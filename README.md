@@ -3,7 +3,9 @@
 把计算机学科专业基础综合（408）的四门课做成**五个可离线打开的单文件网页**：
 每个考点配考点卡片、原理剖析，以及**能亲手操作、能改参数、能逐帧播放**的动画。
 
-> 在线地址：启用 GitHub Pages 后为 `https://<用户名>.github.io/<仓库名>/`
+> 在线地址：**https://5ky0neW.github.io/cs408/**
+>
+> 也可以直接把仓库下载下来，双击任意 `.html` 离线打开。
 
 ---
 
@@ -68,8 +70,24 @@ iframe 让每页在自己的文档里运行，天然隔离。
 克隆后直接双击任意 `.html`，或用任意静态服务器：
 
 ```bash
+git clone https://github.com/5ky0neW/cs408.git
+cd cs408
 python -m http.server 8000
 ```
+
+然后访问 `http://localhost:8000/`。
+
+## 更新方式
+
+站点是纯静态文件，改完直接用 git 推送即可，GitHub Pages 会自动重新部署（约 1 分钟）：
+
+```bash
+git add -A
+git commit -m "更新说明"
+git push
+```
+
+若改动了任一科目页面，记得同步重建 `downloads/` 里的离线合集，否则那份还是旧内容。
 
 ## 说明
 
