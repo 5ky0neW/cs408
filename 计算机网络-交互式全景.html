@@ -1,0 +1,2779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>计算机网络 · 交互式原理全景（408）</title>
+<style>
+:root{
+  --bg:#f7f5f2; --panel:#fff; --text:#1a1815; --muted:#6b7280; --line:#e8e4de;
+  --primary:#d97706; --primary-l:#fff4e3;
+  --accent:#0891b2; --accent-l:#e2f7fb;
+  --green:#15803d; --green-l:#e8f6ec;
+  --red:#dc2626; --red-l:#fdeceb;
+  --purple:#7c3aed; --purple-l:#f2ecfe;
+  --blue:#2563eb; --blue-l:#eaf0ff;
+  --cyan:#0f766e; --cyan-l:#e0f5f2;
+  --radius:12px;
+  --shadow:0 1px 2px rgba(16,24,40,.035),0 8px 22px -14px rgba(16,24,40,.15);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);font-size:15px;line-height:1.8;
+  font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#d8d2c8;border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#c2bab0}
+
+.progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;
+  background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .1s linear}
+
+/* ---------- 布局 ---------- */
+.app{display:flex;align-items:flex-start}
+.sidebar{position:fixed;top:0;left:0;width:256px;height:100vh;background:var(--panel);
+  border-right:1px solid var(--line);padding:20px 14px;overflow-y:auto;z-index:50}
+.brand{padding:4px 10px 16px;border-bottom:1px dashed var(--line);margin-bottom:14px}
+.brand-t{font-size:15px;font-weight:800;letter-spacing:.2px}
+.brand-s{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav-sep{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#c2bab0;padding:12px 10px 5px}
+.speed{margin-top:20px;padding:13px 10px 2px;border-top:1px dashed var(--line)}
+.speed-t{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#c2bab0;margin-bottom:8px}
+.speed-b{display:flex;gap:5px}
+.speed-b button{flex:1;font-family:inherit;font-size:12px;font-weight:650;padding:6px 0;border-radius:7px;
+  border:1px solid var(--line);background:#fff;color:#6b6580;cursor:pointer;transition:.16s}
+.speed-b button:hover{border-color:var(--primary);color:var(--primary)}
+.speed-b button.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.speed-note{font-size:10.5px;color:#c2bab0;margin-top:7px;line-height:1.6}
+.nav-i{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;
+  text-decoration:none;color:#4c4740;font-size:13px;transition:.18s;border-left:2px solid transparent}
+.nav-i b{font-size:11px;font-weight:700;color:#b0a89b;font-variant-numeric:tabular-nums;min-width:16px}
+.nav-i:hover{background:#faf6f0;color:var(--text)}
+.nav-i.on{background:var(--primary-l);color:var(--primary);font-weight:650;border-left-color:var(--primary)}
+.nav-i.on b{color:var(--primary)}
+.nav-tag{font-size:10px;padding:1px 5px;border-radius:4px;margin-left:auto;font-weight:600}
+.t3{background:var(--red-l);color:var(--red)}
+.t2{background:var(--primary-l);color:var(--primary)}
+.t1{background:#efedea;color:#7d7890}
+
+.content{margin-left:256px;flex:1;min-width:0;max-width:1100px;padding:0 34px 90px}
+/* ---------- 小屏：顶部条 + 抽屉式章节导航 ---------- */
+.mtop{display:none}
+.navbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  width:38px;height:38px;flex-shrink:0;padding:0;border-radius:10px;cursor:pointer;
+  border:1px solid var(--line);background:#fff}
+.navbtn i{display:block;width:16px;height:2px;border-radius:2px;background:#5c5773;transition:.2s}
+.navbtn.on i:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.navbtn.on i:nth-child(2){opacity:0}
+.navbtn.on i:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.mtop-t{font-size:13.5px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scrim{position:fixed;inset:0;z-index:70;background:rgba(18,23,33,.45);
+  opacity:0;pointer-events:none;transition:opacity .22s}
+
+@media(max-width:980px){
+  .mtop{display:flex;align-items:center;gap:11px;position:fixed;top:0;left:0;right:0;z-index:90;
+    height:56px;padding:0 14px;background:rgba(255,255,255,.94);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);box-shadow:0 8px 20px -16px rgba(16,24,40,.6)}
+  .sidebar{top:56px;height:calc(100vh - 56px);transform:translateX(-100%);
+    transition:transform .22s ease;z-index:80;box-shadow:none}
+  .sidebar.open{transform:none;box-shadow:0 20px 60px -18px rgba(16,24,40,.5)}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .content{margin-left:0;padding:58px 16px 60px}
+  .hero{padding-top:20px}
+}
+
+/* ---------- Hero ---------- */
+.hero{padding:58px 0 34px;border-bottom:1px solid var(--line);margin-bottom:44px}
+.hero-k{font-size:11.5px;letter-spacing:2.6px;color:var(--primary);font-weight:700;text-transform:uppercase}
+.hero h1{font-size:32px;margin:14px 0 12px;font-weight:800;letter-spacing:-.4px;line-height:1.32}
+.hero p{color:var(--muted);margin:0 0 28px;max-width:640px;font-size:14px;line-height:1.9}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-width:660px}
+@media(max-width:820px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 16px;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:21px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums;line-height:1.35}
+.stat span{display:block;font-size:11px;color:var(--muted);line-height:1.45}
+
+/* ---------- 四门课地图 ---------- */
+.subj{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0 0}
+@media(max-width:980px){.subj{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sj{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.2s}
+.sj.cur{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l),var(--shadow)}
+.sj.cur::before{content:"当前";position:absolute;top:0;right:0;background:var(--primary);color:#fff;
+  font-size:9.5px;font-weight:800;letter-spacing:.6px;padding:3px 9px;border-radius:0 0 0 9px}
+.sj-n{font-size:11px;font-weight:800;color:#c2bab0;letter-spacing:1px}
+.sj-t{font-size:14.5px;font-weight:800;margin:3px 0 7px}
+.sj-s{font-size:11.5px;color:var(--muted);line-height:1.7}
+.sj-bar{height:6px;border-radius:3px;background:#efedea;margin-top:10px;overflow:hidden}
+.sj-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#fcd34d,var(--primary))}
+.sj.mut .sj-bar i{background:#d8d2c8}
+.sj.mut .sj-t{color:#8b8699}
+/* ---------- 四门课地图的跳转（2026-09-29 补） ---------- */
+.hero-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.home-link{margin-left:auto;font-size:12px;font-weight:700;color:var(--muted);text-decoration:none;
+  border:1px solid var(--line);border-radius:20px;padding:4px 14px;transition:.18s;background:#fff;white-space:nowrap}
+.home-link:hover{color:var(--primary);border-color:var(--primary);box-shadow:0 4px 12px -8px rgba(16,24,40,.4)}
+a.sj{text-decoration:none;color:inherit;cursor:pointer}
+a.sj:hover{border-color:var(--primary);transform:translateY(-2px);
+  box-shadow:0 10px 22px -12px rgba(16,24,40,.34),var(--shadow)}
+a.sj:hover .sj-t{color:var(--primary)}
+a.sj::after{content:"进入 →";position:absolute;right:12px;bottom:8px;font-size:10.5px;font-weight:800;
+  color:var(--primary);opacity:0;transform:translateX(-4px);transition:.2s}
+a.sj:hover::after{opacity:1;transform:translateX(0)}
+.sj.cur::after{content:"本页";position:absolute;right:12px;bottom:8px;font-size:10.5px;
+  font-weight:800;color:#bcb6cc;letter-spacing:.4px}
+
+/* ---------- 章节分值权重 ---------- */
+.rank{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 22px;margin:28px 0 0;box-shadow:var(--shadow)}
+.rank-h{margin-bottom:16px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
+.rank-t{font-size:13.5px;font-weight:750;color:#2b3542}
+.rank-s{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.7}
+.rank-r{display:grid;grid-template-columns:152px minmax(0,1fr) 62px 54px;gap:12px;align-items:center;
+  margin-bottom:9px;font-size:12px}
+@media(max-width:620px){.rank-r{grid-template-columns:114px minmax(0,1fr) 56px 48px;gap:8px}}
+.rank-n{color:#3c4654;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-bar{height:10px;background:#efedea;border-radius:5px;overflow:hidden}
+.rank-bar i{display:block;height:100%;border-radius:5px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.rank-v{text-align:right;color:#4b5665;font-variant-numeric:tabular-nums;font-weight:700}
+.rank-b{font-size:10px;font-weight:800;padding:2px 0;border-radius:5px;text-align:center;letter-spacing:.4px}
+.tier1{background:var(--red-l);color:var(--red)}
+.tier2{background:var(--primary-l);color:var(--primary)}
+.tier3{background:#efedea;color:#7d7890}
+.rank-sum{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+.rank-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-bottom:14px}
+.rank-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.rank-sum-r{display:grid;grid-template-columns:112px minmax(0,1fr) 42px;gap:12px;align-items:center;
+  margin-bottom:9px;font-size:12px}
+.rank-sum-bar{height:11px;background:#efedea;border-radius:6px;overflow:hidden}
+.rank-sum-bar i{display:block;height:100%;border-radius:6px;width:0;transition:width .9s ease .3s}
+.rank-sum-v{text-align:right;color:#4b5665;font-weight:700;font-variant-numeric:tabular-nums}
+.rank-note{margin-top:14px;font-size:12.2px;color:#4b5665;line-height:1.8;
+  background:#fbf8f4;border:1px solid var(--line);border-left:3px solid var(--primary);
+  border-radius:9px;padding:12px 15px}
+/* ---------- Section ---------- */
+.sec{padding:56px 0 20px;scroll-margin-top:20px}
+.sec-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:16px;
+  border-bottom:2px solid var(--line);margin-bottom:28px}
+.sec-num{font-size:11px;font-weight:800;letter-spacing:1.6px;color:#fff;background:var(--primary);
+  padding:4px 9px;border-radius:6px}
+.sec-head h2{font-size:23px;margin:0;font-weight:800;letter-spacing:-.2px}
+.weight{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;margin-left:auto}
+.w3{background:var(--red-l);color:var(--red)}
+.w2{background:var(--primary-l);color:var(--primary)}
+.w1{background:#efedea;color:#7d7890}
+
+.sub{font-size:16px;font-weight:750;margin:40px 0 16px;display:flex;align-items:center;gap:9px}
+.sub::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--primary)}
+.sub.g::before{background:var(--green)} .sub.a::before{background:var(--accent)}
+.sub.p::before{background:var(--purple)} .sub.b::before{background:var(--blue)}
+
+/* ---------- 卡片 ---------- */
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;box-shadow:var(--shadow);min-width:0}
+.card h4{margin:0 0 11px;padding-bottom:9px;border-bottom:1px solid #f3f0ea;
+  font-size:13.5px;font-weight:750;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.card h4 .pt{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--primary-l);color:var(--primary)}
+.card h4 .pt.hot{background:var(--red-l);color:var(--red)}
+.card p{margin:0 0 7px;font-size:13.5px;color:#3c4654}
+.card ul{margin:6px 0 0;padding-left:17px;font-size:13.5px;color:#3c4654}
+.card li{margin:4px 0}
+.card li::marker{color:var(--primary)}
+
+.fm{background:#fbf8f4;border:1px solid var(--line);border-left:3px solid var(--primary);
+  border-radius:8px;padding:9px 13px;margin:9px 0;font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px;line-height:1.9;color:#1e293b;overflow-x:auto;white-space:pre-wrap}
+.fm.g{border-left-color:var(--green)} .fm.a{border-left-color:var(--accent)}
+.fm.b{border-left-color:var(--blue)} .fm.p{border-left-color:var(--purple)}
+.fm.r{border-left-color:var(--red)}
+.key{background:linear-gradient(transparent 62%,#ffe9a8 62%);font-weight:650;padding:0 1px}
+.tip{display:flex;gap:9px;font-size:12.8px;padding:10px 13px;border-radius:9px;margin:10px 0;line-height:1.7}
+.tip .ti{font-weight:800;flex-shrink:0}
+.tip.e{background:var(--red-l);color:#8d2020}
+.tip.m{background:var(--primary-l);color:#8a5209}
+.tip.i{background:var(--accent-l);color:#0b5d70}
+.tip.s{background:var(--green-l);color:#0a6b4a}
+
+table.tb{width:100%;border-collapse:collapse;font-size:12.8px;margin:11px 0;
+  border:1px solid var(--line);border-radius:9px;overflow:hidden}
+table.tb th{background:#f5f4fa;text-align:left;padding:8px 11px;font-weight:700;font-size:12.2px;
+  color:#38424f;border-bottom:1px solid var(--line);white-space:nowrap}
+table.tb td{padding:8px 11px;border-bottom:1px solid #f4f1ec;color:#3c4654;vertical-align:top}
+table.tb tr:last-child td{border-bottom:0}
+table.tb tr:hover td{background:#fdfbf8}
+/* 窄屏：宽表自己横向滚动，不把整页撑出横向滚动条 */
+@media(max-width:700px){
+  table.tb{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* 少数动画的图形/表格本身比卡片宽，给一条横向滚动，别让内容被裁掉 */
+  .demo-b{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+.mono{font-family:"Cascadia Mono",Consolas,monospace;font-size:12.5px}
+
+/* ---------- 跨科目连接 ---------- */
+.xlink{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
+  padding:16px 18px;box-shadow:var(--shadow);border-left:4px solid var(--purple)}
+.xlink h4{margin:0 0 10px;font-size:13.5px;font-weight:750;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.xlink h4 .tagx{font-size:10px;font-weight:800;padding:2px 8px;border-radius:5px;background:var(--purple-l);color:var(--purple)}
+.xitem{display:grid;grid-template-columns:150px 1fr;gap:10px;padding:8px 0;border-top:1px dashed #f3f0ea;font-size:12.8px}
+.xitem:first-of-type{border-top:0}
+.xitem .xa{font-weight:700;color:#5b21b6}
+.xitem .xb{color:#3c4654}
+/* ---------- 演示区 ---------- */
+.demo{background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);padding:0;margin:18px 0 30px;overflow:hidden;box-shadow:var(--shadow)}
+.demo-h{display:flex;align-items:center;gap:9px;padding:12px 20px;background:#fbf8f4;
+  border-bottom:1px solid var(--line);font-size:13px;font-weight:750;color:#2b3542;flex-wrap:wrap}
+.demo-h .dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;
+  box-shadow:0 0 0 3px rgba(21,128,61,.16);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.demo-h .tag{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--primary);
+  background:var(--primary-l);padding:2px 8px;border-radius:5px}
+.demo-b{padding:22px 20px}
+@media(max-width:860px){.demo-b{padding:15px}}
+
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.ctl label{font-size:12.5px;color:#4b5665;font-weight:600}
+.ctl>input,.ctl>select{margin-right:7px}
+input[type=number],input[type=text],select{font-family:inherit;font-size:13px;padding:6px 10px;
+  border:1px solid #d8d2c8;border-radius:8px;background:#fff;color:var(--text);outline:none;transition:.15s;width:110px}
+input[type=text]{width:170px}
+select{width:auto;cursor:pointer}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
+.btn{font-family:inherit;font-size:12.5px;font-weight:650;padding:7px 15px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--primary);background:var(--primary);color:#fff;transition:.16s}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.gh{background:#fff;color:var(--primary)}
+.btn.gy{background:#fff;color:#4b5665;border-color:#d8d2c8}
+.btn.rd{background:#fff;color:var(--red);border-color:#f0b9b7}
+.btn.sm{padding:5px 11px;font-size:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+
+.res{font-family:"Cascadia Mono",Consolas,monospace;font-size:13px;line-height:1.95;
+  background:#fbf8f4;border:1px solid var(--line);border-radius:10px;padding:12px 15px;overflow-x:auto}
+.res .r{display:flex;gap:11px;flex-wrap:wrap;align-items:center;margin:4px 0}
+.res .lbl{display:inline-block;min-width:92px;color:var(--muted);font-size:12px}
+.res .val{font-weight:700;color:var(--primary);letter-spacing:.6px}
+
+/* ---------- 比特格子 ---------- */
+.bits{display:flex;flex-wrap:wrap;gap:0;padding:4px 0}
+.bit{width:26px;height:28px;border:1px solid #ded8cf;background:#fff;color:#403a55;margin-left:-1px;
+  display:flex;align-items:center;justify-content:center;font-family:Consolas,monospace;
+  font-size:12.5px;font-weight:700;transition:.3s}
+.bit:first-child{margin-left:0}
+.bit.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.bit.ins{background:var(--green-l);border-color:var(--green);color:#0a6b4a;font-weight:800}
+.bit.mk{background:var(--primary-l);border-color:var(--primary);color:#8a5209}
+.bit.bad{background:var(--red-l);border-color:var(--red);color:#8d2020}
+.blbl{font-size:11px;color:#a49db8;margin-top:5px;font-family:Consolas,monospace}
+
+/* ---------- 字段条（报文字段） ---------- */
+.pkt{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.pf{border:1px solid var(--line);border-radius:8px;padding:7px 11px;background:#fff;font-size:12px;
+  min-width:64px;text-align:center;transition:.3s;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.pf .pn{font-size:10px;color:var(--muted);display:block;letter-spacing:.3px}
+.pf .pv{font-family:Consolas,monospace;font-weight:800;color:#2b3542;font-size:13px}
+.pf.act{border-color:var(--primary);background:var(--primary-l);box-shadow:0 0 0 3px var(--primary-l)}
+.pf.act .pv{color:#a1600a}
+.pf.new{border-color:var(--green);background:var(--green-l)}
+.pf.new .pv{color:#0a6b4a}
+.pf.drop{border-color:#f0b9b7;background:var(--red-l);opacity:.6}
+.pf.drop .pv{color:#8d2020}
+
+/* ---------- 伪代码 ---------- */
+.code{background:#2b2118;color:#f0e6d8;border-radius:10px;padding:13px 15px;overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,monospace;font-size:12.5px;line-height:1.9}
+.code .ln{display:block;padding:1px 8px;border-radius:5px;transition:.25s;white-space:pre}
+.code .ln.on{background:rgba(251,191,36,.28);color:#fff}
+.code .cm{color:#a89684}
+
+/* ---------- 日志 ---------- */
+.logbox{max-height:180px;overflow-y:auto;background:#fbf8f4;border:1px solid var(--line);
+  border-radius:9px;padding:10px 13px;font-size:12px;line-height:1.85;
+  font-family:"Cascadia Mono",Consolas,monospace}
+.logbox .lg{display:block;padding:1px 0}
+.logbox .lg.ok{color:#0a6b4a}
+.logbox .lg.warn{color:#9a5b06}
+.logbox .lg.err{color:#8d2020}
+.logbox .lg.mut{color:#b0a89b}
+
+/* ---------- 步骤条 ---------- */
+.steps{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.step{display:flex;gap:11px;align-items:flex-start;padding:10px 13px;border:1px solid var(--line);
+  border-radius:10px;background:#fff;transition:.3s;opacity:.5}
+.step.act{opacity:1;border-color:var(--primary);background:var(--primary-l);
+  box-shadow:0 0 0 3px rgba(217,119,6,.09)}
+.step.dn{opacity:1;background:#fdfbf8;border-color:#f0d9b5}
+.step .n{width:21px;height:21px;border-radius:50%;background:#efedea;color:#7d7890;font-size:11px;
+  font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step.act .n{background:var(--primary);color:#fff}
+.step.dn .n{background:var(--green);color:#fff}
+.step .t{font-size:13px;font-weight:700;margin-bottom:2px}
+.step .d{font-size:12px;color:#5c5773;font-family:"Cascadia Mono",Consolas,monospace;line-height:1.7}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.8px;color:#5c5773;margin-top:12px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--muted);text-align:center;line-height:2}
+.totop{position:fixed;right:24px;bottom:24px;width:40px;height:40px;border-radius:50%;
+  background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#6b6580;font-size:15px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:60}
+.totop.on{opacity:1;pointer-events:auto}
+.totop:hover{color:var(--primary);border-color:var(--primary)}
+/* ---------- 计网专用 ---------- */
+.stage{overflow-x:auto;margin:2px 0}
+.stage svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.kv{display:flex;gap:9px;flex-wrap:wrap;margin:9px 0}
+.kv span{background:#fbf8f4;border:1px solid var(--line);border-radius:7px;padding:4px 10px;
+  font-size:12px;font-family:"Cascadia Mono",Consolas,monospace;color:#4b5665}
+.kv span b{color:var(--primary)}
+.hint{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.75}
+.split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media(max-width:860px){.split{grid-template-columns:1fr}}
+.split>div{min-width:0}
+.split .cap{font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;margin-bottom:7px}
+
+/* ---------- 封装层级条 ---------- */
+.enc{display:flex;flex-direction:column;gap:0}
+.enc-r{display:grid;grid-template-columns:86px 1fr;gap:10px;align-items:center;padding:6px 0;
+  border-bottom:1px dashed #f3f0ea;transition:.35s;opacity:.28}
+.enc-r.on{opacity:1}
+.enc-r.cur{opacity:1;background:var(--primary-l);border-radius:8px;padding-left:8px;padding-right:8px}
+.enc-l{font-size:12px;font-weight:700;color:#4b5665;text-align:right;white-space:nowrap}
+.enc-r.cur .enc-l{color:#a1600a}
+.enc-u{display:flex;align-items:stretch;flex-wrap:wrap}
+.enc-f{border:1px solid #ded8cf;background:#fff;font-size:11px;font-family:Consolas,monospace;
+  padding:6px 9px;color:#403a55;display:flex;align-items:center;white-space:nowrap;margin-right:-1px}
+.enc-f.h{border-color:var(--primary);background:var(--primary-l);color:#8a5209;font-weight:800;z-index:2}
+.enc-f.d{background:#f6f5fa;color:#5c5773}
+.enc-f.t{border-color:var(--green);background:var(--green-l);color:#0a6b4a;font-weight:800;z-index:2}
+.enc-f.b{border-color:var(--blue);background:var(--blue-l);color:#1d4ed8;font-weight:800;z-index:2}
+.enc-f.s{border-color:#b9a8f0;background:#f2ecfe;color:#5b21b6;font-weight:800;z-index:2}
+.enc-f.mut{background:#f1efe9;color:#b0a89b;border-style:dashed}
+.bit.ok{background:var(--green-l);border-color:var(--green);color:#0a6b4a}
+.bit.tx{background:var(--primary-l);border-color:var(--primary);color:#8a5209}
+.bit.mut{background:#faf8f5;color:#c8c2b8}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-t">408 计算机网络</div>
+    <div class="brand-s">交互式原理全景 · 考点 / 原理 / 动画</div>
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-sep">408 全局</div>
+    <a href="#g0" class="nav-i"><b>00</b><span>四门课全景定位</span><em class="nav-tag t3">先看</em></a>
+    <div class="nav-sep">计算机网络</div>
+    <a href="#c1" class="nav-i"><b>01</b><span>体系结构</span><em class="nav-tag t1">低</em></a>
+    <a href="#c2" class="nav-i"><b>02</b><span>物理层</span><em class="nav-tag t1">低</em></a>
+    <a href="#c3" class="nav-i"><b>03</b><span>数据链路层</span><em class="nav-tag t2">中</em></a>
+    <a href="#c4" class="nav-i"><b>04</b><span>网络层</span><em class="nav-tag t3">核心</em></a>
+    <a href="#c5" class="nav-i"><b>05</b><span>传输层</span><em class="nav-tag t3">核心</em></a>
+    <a href="#c6" class="nav-i"><b>06</b><span>应用层</span><em class="nav-tag t2">中</em></a>
+  </nav>
+  <div class="speed">
+    <div class="speed-t">动画速度</div>
+    <div class="speed-b">
+      <button data-sp="2.6">慢</button>
+      <button data-sp="1.7" class="on">中</button>
+      <button data-sp="1">快</button>
+    </div>
+    <div class="speed-note">切换后对<b>下一次播放</b>生效</div>
+  </div>
+</aside>
+
+<div class="scrim" id="scrim"></div>
+
+<main class="content">
+
+<div class="mtop">
+  <button class="navbtn" id="navbtn" type="button" aria-label="章节导航" aria-expanded="false" aria-controls="nav"><i></i><i></i><i></i></button>
+  <span class="mtop-t" data-subj="计算机网络">计算机网络</span>
+</div>
+<header class="hero">
+  <div class="hero-top">
+    <div class="hero-k">Computer Network · 408</div>
+    <a class="home-link" href="408-全景总览.html">← 回 408 全景总览</a>
+  </div>
+  <h1>计算机网络<br>交互式原理全景</h1>
+  <p>计网是 408 里<b>分值最低、但最容易拉开差距</b>的一门。它的题几乎全是「算出来」或「走一遍流程」——子网划分、IP 分片、滑窗、拥塞窗口、握手挥手，考的都是过程。这一页把这些过程全部做成<b>能点、能改参数、能一步步看</b>的动画：看十遍不如自己推一遍。</p>
+  <div class="stats">
+    <div class="stat"><b>25</b><span>本科分值（满分 150）</span></div>
+    <div class="stat"><b>6</b><span>章节全覆盖</span></div>
+    <div class="stat"><b>14</b><span>交互动画</span></div>
+    <div class="stat"><b>100%</b><span>可离线打开</span></div>
+  </div>
+
+  <div class="subj">
+    <a class="sj mut" href="数据结构-交互式全景.html">
+      <div class="sj-n">01</div>
+      <div class="sj-t">数据结构</div>
+      <div class="sj-s">线性表 / 树 / 图 / 查找 / 排序<br>路由算法、Trie 都源于此</div>
+      <div class="sj-bar"><i style="width:100%"></i></div>
+    </a>
+    <a class="sj mut" href="计算机组成原理-交互式全景.html">
+      <div class="sj-n">02</div>
+      <div class="sj-t">计算机组成原理</div>
+      <div class="sj-s">数据表示 / 存储 / 指令 / CPU<br>网卡、DMA、中断、CRC</div>
+      <div class="sj-bar"><i style="width:100%"></i></div>
+    </a>
+    <a class="sj mut" href="操作系统-交互式全景.html">
+      <div class="sj-n">03</div>
+      <div class="sj-t">操作系统</div>
+      <div class="sj-s">进程 / 内存 / 文件 / I-O 管理<br>socket、缓冲区、协议栈</div>
+      <div class="sj-bar"><i style="width:78%"></i></div>
+    </a>
+    <div class="sj cur">
+      <div class="sj-n">04</div>
+      <div class="sj-t">计算机网络</div>
+      <div class="sj-s">体系结构 / 五层协议 / 应用层<br>本页</div>
+      <div class="sj-bar"><i style="width:56%"></i></div>
+    </div>
+  </div>
+
+  <div class="rank">
+    <div class="rank-h">
+      <div class="rank-t">各章分值权重与复习优先级</div>
+      <div class="rank-s">按历年统考真题中的<b>大致分值降序</b>排列 —— 排在前面的章节，复习投入应当明显更多。分值区间为估计值，用于确定复习顺序，<b>非官方数据</b>。</div>
+    </div>
+
+    <div class="rank-r"><div class="rank-n">04 网络层</div><div class="rank-bar"><i data-w="100" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-v">7-10</div><div class="rank-b tier1">核心</div></div>
+    <div class="rank-r"><div class="rank-n">05 传输层</div><div class="rank-bar"><i data-w="100" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-v">7-10</div><div class="rank-b tier1">核心</div></div>
+    <div class="rank-r"><div class="rank-n">03 数据链路层</div><div class="rank-bar"><i data-w="60" style="background:linear-gradient(90deg,#fcd34d,#d97706)"></i></div><div class="rank-v">4-6</div><div class="rank-b tier2">主力</div></div>
+    <div class="rank-r"><div class="rank-n">06 应用层</div><div class="rank-bar"><i data-w="60" style="background:linear-gradient(90deg,#fcd34d,#d97706)"></i></div><div class="rank-v">4-6</div><div class="rank-b tier2">主力</div></div>
+    <div class="rank-r"><div class="rank-n">01 体系结构</div><div class="rank-bar"><i data-w="30" style="background:linear-gradient(90deg,#e0dcea,#bcb6cc)"></i></div><div class="rank-v">2-3</div><div class="rank-b tier3">补充</div></div>
+    <div class="rank-r"><div class="rank-n">02 物理层</div><div class="rank-bar"><i data-w="30" style="background:linear-gradient(90deg,#e0dcea,#bcb6cc)"></i></div><div class="rank-v">2-3</div><div class="rank-b tier3">补充</div></div>
+
+    <div class="rank-sum">
+      <div class="rank-legend">
+        <span><i style="background:#dc2626"></i>核心章（≥7 分）—— 必考大题，要反复算</span>
+        <span><i style="background:#d97706"></i>主力章（4-6 分）—— 吃透考点，稳定拿分</span>
+        <span><i style="background:#bcb6cc"></i>补充章（&lt;4 分）—— 单选为主，快速过</span>
+      </div>
+      <div class="rank-sum-r"><div>核心 2 章</div><div class="rank-sum-bar"><i data-w="53" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-sum-v">53%</div></div>
+      <div class="rank-sum-r"><div>主力 2 章</div><div class="rank-sum-bar"><i data-w="31" style="background:linear-gradient(90deg,#fcd34d,#d97706)"></i></div><div class="rank-sum-v">31%</div></div>
+      <div class="rank-sum-r"><div>补充 2 章</div><div class="rank-sum-bar"><i data-w="16" style="background:linear-gradient(90deg,#e0dcea,#bcb6cc)"></i></div><div class="rank-sum-v">16%</div></div>
+      <div class="rank-note">
+        <b>怎么用这张表：</b><b>网络层 + 传输层两章合计约 17 分，占本科近 2/3</b>，而且这两章的题几乎从不「背」出来 ——
+        子网划分要算、分片要算、滑动窗口要推、拥塞窗口要画曲线。这两章的投入产出比是四门课里最高的。<br>
+        <b>计网的复习方式与另外三门都不同：</b>它按<b>层次</b>组织，一层叠一层。正确顺序是
+        <b>先记牢每层「分工是什么、数据单元叫什么、有哪些协议」，再回头填细节</b> ——
+        一上来就背 TCP 报文段每个字段的字节数，效率很低。<br>
+        <b>与其它科目的联动：</b>路由算法（Dijkstra、Prim）直接来自数据结构；
+        网卡收包走的是计组的 DMA 和中断；socket、接收缓冲区、协议栈分层属于 OS 的内容。
+        <b>这四门在计网这章是全打通的。</b>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="sec" id="g0">
+  <div class="sec-head">
+    <span class="sec-num">SECTION 00</span>
+    <h2>四门课全景定位</h2>
+    <span class="weight w3">先看这一节</span>
+  </div>
+
+  <div class="tip i"><span class="ti">为什么先看这个</span><span>计网是 408 里<b>唯一「自顶向下」讲得通、也「自底向上」讲得通</b>的一门课 —— 因为它本来就是按层次设计出来的。这一页的六章，从物理层的电信号一直到应用层的 HTTP，中间每一层都在做两件事：<b>给上层提供服务</b>、<b>把上层的委托封装成自己能处理的数据单元</b>。抓不住这条主线，学计网就会变成「背协议名」。</span></div>
+
+  <div class="sub">计算机网络在 408 里的位置</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>分值分布（共 150 分）</h4>
+      <table class="tb">
+        <tr><th>科目</th><th>分值</th><th>占比</th></tr>
+        <tr><td>数据结构</td><td class="mono">45</td><td>30%</td></tr>
+        <tr><td>计算机组成原理</td><td class="mono">45</td><td>30%</td></tr>
+        <tr><td>操作系统</td><td class="mono">35</td><td>约 23%</td></tr>
+        <tr><td><b>计算机网络</b></td><td class="mono"><b>25</b></td><td>约 17%</td></tr>
+      </table>
+      <div class="fm">计网 25 分 ≈ 2 道大题 + 若干单选
+但它的题"会做就是会做"：
+  ❌ 不像 OS 那样有大量概念辨析
+  ✅ 全是算得出来、推得出来的题目</div>
+    </div>
+    <div class="card">
+      <h4>计网题的三种形态 <span class="pt hot">摸清套路</span></h4>
+      <table class="tb">
+        <tr><th>形态</th><th>典型题</th></tr>
+        <tr><td><b>算</b></td><td>子网划分与可用地址数、IP 分片偏移、CRC 校验、时延与带宽时延积</td></tr>
+        <tr><td><b>推过程</b></td><td>ARP 解析、三次握手、滑动窗口推进、拥塞窗口变化</td></tr>
+        <tr><td><b>比大小</b></td><td>发送时延 vs 传播时延、奈氏上限 vs 香农上限、GBN vs SR 效率</td></tr>
+      </table>
+      <div class="tip s"><span class="ti">本页的做法</span><span>三种形态各配了对应动画：<b>计算器</b>（改参数实时出结果）、<b>分步演示</b>（一步步看过程）、<b>对比图</b>（两条曲线放在一起看差距）。</span></div>
+    </div>
+  </div>
+
+  <div class="sub p">跨科目接口图：计网与另外三门的连接点</div>
+  <div class="grid g2">
+    <div class="xlink">
+      <h4><span class="tagx">计网 × 数据结构</span>算法直接复用，而且是大题</h4>
+      <div class="xitem"><div class="xa">图 → 路由算法</div><div class="xb">OSPF 用的就是 <b>Dijkstra 最短路径</b>；RIP 是距离向量，本质是 Bellman-Ford 的分布式版本 —— 数据结构第 5 章的两个算法在这里落地</div></div>
+      <div class="xitem"><div class="xa">最小生成树 → STP</div><div class="xb">生成树协议（STP）靠 Prim / Kruskal 的思想在网络里「砍掉环路」，选出唯一一棵无环转发树</div></div>
+      <div class="xitem"><div class="xa">队列 → 分组排队</div><div class="xb">路由器每个输出端口的<b>发送队列</b>、TCP 的<b>接收缓冲区</b>、拥塞控制的<b>滑动窗口</b>，全是队列结构</div></div>
+      <div class="xitem"><div class="xa">Trie 树 → 路由表查找</div><div class="xb"><b>最长前缀匹配</b>如果用朴素顺序比对要 O(n)，换成 Trie（字典树）才能做到与表项数量无关</div></div>
+    </div>
+    <div class="xlink" style="border-left-color:var(--blue)">
+      <h4><span class="tagx" style="background:var(--blue-l);color:var(--blue)">计网 × 计算机组成原理</span>数据怎么从线上进到内存</h4>
+      <div class="xitem"><div class="xa">中断 → 网卡通知 CPU</div><div class="xb">网卡收到一个帧、校验通过后<b>发中断</b>，CPU 才知道「有数据来了」。这就是计组第 7 章的中断机制</div></div>
+      <div class="xitem"><div class="xa">DMA → 网卡搬数据</div><div class="xb">大数据包由 DMA 直接写入主存，<b>不占 CPU 的搬运时间</b>；这决定了网卡的吞吐上限</div></div>
+      <div class="xitem"><div class="xa">校验码 → CRC</div><div class="xb">数据链路层的 CRC 与计组的检错纠错编码同源：都是<b>模 2 除法 + 余数判 0</b></div></div>
+      <div class="xitem"><div class="xa">存储层次 → 缓冲区</div><div class="xb">路由器/交换机的缓冲、TCP 的接收窗口，都是「用存储换时间」；缓冲区大小直接决定丢包率</div></div>
+    </div>
+    <div class="xlink" style="border-left-color:var(--cyan)">
+      <h4><span class="tagx" style="background:var(--cyan-l);color:#0a5f58">计网 × 操作系统</span>网络与进程的交界处</h4>
+      <div class="xitem"><div class="xa">socket → 进程通信</div><div class="xb">套接字是<b>「IP 找到主机、端口找到进程」</b>的落地接口。计网讲端口，OS 讲进程，socket 把两者接上</div></div>
+      <div class="xitem"><div class="xa">接收缓冲区 → 生产者消费者</div><div class="xb">网卡往缓冲区里「生产」，应用进程从里「消费」。这正是 OS 第 3 章 PV 操作的经典场景</div></div>
+      <div class="xitem"><div class="xa">协议栈 → 分层处理</div><div class="xb">OS 里的协议栈是分层的：链路层在中断上下文处理，传输层/应用层在进程上下文处理</div></div>
+      <div class="xitem"><div class="xa">端口号 → 进程标识</div><div class="xb">目标 IP 决定「送到哪台机器」，目标端口决定「交给哪个进程」—— 这是复用/分用的本质</div></div>
+    </div>
+    <div class="xlink" style="border-left-color:var(--primary)">
+      <h4><span class="tagx" style="background:var(--primary-l);color:#8a5209">复习路线建议</span></h4>
+      <div class="xitem"><div class="xa">先修</div><div class="xb">第 1 章的<b>分层模型</b>必须先看 —— 后面每一章都是「补某一层」，没有这个框架会一直晕</div></div>
+      <div class="xitem"><div class="xa">攻坚顺序</div><div class="xb">第 1 章 → <b>第 4 章网络层</b> → <b>第 5 章传输层</b> → 第 3 章数据链路层 → 第 6 章应用层 → 第 2 章物理层</div></div>
+      <div class="xitem"><div class="xa">最难三处</div><div class="xb"><b>子网划分与路由聚合</b>、<b>TCP 拥塞窗口的变化曲线</b>、<b>IP 分片的偏移与长度计算</b></div></div>
+      <div class="xitem"><div class="xa">大题分布</div><div class="xb">常见形态：给一个地址块做子网划分、给窗口和 RTT 画拥塞曲线、按 MTU 做分片、算 CRC</div></div>
+    </div>
+  </div>
+
+  <div class="sub">学这一页之前，你需要先知道</div>
+  <div class="grid g3">
+    <div class="card">
+      <h4>二进制与按位运算</h4>
+      <p>子网划分、掩码、IP 分片<b>全是按位与和移位</b>。如果看到 <span class="mono">192.168.1.130/26</span> 还不能立刻反应过来「前 26 位是网络号」，先把掩码这块补上。</p>
+    </div>
+    <div class="card">
+      <h4>分层的思想</h4>
+      <p>每一层<b>只负责自己那部分</b>，用下层提供的服务，向上层提供更好的服务。理解这一点，就不会再问「ARP 到底属于哪一层」这种问题。</p>
+    </div>
+    <div class="card">
+      <h4>速率与时延的直觉</h4>
+      <p>「发送时延」和「传播时延」是<b>两件完全不同的事</b>：一个是把比特推上链路，一个是信号在介质里跑。这个区分不清，整章时延计算都会错。</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="c1">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 01</span>
+    <h2>计算机网络体系结构</h2>
+    <span class="weight w1">补充 · 2-3 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>纯框架章，单选 1-2 题。分值不高，但<b>它是后面五章的坐标系</b> —— 不先把分层模型记牢，后面每学一个协议都会「不知道往哪放」。这章真正要吃透的只有三件事：<b>分层怎么分的、每层管什么、性能指标怎么算</b>。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 三种分层模型对照 <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th>OSI 七层</th><th>五层（教学）</th><th>TCP/IP 四层</th></tr>
+        <tr><td>应用层</td><td rowspan="3"><b>应用层</b><br><span style="color:var(--muted)">（表示、会话并入）</span></td><td rowspan="3"><b>应用层</b></td></tr>
+        <tr><td>表示层</td></tr>
+        <tr><td>会话层</td></tr>
+        <tr><td>传输层</td><td><b>传输层</b></td><td><b>传输层</b></td></tr>
+        <tr><td>网络层</td><td><b>网络层</b></td><td><b>网际层</b></td></tr>
+        <tr><td>数据链路层</td><td><b>数据链路层</b></td><td rowspan="2"><b>网络接口层</b></td></tr>
+        <tr><td>物理层</td><td><b>物理层</b></td></tr>
+      </table>
+      <div class="tip s"><span class="ti">口诀</span><span><b>物·数·网·传·会·表·应</b>（自下而上）。五层模型就是把「会表」塞进应用层；TCP/IP 又把「数据链路 + 物理」合成网络接口层。<b>考试默认用五层模型</b>。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>2. 各层功能与数据单元 <span class="pt hot">贯穿全书</span></h4>
+      <table class="tb">
+        <tr><th>层</th><th>数据单元</th><th>管什么</th></tr>
+        <tr><td><b>应用层</b></td><td>报文</td><td>为用户程序提供服务：HTTP、DNS、SMTP、FTP</td></tr>
+        <tr><td><b>传输层</b></td><td>报文段（TCP）<br>用户数据报（UDP）</td><td><b>进程到进程</b>：端口、可靠传输、流量与拥塞控制</td></tr>
+        <tr><td><b>网络层</b></td><td>分组（IP 数据报）</td><td><b>主机到主机</b>：编址、选路、转发</td></tr>
+        <tr><td><b>数据链路层</b></td><td>帧</td><td><b>相邻结点间</b>：组帧、差错控制、流量控制、介质访问</td></tr>
+        <tr><td><b>物理层</b></td><td>比特</td><td>在介质上传原始比特流：编码、调制、传输介质</td></tr>
+      </table>
+      <div class="tip e"><span class="ti">易错</span><span><b>ARP 属于网络层</b>（它直接为 IP 转发服务），虽然它工作在链路之上。<br>设备归属：<b>集线器 / 中继器 → 物理层</b>，<b>交换机 / 网桥 → 数据链路层</b>，<b>路由器 → 网络层</b>。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>3. 协议的三要素</h4>
+      <ul>
+        <li><b>语法</b>：数据与控制信息的<b>格式</b>（长什么样）</li>
+        <li><b>语义</b>：需要发出何种控制信息、完成何种动作、做出何种应答（要干什么）</li>
+        <li><b>同步</b>：事件实现顺序的<b>时序</b>关系（先说什么、后说什么）</li>
+      </ul>
+      <div class="tip s"><span class="ti">一句话</span><span><b>语法管格式、语义管动作、同步管时序。</b>三者对应「长什么样、干什么、什么时候干」。</span></div>
+      <div class="tip i" style="margin-top:10px"><span class="ti">注意</span><span>协议是<b>水平的</b>（同一层的两个实体之间），服务是<b>垂直的</b>（下层向上层提供）。<b>协议 ≠ 服务</b>：协议是「怎么实现」，服务是「对外提供什么」。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>4. 速率、带宽、吞吐量</h4>
+      <div class="fm">速率（数据率）= 每秒传输的比特数，单位 b/s
+  1 kb/s = 10³ b/s     1 Mb/s = 10⁶ b/s
+
+带宽
+  原始含义：信号频带宽度，单位 Hz
+  计网含义：链路的<b>最高数据率</b>，单位 b/s
+
+吞吐量 = 单位时间实际通过的数据量
+  始终 ≤ 带宽（受瓶颈链路限制）</div>
+      <div class="tip e"><span class="ti">最经典的坑</span><span>网络里的 <b>k = 10³、M = 10⁶</b>（十进制）；而存储容量里的 <b>K = 2¹⁰ = 1024</b>（二进制）。<br>所以 100 Mb/s 的链路，传 1 MB（2²⁰ B）数据要 <b>约 84 ms</b>，不是 80 ms。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>5. 时延的四个组成部分 <span class="pt hot">大题常考</span></h4>
+      <div class="fm a">总时延 = 发送时延 + 传播时延 + 处理时延 + 排队时延
+
+① 发送时延（传输时延）
+   = 数据长度(bit) ÷ 发送速率(b/s)
+   ——把全部比特"推上"链路所需的时间
+
+② 传播时延
+   = 信道长度(m) ÷ 电磁波传播速率(m/s)
+   ——信号在介质里跑完全程的时间
+   铜缆/光纤中约 2×10⁸ m/s，自由空间 3×10⁸ m/s
+
+③ 处理时延 + ④ 排队时延：路由器里查表、排队，通常"忽略"</div>
+      <div class="tip m"><span class="ti">辨析</span><span>「提高带宽就能变快」是半对：带宽只减小<b>发送时延</b>。传播时延由<b>距离和介质</b>决定，改不了 —— 所以卫星链路的 RTT 天然就大。<br>推论：<b>长肥管道（高带宽长距离）的瓶颈往往不是带宽，而是 RTT。</b></span></div>
+    </div>
+
+    <div class="card">
+      <h4>6. 时延带宽积与利用率</h4>
+      <div class="fm g">时延带宽积 = 传播时延 × 带宽
+  = "链路中能容纳多少比特"
+  = 管道的容积（管道里同时有多少水）
+
+例：带宽 1 Gb/s，单向传播时延 10 ms
+  时延带宽积 = 10⁹ × 10⁻² = 10⁷ bit = 10 Mbit
+
+利用率（信道利用率）= 有数据通过的时间 ÷ 总时间
+  当前时延 D = D₀ ÷ (1 − U)
+  → U 趋近 1 时，时延急剧增大（排队爆炸）</div>
+      <div class="tip s"><span class="ti">怎么记</span><span>时延带宽积就是<b>「一条管道里装了多少水」</b> —— 本页<b>动画 02</b> 直接把这个画出来了。</span></div>
+    </div>
+  </div>
+
+  <div class="tip s"><span class="ti">自测速答</span><span><b>①</b> 带宽 1 Gb/s、RTT 20 ms 的链路，时延带宽积是多少？（答：10⁹ × 10×10⁻³ = 10⁷ bit = 10 Mbit，注意是<b>单向</b>传播时延）<br><b>②</b> 「光纤比铜线快，是因为光纤里光速更快」对不对？（答：<b>错</b>。光纤中光速约 2×10⁸ m/s，比真空慢；光纤的优势是带宽高、损耗小、抗干扰）<br><b>③</b> 同一个数据块，用 100 Mb/s 链路和 1 Gb/s 链路发送，传播时延变不变？（答：<b>不变</b>）</span></div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 01 · 分层封装与解封装：数据怎么一层层穿上外套<span class="tag">点下一步逐帧看</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <button class="btn" id="enPlay">播放全过程</button>
+        <button class="btn gh" id="enStep">下一步</button>
+        <button class="btn gy" id="enReset">重置</button>
+      </div>
+      <div id="enStage"></div>
+      <div id="enOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 02 · 时延计算器：发送时延和传播时延到底差在哪<span class="tag">改参数实时算</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>数据长度</label><input type="number" id="dlLen" value="1" step="0.1" min="0.001"><span style="font-size:12.5px;color:var(--muted)">MB</span>
+        <label>链路速率</label><input type="number" id="dlRate" value="100"><span style="font-size:12.5px;color:var(--muted)">Mb/s</span>
+        <label>链路长度</label><input type="number" id="dlDist" value="1000"><span style="font-size:12.5px;color:var(--muted)">km</span>
+      </div>
+      <div id="dlStage"></div>
+      <div id="dlOut" style="margin-top:16px"></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="c2">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 02</span>
+    <h2>物理层</h2>
+    <span class="weight w1">补充 · 2-3 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>内容少、但<b>有两个必考公式</b>（奈氏准则、香农公式）和<b>一个必会画法</b>（曼彻斯特编码）。分值只有 2-3 分，却几乎每年至少出一道单选。<b>把公式的口径记准、把波形会画，这章就结束了</b>，不要在这章花多余的时间。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 奈氏准则（无噪声） <span class="pt hot">必考</span></h4>
+      <div class="fm a">奈奎斯特准则（理想低通信道、无噪声）
+
+  极限码元传输速率 = 2W  Baud
+  极限数据传输速率 C = 2W · log₂V   (b/s)
+
+    W = 信道带宽（Hz）
+    V = 一个码元能取多少个离散状态（电平/相位数）
+
+含义：带宽决定了"码元发多快"，
+      码元状态数决定了"每个码元带多少信息"</div>
+      <div class="tip s"><span class="ti">怎么推</span><span>一个码元 = log₂V 个比特。所以 <b>C = 2W × log₂V</b>。<br>例：W = 3000 Hz、16 种码元 → C = 2×3000×log₂16 = <b>24000 b/s</b>。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>2. 香农公式（有噪声） <span class="pt hot">必考</span></h4>
+      <div class="fm b">香农定理（有噪声、带宽受限）
+
+  C = W · log₂(1 + S/N)   (b/s)
+
+    S/N = 信号平均功率 ÷ 噪声平均功率（比值，不是 dB！）
+    信噪比(dB) = 10 · log₁₀(S/N)
+
+含义：噪声给"每个码元能带多少信息"设了上限
+      —— 这就是为什么不能无限提高 V</div>
+      <div class="tip e"><span class="ti">最常错</span><span><b>公式里用的必须是 S/N 的比值，不是 dB。</b><br>题目给「信噪比 30 dB」要先换算：30 = 10·log₁₀(S/N) → S/N = <b>1000</b>，再代入。<br>例：W = 3000 Hz、30 dB → C = 3000 × log₂(1001) ≈ <b>29900 b/s</b>。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>3. 两个公式的关系 <span class="pt">对比记</span></h4>
+      <table class="tb">
+        <tr><th></th><th>奈氏准则</th><th>香农公式</th></tr>
+        <tr><td>前提</td><td>无噪声</td><td>有噪声</td></tr>
+        <tr><td>限制来自</td><td>带宽 + 码元状态数</td><td>带宽 + 信噪比</td></tr>
+        <tr><td>能不能靠加电平提速</td><td>能（V 越大越快）</td><td><b>不能</b>（受噪声封顶）</td></tr>
+        <tr><td>单位</td><td>b/s</td><td>b/s</td></tr>
+      </table>
+      <div class="tip i"><span class="ti">怎么用</span><span>两个上限<b>取较小的那个</b>作为实际可达速率。<br><b>无噪声题用奈氏，有噪声题用香农</b>；题目同时给带宽和信噪比时用香农。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>4. 编码与调制</h4>
+      <table class="tb">
+        <tr><th>编码</th><th>规则</th><th>特点</th></tr>
+        <tr><td>不归零 NRZ</td><td>高 = 1、低 = 0（全宽）</td><td>简单，但<b>无法提取时钟</b>，连续同值时接收方失步</td></tr>
+        <tr><td><b>曼彻斯特</b></td><td><b>每个位中间必跳变</b>；本页按 IEEE 802.3：高→低 = 0，低→高 = 1</td><td><b>自带时钟</b>（跳变即同步信号），但<b>波特率是数据率的 2 倍</b></td></tr>
+        <tr><td><b>差分曼彻斯特</b></td><td>位中间<b>只作时钟</b>；数据看<b>位开始处有无跳变</b>：有跳变 = 0，无跳变 = 1</td><td>抗干扰更强（看"变没变"比看"是高还是低"可靠）</td></tr>
+        <tr><td>4B/5B</td><td>4 位数据映射成 5 位码</td><td>保证不出现长串 0，配合 NRZI 用（百兆以太网）</td></tr>
+      </table>
+      <div class="tip m"><span class="ti">口径提醒</span><span><b>曼彻斯特的「哪个跳变代表 1」在不同教材里是反的。</b>本页统一采用 IEEE 802.3 约定（<b>高→低 = 0</b>），王道教材同此。做真题时<b>以题目附图为准</b> —— 只要学会「位中间必跳变、跳变方向携带数据」这个原理，反过来也能读。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>5. 传输介质与物理层设备</h4>
+      <table class="tb">
+        <tr><th>介质</th><th>要点</th></tr>
+        <tr><td>双绞线</td><td>绞合是为了<b>抵消电磁干扰</b>；UTP 无屏蔽 / STP 有屏蔽；常用于以太网、电话线</td></tr>
+        <tr><td>同轴电缆</td><td>抗干扰好、带宽较高，早期以太网 / 有线电视</td></tr>
+        <tr><td>光纤</td><td><b>单模</b>：纤芯细、激光源、损耗小、<b>长距离</b>；<b>多模</b>：纤芯粗、LED 源、距离短。光纤<b>不受电磁干扰</b></td></tr>
+        <tr><td>无线</td><td>无线电、微波（直线传播、需视距）、红外</td></tr>
+      </table>
+      <div class="tip e"><span class="ti">易错</span><span>光纤里光速约 <b>2×10⁸ m/s</b>，<b>比真空中的 3×10⁸ 慢</b>。光纤的优势是带宽、损耗、抗干扰，不是「速度快」。<br><b>中继器 / 集线器属于物理层</b>，只放大再生信号，<b>不隔离冲突域</b>（集线器所有端口在同一个冲突域里）。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>6. 信道复用</h4>
+      <table class="tb">
+        <tr><th>方式</th><th>怎么分</th><th>典型</th></tr>
+        <tr><td>频分 FDM</td><td>按<b>频率</b>分成若干子频带</td><td>广播、电视、ADSL</td></tr>
+        <tr><td>时分 TDM</td><td>按<b>时间片</b>轮流占用</td><td>电话干线；同步 TDM 有<b>空槽浪费</b>，统计 TDM 按需分配</td></tr>
+        <tr><td>波分 WDM</td><td>光纤里按<b>波长</b>复用（FDM 的光学版本）</td><td>光纤骨干网</td></tr>
+        <tr><td>码分 CDM</td><td>各站用<b>相互正交的码片序列</b>，同时同频发送</td><td>CDMA 移动通信</td></tr>
+      </table>
+      <div class="tip s"><span class="ti">CDM 计算</span><span>每站一个码片序列（如 8 位），<b>内积 = 0 表示正交</b>。发 1 就发送自己的码片，发 0 就发送它的<b>反码</b>。接收方用某站的码片去内积：<b>+1 表示该站发了 1、−1 表示发了 0、0 表示没发</b>。</span></div>
+    </div>
+  </div>
+
+  <div class="tip s"><span class="ti">自测速答</span><span><b>①</b> 带宽 4 kHz、每个码元 4 种状态，理想无噪声下最高速率？（答：2×4000×log₂4 = <b>16000 b/s</b>）<br><b>②</b> 同样 4 kHz 带宽、信噪比 20 dB，香农上限？（答：S/N = 100 → 4000×log₂101 ≈ <b>26640 b/s</b>）<br><b>③</b> 曼彻斯特编码的数据率 100 Mb/s，波特率是多少？（答：<b>200 MBaud</b>，因为每个位要两个码元）</span></div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 03 · 奈氏准则 vs 香农公式：两个上限谁在起作用<span class="tag">改参数实时算</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>带宽 W</label><input type="number" id="shW" value="3000"><span style="font-size:12.5px;color:var(--muted)">Hz</span>
+        <label>码元状态数 V</label><input type="number" id="shV" value="16"><span style="font-size:12.5px;color:var(--muted)">个</span>
+        <label>信噪比</label><input type="number" id="shSNR" value="30"><span style="font-size:12.5px;color:var(--muted)">dB</span>
+      </div>
+      <div id="shStage"></div>
+      <div id="shOut" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 04 · 曼彻斯特编码：跳变里怎么同时藏时钟和数据<span class="tag">改比特流看波形</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>比特流</label><input type="text" id="mcBits" value="11010010">
+        <label>编码方式</label>
+        <select id="mcType">
+          <option value="nrz">不归零 NRZ</option>
+          <option value="mch" selected>曼彻斯特</option>
+          <option value="dmch">差分曼彻斯特</option>
+        </select>
+        <button class="btn gy sm" id="mcRand">随机来一串</button>
+      </div>
+      <div id="mcStage"></div>
+      <div id="mcOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="c3">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 03</span>
+    <h2>数据链路层</h2>
+    <span class="weight w2">主力 · 4-6 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>第一个「有真东西」的章节。三条主线：<b>怎么把比特流切成帧</b>（组帧）、<b>怎么发现传输错误</b>（CRC）、<b>多个站点怎么共享一条链路</b>（CSMA/CD）。前两条是计算题，第三条是过程题。本章最常考的一题是<b>最小帧长的计算</b>。</span></div>
+
+  <div class="tip i"><span class="ti">跨科目接口</span><span><b>与计组</b>：CRC 的模 2 除法 = 计组的检错纠错编码，同一套位运算。<br><b>与数据结构</b>：滑动窗口 = 队列 + 环形缓冲；CRC 计算用移位寄存器。<br><b>与网络层</b>：链路层只保证「相邻结点之间」正确，端到端的可靠要靠 TCP。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 数据链路层的三大功能</h4>
+      <table class="tb">
+        <tr><th>功能</th><th>做什么</th></tr>
+        <tr><td><b>封装成帧</b></td><td>在比特流里划出帧的边界（加帧定界符）</td></tr>
+        <tr><td><b>差错控制</b></td><td>检错（CRC）+ 纠错；帧丢失/帧序错乱靠序号与确认解决</td></tr>
+        <tr><td><b>流量控制</b></td><td>别让发送方把接收方冲垮（滑动窗口）</td></tr>
+      </table>
+      <div class="tip i"><span class="ti">补充</span><span>「链路」是物理线路，「数据链路」= 物理链路 + 实现通信协议的硬件和软件。<b>链路层管的是相邻结点之间</b>，一跳一跳地负责 —— 端到端的可靠性不归它管。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>2. 组帧的三种做法 <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th>方法</th><th>思路</th><th>缺点</th></tr>
+        <tr><td>字符计数法</td><td>帧头放一个「本帧有多少字符」的计数字段</td><td>计数字段一错，<b>后面全乱套</b>（错位无法恢复）</td></tr>
+        <tr><td>字节填充法</td><td>标志字节 FLAG 定界；数据里出现 FLAG/ESC 就<b>在前面插 ESC</b></td><td>实现简单，但填充后长度不固定</td></tr>
+        <tr><td><b>零比特填充</b></td><td>FLAG = 01111110；发送方在数据中<b>每 5 个连续 1 后插一个 0</b>，接收方反向删除</td><td>最常用（HDLC、PPP），<b>透明传输</b></td></tr>
+      </table>
+      <div class="tip s"><span class="ti">核心一句话</span><span><b>填充的目的只有一个：让数据里永远不出现和定界符相同的比特模式。</b>这样接收方才不会把数据误当成帧尾。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>3. CRC 循环冗余校验 <span class="pt hot">大题常考</span></h4>
+      <div class="fm a">设生成多项式 G(x) 的阶为 r（对应 r+1 位二进制串）
+
+发送方：
+  ① 数据后面补 r 个 0          → 被除数
+  ② 用 G 做<b>模 2 除法</b>（异或，不借位）
+  ③ 余数就是 r 位的 FCS
+  ④ 发出「数据 + FCS」
+
+接收方：
+  用 G 除「收到的数据 + FCS」
+    余数 = 0  → 认为无差错
+    余数 ≠ 0  → 判定有错，丢弃</div>
+      <div class="tip e"><span class="ti">两个易错点</span><span><b>①</b> 模 2 除法是<b>异或</b>，没有借位，不是普通除法。<br><b>②</b> CRC <b>只能检错、不能纠错</b>（FCS 只是余数，不含定位信息）。要纠错得用海明码。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>4. 可靠传输的三种协议 <span class="pt hot">对比必记</span></h4>
+      <table class="tb">
+        <tr><th></th><th>停止-等待</th><th>后退 N 帧 GBN</th><th>选择重传 SR</th></tr>
+        <tr><td>发送窗口</td><td>1</td><td>&gt; 1</td><td>&gt; 1</td></tr>
+        <tr><td>接收窗口</td><td>1</td><td><b>1</b></td><td>&gt; 1</td></tr>
+        <tr><td>确认方式</td><td>逐帧确认</td><td><b>累积确认</b></td><td>逐帧确认</td></tr>
+        <tr><td>出错时重传</td><td>那一帧</td><td><b>该帧及之后所有帧</b></td><td><b>只重传那一帧</b></td></tr>
+        <tr><td>接收方缓存</td><td>不需要</td><td>不需要</td><td><b>需要</b>（缓存乱序帧）</td></tr>
+        <tr><td>窗口上限</td><td>1</td><td>W ≤ 2ⁿ − 1</td><td>W<sub>T</sub> + W<sub>R</sub> ≤ 2ⁿ</td></tr>
+      </table>
+      <div class="tip m"><span class="ti">窗口大小怎么来的</span><span>序号 n 位能表示 2ⁿ 个数。GBN 的接收窗口只有 1，发送窗口若等于 2ⁿ，<b>新旧两组序号会完全重叠</b>，接收方分不清是重传还是新帧 —— 所以必须 <b>≤ 2ⁿ − 1</b>。<br>SR 两边都要缓存，加起来不能超过 2ⁿ，所以典型取值是 <b>W<sub>T</sub> = W<sub>R</sub> = 2ⁿ⁻¹</b>。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>5. CSMA/CD 与最小帧长 <span class="pt hot">必考计算</span></h4>
+      <div class="fm r">四点口诀：<b>先听后发、边发边听、冲突停发、随机重发</b>
+
+争用期（冲突窗口）= 2τ
+  τ = 单程传播时延
+  最坏情况：A 发出的信号快到 B 时，B 才发 —— 
+  A 要在 2τ 内还听得到冲突
+
+★ 最小帧长 = 2τ × 数据率
+  （以太网取 2τ = 51.2 μs @10 Mb/s
+    最小帧长 = 51.2 μs × 10 Mb/s = 512 bit = 64 B）
+
+截断二进制指数退避
+  第 i 次冲突：从 [0, 2^k − 1] 随机取 r，k = min(i, 10)
+  等待 r × 512 比特时间；冲突 16 次后丢弃并报错</div>
+      <div class="tip m"><span class="ti">为什么是最小帧长</span><span>如果帧太短，<b>发送方在冲突信号回来之前就已经发完了</b>，就以为发送成功 —— 冲突检测失效。所以帧必须长到「发完所需时间 ≥ 2τ」。<br><b>反过来推：2τ 由链路长度决定，帧长由数据率决定，改一个另一个就要跟着改。</b></span></div>
+    </div>
+
+    <div class="card">
+      <h4>6. 以太网 MAC 帧与交换机</h4>
+      <div class="fm b">MAC 帧格式（Ethernet V2，单位为字节）
+
+ 目的MAC(6) | 源MAC(6) | 类型(2) | 数据(46~1500) | FCS(4)
+
+  最小帧长 = 64 B（数据段不够 46 B 要填充）
+  最大帧长 = 1518 B（MTU = 1500 B）
+  类型字段 &gt; 0x0600 表示上层协议（0x0800 = IP）
+  长度字段 ≤ 0x0600 时是 802.3 格式</div>
+      <table class="tb">
+        <tr><th>交换机自学习的四步</th><th>说明</th></tr>
+        <tr><td>① 收到帧，记源地址</td><td>把「源 MAC → 入端口」写进交换表（带老化时间）</td></tr>
+        <tr><td>② 查目的地址</td><td>在交换表里找目的 MAC 对应的端口</td></tr>
+        <tr><td>③ 找到 → 单播转发</td><td>只从那个端口发出</td></tr>
+        <tr><td>④ 没找到 → 泛洪</td><td>向<b>除入端口外</b>的所有端口转发</td></tr>
+      </table>
+      <div class="tip e"><span class="ti">易错</span><span>MAC 地址 <b>48 位</b>，前 24 位是厂商编号（OUI）。<b>全 1（FF-FF-FF-FF-FF-FF）是广播地址</b>。<br>交换机<b>隔离冲突域、不隔离广播域</b>；路由器才隔离广播域（划分子网）。</span></div>
+    </div>
+  </div>
+
+  <div class="tip s"><span class="ti">自测速答</span><span><b>①</b> 10 Mb/s 以太网，最小帧长 64 B，则争用期 2τ 是多少？（答：64×8 ÷ 10⁷ = <b>51.2 μs</b>）<br><b>②</b> 数据 101001，G(x) = 1101，FCS 是多少？（答：<b>001</b>，完整发送串 101001001，见动画 06）<br><b>③</b> GBN 用 3 位序号，发送窗口最大是多少？（答：2³ − 1 = <b>7</b>）</span></div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 05 · 零比特填充：数据里出现 5 个 1 怎么办<span class="tag">点下一步逐位看</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>数据比特流</label><input type="text" id="zbBits" value="10111110111110" style="width:220px">
+        <button class="btn" id="zbStep">下一步</button>
+        <button class="btn gh" id="zbRun">自动播完</button>
+        <button class="btn gy" id="zbReset">重置</button>
+      </div>
+      <div id="zbStage"></div>
+      <div id="zbOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 06 · CRC 循环冗余校验：模 2 除法一步步算<span class="tag">改数据实时算</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>数据</label><input type="text" id="crData" value="101001">
+        <label>生成多项式</label><input type="text" id="crGen" value="1101" style="width:130px">
+        <button class="btn gy sm" id="crDemo">换组数据</button>
+      </div>
+      <div id="crStage"></div>
+      <div id="crOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 07 · CSMA/CD 冲突检测：为什么最小帧长是 2τ<span class="tag">点下一步逐帧看</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <button class="btn" id="cdPlay">播放全过程</button>
+        <button class="btn gh" id="cdStep">下一步</button>
+        <button class="btn gy" id="cdReset">重置</button>
+      </div>
+      <div id="cdStage"></div>
+      <div id="cdOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="c4">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 04</span>
+    <h2>网络层</h2>
+    <span class="weight w3">核心 · 7-10 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span><b>本章与传输层并列计网的最高分值（各 7-10 分）。</b>网络层解决的是「<b>怎么把分组送到任意一台主机</b>」—— 为此它需要三样东西：<b>编址</b>（IP 地址）、<b>解析</b>（ARP）、<b>选路</b>（路由协议）。考试的三个高频点是：<b>子网划分、分片计算、最长前缀匹配</b>，全是算得出来的题，练熟就是稳分。</span></div>
+
+  <div class="tip i"><span class="ti">跨科目接口</span><span><b>与数据结构</b>：OSPF 用 Dijkstra 算最短路径、STP 用最小生成树、路由表查找用 Trie（最长前缀匹配）。<br><b>与计组</b>：分组的收发靠<span class="mono">DMA</span> 搬运、网卡中断通知 CPU。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. IPv4 数据报首部（20 B 固定部分） <span class="pt">必背</span></h4>
+      <div class="fm">0        4      8              16                      31
+├────────┼──────┼──────────────┴────────────────────────┤
+│ 版本(4)│首部长(4)│  区分服务(8)  │        总长度(16)        │
+├────────┴──────┴──────┬───────┴────┬──────────────────────┤
+│      标识(16)        │ 标志(3)     │      片偏移(13)        │
+├──────────────────────┼─────────────┴──────────────────────┤
+│   生存时间 TTL(8)    │    协议(8)   │     首部校验和(16)     │
+├──────────────────────┴──────────────┴──────────────────────┤
+│                    源 IP 地址(32)                          │
+├────────────────────────────────────────────────────────────┤
+│                   目的 IP 地址(32)                         │
+└────────────────────────────────────────────────────────────┘</div>
+      <table class="tb">
+        <tr><th>字段</th><th>长度</th><th>要点</th></tr>
+        <tr><td>首部长度</td><td>4 位</td><td><b>单位是 4 B</b>；最小 5（=20 B），最大 15（=60 B）</td></tr>
+        <tr><td>总长度</td><td>16 位</td><td><b>单位是 1 B</b>，含首部；最大 65535 B</td></tr>
+        <tr><td><b>片偏移</b></td><td>13 位</td><td><b>单位是 8 B</b> —— 所以每片数据长度必须是 8 的倍数</td></tr>
+        <tr><td>TTL</td><td>8 位</td><td>每过一个路由器减 1，减到 0 就丢弃并回 ICMP 差错</td></tr>
+        <tr><td>协议</td><td>8 位</td><td><b>6 = TCP，17 = UDP，1 = ICMP</b></td></tr>
+        <tr><td>首部校验和</td><td>16 位</td><td><b>只校验首部</b>，不校验数据</td></tr>
+      </table>
+      <div class="tip e"><span class="ti">三个「单位」是最大的坑</span><span><b>首部长度 ×4 B、总长度 ×1 B、片偏移 ×8 B。</b>考试就爱在这里埋一个陷阱，让你把 5 当成 5 字节。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>2. IP 地址分类与特殊地址</h4>
+      <table class="tb">
+        <tr><th>类别</th><th>首位</th><th>首字节范围</th><th>默认掩码</th><th>网络/主机位数</th></tr>
+        <tr><td>A</td><td>0</td><td>1 ~ 126</td><td>/8</td><td>8 + 24</td></tr>
+        <tr><td>B</td><td>10</td><td>128 ~ 191</td><td>/16</td><td>16 + 16</td></tr>
+        <tr><td>C</td><td>110</td><td>192 ~ 223</td><td>/24</td><td>24 + 8</td></tr>
+        <tr><td>D</td><td>1110</td><td>224 ~ 239</td><td>—</td><td>组播地址</td></tr>
+        <tr><td>E</td><td>1111</td><td>240 ~ 255</td><td>—</td><td>保留</td></tr>
+      </table>
+      <div class="fm g">必须记住的特殊地址
+  主机号全 0        → 网络地址（代表"这个网络"）
+  主机号全 1        → 直接广播地址（本网络的广播）
+  127.x.x.x        → 回环地址（本机测试，不发上网络）
+  0.0.0.0          → 本网络本主机（只能做源地址）
+  255.255.255.255  → 受限广播（不被路由器转发）
+
+私有地址（NAT 用，不出现在公网）
+  10.0.0.0/8   172.16.0.0/12   192.168.0.0/16</div>
+      <div class="tip s"><span class="ti">数一下</span><span>C 类网络地址 2²¹ 个，每个网段可分配主机 <b>2⁸ − 2 = 254</b> 台。为什么要减 2？<b>因为「全 0」是网络地址、「全 1」是广播地址，都不能给主机用。</b></span></div>
+    </div>
+
+    <div class="card">
+      <h4>3. 子网掩码与 CIDR <span class="pt hot">最高频计算</span></h4>
+      <div class="fm a">子网掩码：网络号位全 1，主机号位全 0
+  网络地址 = IP 地址 <b>按位与</b> 子网掩码
+  广播地址 = 网络地址 | (取反后的掩码)
+
+CIDR（无分类编址）：写成 a.b.c.d / n
+  地址块大小   = 2^(32−n)
+  可用主机数   = 2^(32−n) − 2
+  网络前缀     = 前 n 位（必须连续）
+
+例：192.168.1.0/26
+  块大小 = 2^6 = 64
+  可用主机 = 64 − 2 = 62
+  第一个子网：.0 ~ .63（网络 .0、广播 .63）
+  第二个子网：.64 ~ .127（网络 .64、广播 .127）</div>
+      <div class="tip m"><span class="ti">路由聚合（构成超网）</span><span>把几条<b>前缀相同、地址连续</b>的路由合并成一条，<b>取最长公共前缀</b>。<br>例：192.168.0.0/24 与 192.168.1.0/24 → 合并为 <b>192.168.0.0/23</b>（前 23 位相同）。<br><b>聚合是有条件的</b>：合并后的前缀必须能覆盖且仅覆盖这些子网，不能把「别人家的」网段也圈进来。</span></div>
+      <div class="tip e"><span class="ti">最长前缀匹配</span><span>路由表里多条都匹配时，<b>选前缀最长（掩码最长的）那条</b>。因为前缀越长 = 网络越具体 = 越可能是目的地真正所在的网络。<br>顺序是：<b>先找匹配的，再从中挑最长的</b>，不是看表里谁在前。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>4. IP 分片与重组 <span class="pt hot">大题必考</span></h4>
+      <div class="fm r">为什么要分片：数据报长度 &gt; 链路 MTU
+  以太网 MTU = 1500 B
+
+分片时要改的字段（就四个）
+  ① 总长度   → 片的首部 + 该片数据
+  ② MF       → 1 表示后面还有片，最后一片为 0
+  ③ DF       → 置 1 则禁止分片（超 MTU 就丢弃 + 报 ICMP）
+  ④ 片偏移   → 该片数据在原数据中的位置 <b>÷ 8</b>
+
+计算模板（原始 4000 B，首部 20 B，MTU 1500）
+  每片数据上限 = 1500 − 20 = 1480 B（且必须是 8 的倍数）
+  片 1：数据 1480，偏移 0，    MF=1，总长 1500
+  片 2：数据 1480，偏移 185，  MF=1，总长 1500
+  片 3：数据 1020，偏移 370，  MF=0，总长 1040</div>
+      <div class="tip e"><span class="ti">两个易错</span><span><b>①</b> 每片都<b>各带一个 20 B 首部</b>，所以要减 20。<br><b>②</b> 每片的<b>数据长度必须是 8 的倍数</b>（因为偏移以 8 B 为单位），最后一片才允许不是。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>5. ARP / DHCP / ICMP</h4>
+      <table class="tb">
+        <tr><th>协议</th><th>作用</th><th>关键细节</th></tr>
+        <tr><td><b>ARP</b></td><td>IP 地址 → MAC 地址</td><td>请求用<b>广播</b>、应答用<b>单播</b>；跨网段时解析的是<b>默认网关</b>的 MAC</td></tr>
+        <tr><td><b>DHCP</b></td><td>自动分配 IP 配置</td><td>基于 <b>UDP 67/68</b>；四步 Discover → Offer → Request → ACK</td></tr>
+        <tr><td><b>ICMP</b></td><td>差错报告 + 网络探询</td><td>装在 IP 数据报里；<b>ping</b> 用回送请求/回答，<b>traceroute</b> 用 TTL 递增</td></tr>
+        <tr><td>IGMP</td><td>组播组成员管理</td><td>主机告诉路由器「我要收某组播组」</td></tr>
+      </table>
+      <div class="tip i"><span class="ti">ARP 的四步</span><span>① 查本机 ARP 缓存 → 有就直接用；② 没有则<b>广播</b>「谁是 192.168.1.5？请把你的 MAC 告诉我」；③ 目标主机<b>单播</b>应答；④ 写入缓存（有老化时间）。<br><b>注意：ARP 请求里目的 MAC 是全 F 广播地址，但目的 IP 是具体的。</b></span></div>
+    </div>
+
+    <div class="card">
+      <h4>6. 路由协议与 NAT</h4>
+      <table class="tb">
+        <tr><th></th><th>RIP</th><th>OSPF</th><th>BGP</th></tr>
+        <tr><td>范围</td><td>内部网关 IGP</td><td>内部网关 IGP</td><td>外部网关 EGP</td></tr>
+        <tr><td>算法</td><td>距离向量</td><td><b>链路状态</b></td><td>路径向量</td></tr>
+        <tr><td>度量</td><td><b>跳数</b>（最大 15）</td><td>带宽/时延等代价</td><td>AS 路径</td></tr>
+        <tr><td>承载</td><td>UDP 520</td><td>直接用 IP（协议号 89）</td><td>TCP 179</td></tr>
+        <tr><td>思想</td><td>跟邻居交换<b>整张表</b></td><td>洪泛链路状态，各路由器<b>各算最短路径</b>（Dijkstra）</td><td>交换可达性</td></tr>
+      </table>
+      <div class="tip s"><span class="ti">NAT 一句话</span><span>把私有地址 ↔ 公网地址做转换，让一个公网 IP 承载一堆内网主机。<b>转换表记录「内网 IP:端口 ↔ 公网 IP:端口」</b>，所以 NAT 是靠端口号区分不同内网连接的。</span></div>
+      <div class="tip i"><span class="ti">IPv6 三个要点</span><span>地址 <b>128 位</b>；首部固定 <b>40 B</b>；取消了首部校验和、取消了路由器分片（由源主机做路径 MTU 发现）。</span></div>
+    </div>
+  </div>
+
+  <div class="tip s"><span class="ti">自测速答</span><span><b>①</b> 192.168.10.130/26 的网络地址和广播地址？（答：网络 192.168.10.128、广播 192.168.10.191，可用 62 个）<br><b>②</b> 一个 3000 B 的 IP 数据报（首部 20 B）经 MTU=1500 链路，分几片？（答：数据 2980 B，每片最多 1480 → <b>3 片</b>：1480 / 1480 / 20，偏移 0 / 185 / 370）<br><b>③</b> RIP 为什么最大跳数是 15？（答：<b>16 表示不可达</b>，这是它的「无穷大」，用来抑制路由环路</span></div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 08 · ARP 地址解析：为什么请求广播、应答单播<span class="tag">点下一步逐帧看</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <button class="btn" id="apPlay">播放全过程</button>
+        <button class="btn gh" id="apStep">下一步</button>
+        <button class="btn gy" id="apReset">重置</button>
+      </div>
+      <div id="apStage"></div>
+      <div id="apOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 09 · IP 分片与重组：偏移为什么以 8 字节为单位<span class="tag">改长度和 MTU</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>数据报总长</label><input type="number" id="frLen" value="4000"><span style="font-size:12.5px;color:var(--muted)">字节</span>
+        <label>链路 MTU</label><input type="number" id="frMtu" value="1500"><span style="font-size:12.5px;color:var(--muted)">字节</span>
+        <label>是否允许分片</label>
+        <select id="frDF">
+          <option value="0" selected>允许分片（DF=0）</option>
+          <option value="1">禁止分片（DF=1）</option>
+        </select>
+      </div>
+      <div id="frStage"></div>
+      <div id="frOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 10 · 子网划分计算器：一个 /n 到底能装多少主机<span class="tag">改 IP 和掩码实时算</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>IP 地址</label><input type="text" id="snIp" value="192.168.10.130" style="width:150px">
+        <label>前缀长度</label><input type="number" id="snPre" value="26" min="0" max="32">
+        <button class="btn gh sm" id="snLs">直接划 4 个子网</button>
+        <button class="btn gy sm" id="snReset">重置</button>
+      </div>
+      <div id="snStage"></div>
+      <div id="snOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="c5">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 05</span>
+    <h2>传输层</h2>
+    <span class="weight w3">核心 · 7-10 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span><b>本章与网络层并列最高分（各 7-10 分），而且它是全书「过程感」最强的一章。</b>网络层负责把分组送到主机，传输层负责把数据交给<b>具体哪个进程</b>，并且决定「要不要保证可靠」。两条主线：<b>TCP 怎么建立/释放连接</b>（握手挥手）、<b>TCP 怎么控制发送节奏</b>（滑动窗口 + 拥塞控制）。后者的<b>拥塞窗口曲线</b>是大题常客。</span></div>
+
+  <div class="tip i"><span class="ti">跨科目接口</span><span><b>与 OS</b>：端口 → 进程标识、接收缓冲区 → 生产者消费者、socket → 系统调用。<br><b>与数据结构</b>：滑动窗口本质是环形缓冲 + 队列，超时重传要用定时器管理（最小堆）。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 端口与复用 / 分用</h4>
+      <div class="fm">端口的两个含义
+  ① 服务端：<b>知名端口</b>，固定分配给某种服务
+     FTP 21/20、SSH 22、DNS 53、HTTP 80、HTTPS 443、SMTP 25、POP3 110
+  ② 客户端：<b>临时端口</b>，由系统动态分配（1024 ~ 49151）
+
+复用：多个应用进程共用同一个传输层协议
+分用：收到的数据按<b>目的端口号</b>交给对应的进程</div>
+      <div class="tip s"><span class="ti">一句话抓住</span><span><b>IP 地址决定「哪台机器」，端口号决定「哪个进程」。</b>socket = IP + 端口，这就是《计网》与《OS》的交界处。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>2. UDP：首部只有 8 字节 <span class="pt">必考</span></h4>
+      <div class="fm g">UDP 首部（共 8 B，四行每行 2 B）
+  源端口(2) | 目的端口(2) | 长度(2) | 校验和(2)
+
+  长度 = 首部 + 数据的总字节数（最小 8）
+  校验和：伪首部(12 B) + UDP 首部 + 数据</div>
+      <table class="tb">
+        <tr><th>UDP 的四个特点</th><th>含义</th></tr>
+        <tr><td><b>无连接</b></td><td>不需要握手，想发就发</td></tr>
+        <tr><td><b>不可靠</b></td><td>不确认、不重传、不排序，尽力而为</td></tr>
+        <tr><td><b>面向报文</b></td><td>应用层给多长就发多长，<b>不合并不拆分</b></td></tr>
+        <tr><td>首部开销小</td><td>8 B，而 TCP 是 20 B</td></tr>
+      </table>
+      <div class="tip i"><span class="ti">什么时候用 UDP</span><span>实时性优先、容忍少量丢失的场景：<b>DNS、DHCP、TFTP、RIP、视频直播、游戏</b>。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>3. TCP 报文段首部（20 B 固定）</h4>
+      <div class="fm b">源端口(2) | 目的端口(2)
+序号 seq(4)          —— 本报文段数据第一个字节的编号
+确认号 ack(4)        —— 期望收到对方<b>下一个</b>字节的编号
+数据偏移(4位)        —— <b>单位 4 B</b>，最小 5（=20 B）
+保留(6位) + 六个标志位
+窗口(2)              —— <b>接收窗口</b>，告诉对方我还能收多少
+校验和(2) | 紧急指针(2)
+
+六个标志位
+  URG 紧急  ACK 确认  PSH 推送  RST 重置  <b>SYN 同步  FIN 结束</b></div>
+      <div class="tip e"><span class="ti">易错</span><span><b>确认号 ack = 期望收到的下一个字节序号</b>，所以「收到了 seq=100、长度 20 的段」应答 <b>121</b>，不是 120。<br><b>SYN 和 FIN 各消耗一个序号</b>（虽然不带数据），这是握手挥手算序号的关键。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>4. 三次握手 / 四次挥手 <span class="pt hot">过程必背</span></h4>
+      <div class="fm r">三次握手（SYN 和 ACK 各占一个序号）
+  ① 客户 → 服务：SYN=1, seq=x                （不能带数据）
+  ② 服务 → 客户：SYN=1, ACK=1, seq=y, ack=x+1
+  ③ 客户 → 服务：ACK=1, seq=x+1, ack=y+1     （可带数据）
+
+四次挥手（半关闭：一方先停发，另一方可能还有数据）
+  ① 客户 → 服务：FIN=1, seq=u
+  ② 服务 → 客户：ACK=1, seq=v, ack=u+1       ← 半关闭状态
+  ③ 服务 → 客户：FIN=1, ACK=1, seq=w, ack=u+1
+  ④ 客户 → 服务：ACK=1, seq=u+1, ack=w+1
+  客户进入 <b>TIME_WAIT，等 2MSL</b> 后才真正关闭</div>
+      <div class="tip m"><span class="ti">为什么是三次、为什么是四次</span><span><b>三次</b>：防止「已经失效的连接请求」突然到达服务器 —— 如果只有两次，服务器会白白建立一条连接并一直等数据。<b>第三次握手的作用是让服务器确认「客户端确实收到了我的 SYN+ACK，而且它现在还想连」。</b><br><b>四次</b>：TCP 是全双工。<b>FIN 只表示「我没有数据要发了」，不表示「我也不能收了」</b>。所以 ACK 和 FIN 要分开发（②③之间服务器可能还在发数据）。</span></div>
+      <div class="tip s"><span class="ti">TIME_WAIT 等 2MSL 的两个理由</span><span><b>①</b> 万一最后的 ACK 丢了，服务器会重传 FIN，客户端还在等就能再答一次；<br><b>②</b> 让本次连接产生的所有报文段都从网络中消失，避免干扰下一个相同四元组的新连接。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>5. 滑动窗口与流量控制</h4>
+      <div class="fm a">发送窗口 = min( 接收窗口 rwnd , 拥塞窗口 cwnd )
+
+  接收窗口 rwnd：接收方还剩多少缓存 → <b>流量控制</b>
+  拥塞窗口 cwnd：网络当前能承受多少 → <b>拥塞控制</b>
+  发送窗口取两者中<b>较小</b>的那个
+
+流量控制的要点
+  · 接收方通过首部"窗口"字段动态告知
+  · 窗口为 0 时，发送方启动<b>持续计时器</b>，
+    到期发一个<b>零窗口探测</b>，避免双方互相死等
+  · TCP 用<b>累积确认</b>：ack=n 表示 n 之前全部收到</div>
+      <div class="tip i"><span class="ti">超时重传时间怎么定</span><span>RTT 是动态估计的：<b>RTT<sub>S</sub> = (1−α)·RTT<sub>S</sub> + α·新样本</b>（α 通常 1/8）。<br>超时时间 <b>RTO = RTT<sub>S</sub> + 4·RTT<sub>D</sub></b>（RTT<sub>D</sub> 是偏差的加权平均）。<br><b>Karn 算法</b>：重传过的报文段<b>不能用它的往返时间来更新 RTT<sub>S</sub></b> —— 因为分不清 ACK 是确认哪一次的。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>6. 拥塞控制四件套 <span class="pt hot">大题必画</span></h4>
+      <div class="fm r">① 慢开始
+   cwnd 从 1 开始，每收到一个 ACK 就 +1
+   → 效果：<b>每个 RTT 翻一倍</b>（1, 2, 4, 8 … 指数增长）
+   到达 ssthresh 后切换
+
+② 拥塞避免
+   cwnd ≥ ssthresh 后，每轮 RTT 只 +1（线性增长，"加法增大"）
+
+③ 超时（判为严重拥塞）
+   ssthresh = cwnd ÷ 2
+   cwnd = 1   ← 回到慢开始
+
+④ 快重传 + 快恢复（收到 3 个重复 ACK）
+   ssthresh = cwnd ÷ 2
+   cwnd = ssthresh   ← <b>不回到 1</b>，直接进拥塞避免
+   （乘法减小 + 加法增大 = AIMD）</div>
+      <div class="tip e"><span class="ti">最容易错的一句话</span><span><b>「一超时 cwnd 就回到 1」和「一收到 3 个重复 ACK 也回到 1」是错的。</b><br>超时 → cwnd = 1；<b>3 个重复 ACK → cwnd = ssthresh（新的），直接进拥塞避免</b>。因为快重传说明网络只是轻微拥塞，丢的包还能通过重复 ACK 感知到，不必那么激进地降速。</span></div>
+      <div class="tip s"><span class="ti">画图的三个关键点</span><span>① 慢开始段是<b>指数上升</b>的；② 拥塞避免段是<b>线性上升</b>的；③ 每次拥塞后新 ssthresh 总是「当时 cwnd 的一半」，所以曲线在同一个水平线上<b>反复触及又回落</b>。</span></div>
+    </div>
+  </div>
+
+  <div class="tip s"><span class="ti">自测速答</span><span><b>①</b> 客户端发 SYN=1,seq=200，服务器回什么？（答：SYN=1, ACK=1, seq=y（随机）, <b>ack=201</b>）<br><b>②</b> cwnd=16 时发生超时，新 ssthresh 和 cwnd 分别是多少？（答：ssthresh = <b>8</b>，cwnd = <b>1</b>，回到慢开始）<br><b>③</b> 同样是 cwnd=16，收到 3 个重复 ACK 呢？（答：ssthresh = 8，cwnd = <b>8</b>，直接进拥塞避免，不回到 1）</span></div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 11 · TCP 三次握手 / 四次挥手：每一步的序号怎么变<span class="tag">可切换握手/挥手</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <select id="hsMode">
+          <option value="open" selected>三次握手（建立连接）</option>
+          <option value="close">四次挥手（释放连接）</option>
+        </select>
+        <button class="btn" id="hsPlay">播放全过程</button>
+        <button class="btn gh" id="hsStep">下一步</button>
+        <button class="btn gy" id="hsReset">重置</button>
+      </div>
+      <div id="hsStage"></div>
+      <div id="hsOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 12 · TCP 滑动窗口：窗口怎么右移、丢了包怎么办<span class="tag">点下一步逐帧看</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>窗口大小</label><input type="number" id="swSize" value="4" min="1" max="8">
+        <label>在第几号丢失</label><input type="number" id="swLost" value="3" min="1" max="12">
+        <label>重传策略</label>
+        <select id="swMode">
+          <option value="gbn" selected>累积确认（GBN 式）</option>
+          <option value="sr">选择确认（SR 式）</option>
+        </select>
+      </div>
+      <div class="ctl">
+        <button class="btn" id="swRun">播放全过程</button>
+        <button class="btn gh" id="swStep">下一步</button>
+        <button class="btn gy" id="swReset">重置</button>
+      </div>
+      <div id="swStage"></div>
+      <div id="swOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 13 · TCP 拥塞控制：慢开始、拥塞避免、快恢复的完整曲线<span class="tag">改参数重画曲线</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>初始 ssthresh</label><input type="number" id="ccTh" value="16" min="2" max="64">
+        <label>事件</label>
+        <select id="ccEv">
+          <option value="to" selected>第 12 轮超时</option>
+          <option value="ack3">第 12 轮收到 3 个重复 ACK</option>
+          <option value="both">第 10 轮超时 + 第 16 轮 3 个重复 ACK</option>
+        </select>
+        <button class="btn gy sm" id="ccReset">重置</button>
+      </div>
+      <div id="ccStage"></div>
+      <div id="ccOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="c6">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 06</span>
+    <h2>应用层</h2>
+    <span class="weight w2">主力 · 4-6 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>应用层就是「<b>用户能直接看见的那一层</b>」。它没有复杂的算法，考的是<b>协议名 + 端口号 + 工作方式的对应关系</b>，以及 DNS 的查询方式、HTTP 的连接计算。这一章的特点是：<b>概念题多、计算题少，但送分也送得干脆</b> —— 把下面两张表的对应关系背熟，大部分分就到手了。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. DNS 域名系统 <span class="pt hot">必考</span></h4>
+      <div class="fm">域名结构（从右往左读，越往右级别越高）
+  host.example.com.
+   ↑    ↑      ↑   ↑
+  主机  三级域 顶级域 根
+
+四类域名服务器
+  根域名服务器     —— 全球 13 组，知道所有顶级域的位置
+  顶级域名服务器   —— .com .cn .org 的管理者
+  权限域名服务器   —— 具体某个域的权威管理者
+  本地域名服务器   —— 你所在网络的那个，默认网关附近</div>
+      <table class="tb">
+        <tr><th>查询方式</th><th>谁问谁</th><th>对方怎么答</th></tr>
+        <tr><td><b>递归查询</b></td><td>主机 → 本地域名服务器</td><td><b>替它查到底</b>，直接给最终结果</td></tr>
+        <tr><td><b>迭代查询</b></td><td>本地域名服务器 → 根 / 顶级 / 权限</td><td>只告诉你「<b>去问下一个</b>」，不代劳</td></tr>
+      </table>
+      <div class="tip s"><span class="ti">为什么这么设计</span><span>如果全都用递归，<b>根域名服务器的负载会爆炸</b>。所以「主机到本地服务器」用递归（省客户端的事），「本地服务器到根」用迭代（省根服务器的事）。<b>再加上高速缓存，绝大部分查询根本到不了根。</b></span></div>
+    </div>
+
+    <div class="card">
+      <h4>2. HTTP 超文本传输协议</h4>
+      <div class="fm a">请求报文
+  请求行：GET /index.html HTTP/1.1
+  首部行：Host / User-Agent / Connection: keep-alive …
+  空行
+  实体主体（GET 一般没有）
+
+响应报文
+  状态行：HTTP/1.1 200 OK
+  首部行：Content-Type / Content-Length / Date …
+  空行
+  实体主体（网页内容）
+
+常见状态码
+  200 OK        成功
+  301 Moved     永久移动（重定向）
+  400 Bad       请求报文语法错误
+  404 Not Found 资源不存在
+  500 Server    服务器内部错误</div>
+      <div class="tip m"><span class="ti">连接方式的时延计算</span><span><b>非持久连接</b>：每个对象都要新建一次 TCP 连接 → 每个对象花 <b>2 个 RTT</b>（1 个建连 + 1 个请求/响应）。<br><b>持久连接（非流水线）</b>：建一次连接，后续每个对象只花 <b>1 个 RTT</b>。<br><b>持久连接（流水线）</b>：连着把请求都发出去，时延可以接近于 1 个 RTT 收全部。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>3. 要背熟的「协议—端口—传输层」对应表 <span class="pt">送分题</span></h4>
+      <table class="tb">
+        <tr><th>应用</th><th>协议</th><th>端口</th><th>传输层</th></tr>
+        <tr><td>万维网</td><td>HTTP / HTTPS</td><td>80 / 443</td><td>TCP</td></tr>
+        <tr><td>域名解析</td><td>DNS</td><td>53</td><td><b>UDP</b>（区域传送用 TCP）</td></tr>
+        <tr><td>文件传送</td><td>FTP</td><td><b>控制 21 / 数据 20</b></td><td>TCP</td></tr>
+        <tr><td>发邮件</td><td>SMTP</td><td>25</td><td>TCP</td></tr>
+        <tr><td>收邮件</td><td>POP3 / IMAP</td><td>110 / 143</td><td>TCP</td></tr>
+        <tr><td>远程登录</td><td>Telnet / SSH</td><td>23 / 22</td><td>TCP</td></tr>
+        <tr><td>简单文件传送</td><td>TFTP</td><td>69</td><td><b>UDP</b></td></tr>
+        <tr><td>动态主机配置</td><td>DHCP</td><td>67 / 68</td><td><b>UDP</b></td></tr>
+        <tr><td>网络管理</td><td>SNMP</td><td>161</td><td><b>UDP</b></td></tr>
+      </table>
+      <div class="tip e"><span class="ti">易错</span><span>用 UDP 的就这四个：<b>DNS、TFTP、DHCP、SNMP</b>（记「<b>D·T·D·S 用 UDP</b>」）。其余常见应用层协议都是 TCP。<br>另外 <b>DNS 平时用 UDP 53，但主辅服务器之间的区域传送用 TCP 53</b> —— 这个细节考过。</span></div>
+    </div>
+
+    <div class="card">
+      <h4>4. FTP 与电子邮件</h4>
+      <div class="fm b">FTP：<b>两个 TCP 连接</b>（带外控制）
+  控制连接 端口 21 —— 整个会话期间一直保持，传命令
+  数据连接 端口 20 —— <b>每传一个文件建一次</b>，传完就关
+
+电子邮件：<b>发和收是两套协议</b>
+  发送（推）：SMTP，端口 25
+      用户代理 → 发送方邮件服务器 → 接收方邮件服务器
+  接收（拉）：POP3 端口 110 / IMAP 端口 143
+      用户代理 → 自己的邮件服务器 取信
+  非 ASCII 内容靠 <b>MIME</b> 扩展编码</div>
+      <div class="tip s"><span class="ti">一句话</span><span><b>「SMTP 是推，POP3 是拉」</b>。SMTP 只能传 ASCII，且只负责「送到对方服务器」，取信是另一回事。</span></div>
+      <div class="tip i"><span class="ti">POP3 vs IMAP</span><span>POP3 默认<b>下载后删除</b>（邮件存在本地，多设备不同步）；IMAP 报文<b>留在服务器</b>上（多设备同步）。</span></div>
+    </div>
+  </div>
+
+  <div class="tip s"><span class="ti">自测速答</span><span><b>①</b> 用非持久 HTTP 获取含 1 个 HTML + 5 张图的页面，共需几个 RTT？（答：每个对象 2 RTT，<b>6 × 2 = 12 个 RTT</b>，另有 DNS 解析开销）<br><b>②</b> 主机向本地域名服务器发出的是哪种查询？（答：<b>递归查询</b>）<br><b>③</b> FTP 传 3 个文件，一共建立几次数据连接？（答：<b>3 次</b>，每个文件一次）</span></div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 14 · DNS 域名解析：递归查询和迭代查询差在哪<span class="tag">两种模式对比</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <select id="dnMode">
+          <option value="iter" selected>迭代查询（本地服务器逐级问）</option>
+          <option value="rec">递归查询（每一级都替它问到底）</option>
+        </select>
+        <button class="btn" id="dnPlay">播放全过程</button>
+        <button class="btn gh" id="dnStep">下一步</button>
+        <button class="btn gy" id="dnReset">重置</button>
+      </div>
+      <div id="dnStage"></div>
+      <div id="dnOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  408 计算机网络 · 交互式原理全景<br>
+  考点清单 / 原理剖析 / 可动手的动画 —— 单文件、零外部依赖、断网可开<br>
+  配合《数据结构》《计算机组成原理》《操作系统》三页使用，408 四门课即完整覆盖
+</footer>
+</main>
+</div>
+<div class="totop" id="totop">↑</div>
+
+<script>
+/* ============================================================
+   动画速度总控
+   页面里所有动画的 setTimeout / setInterval 延迟统一乘这个倍率。
+   只放大 300~2000ms 区间（动画用到的范围），不影响其它短延迟逻辑。
+   ============================================================ */
+let ANIM_SPEED = 1.7;                    // 1 = 原始速度，越大越慢
+(function(){
+  const _st = window.setTimeout.bind(window);
+  const _si = window.setInterval.bind(window);
+  const scale = ms => (typeof ms === 'number' && ms >= 300 && ms <= 2000)
+    ? Math.round(ms * ANIM_SPEED) : ms;
+  window.setTimeout = function(fn, ms){ return _st(fn, scale(ms)); };
+  window.setInterval = function(fn, ms){ return _si(fn, scale(ms)); };
+})();
+
+/* ============================================================
+   通用工具
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const qsa = s => Array.prototype.slice.call(document.querySelectorAll(s));
+
+qsa('[data-sp]').forEach(b=>{
+  b.onclick = ()=>{
+    ANIM_SPEED = parseFloat(b.dataset.sp) || 1.7;
+    qsa('[data-sp]').forEach(x=>x.classList.toggle('on', x === b));
+  };
+});
+
+window.addEventListener('scroll', ()=>{
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  $('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  $('totop').classList.toggle('on', window.scrollY > 500);
+});
+$('totop').onclick = ()=>window.scrollTo({top:0,behavior:'smooth'});
+
+/* ---------- 小屏抽屉导航 ---------- */
+(function(){
+  const btn = $('navbtn'), side = document.querySelector('.sidebar'), scrim = $('scrim');
+  if(!btn || !side || !scrim) return;
+  function close(){
+    side.classList.remove('open'); scrim.classList.remove('on');
+    btn.classList.remove('on'); btn.setAttribute('aria-expanded','false');
+  }
+  function open(){
+    side.classList.add('open'); scrim.classList.add('on');
+    btn.classList.add('on'); btn.setAttribute('aria-expanded','true');
+  }
+  btn.onclick = ()=>{ side.classList.contains('open') ? close() : open(); };
+  scrim.onclick = close;
+  qsa('.nav-i').forEach(a=>a.addEventListener('click', close));
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape') close(); });
+  window.addEventListener('resize', ()=>{ if(window.innerWidth > 980) close(); });
+
+  /* 顶部条上的「当前章节」按滚动位置算，跳转后不会滞后 */
+  function syncTitle(){
+    const t = document.querySelector('.mtop-t');
+    if(!t) return;
+    const secs = qsa('section.sec');
+    let cur = secs[0];
+    for(let i = 0; i < secs.length; i++){ if(secs[i].getBoundingClientRect().top <= 96) cur = secs[i]; }
+    const link = qsa('.nav-i').filter(a=>a.getAttribute('href') === '#'+cur.id)[0];
+    if(link) t.textContent = t.dataset.subj + ' · ' + link.querySelector('span').textContent;
+  }
+  window.addEventListener('scroll', syncTitle, {passive:true});
+  syncTitle();
+})();
+
+const navLinks = qsa('.nav-i');
+const secOb = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const cur = navLinks.filter(a=>a.getAttribute('href') === '#'+e.target.id)[0];
+      navLinks.forEach(a=>a.classList.toggle('on', a === cur));
+    }
+  });
+},{rootMargin:'-15% 0px -70% 0px'});
+qsa('.sec').forEach(s=>secOb.observe(s));
+
+/* 分值权重条形入场动画 */
+setTimeout(()=>{ qsa('.rank-bar i, .rank-sum-bar i').forEach(f=>f.style.width = f.dataset.w + '%'); }, 300);
+
+/* ---------- 输入安全化：自动测试会给所有输入塞乱七八糟的值 ---------- */
+function numVal(id, def, min, max, step){
+  const el = $(id); if(!el) return def;
+  let v = parseFloat(el.value);
+  if(!isFinite(v)) v = def;
+  if(min != null && v < min) v = min;
+  if(max != null && v > max) v = max;
+  if(step) v = Math.round(v / step) * step;
+  return v;
+}
+function bitsVal(id, def){
+  const el = $(id); if(!el) return def;
+  const s = String(el.value || '').replace(/[^01]/g, '');
+  return s.length ? s.slice(0, 24) : def;
+}
+function fmtT(s){
+  if(!isFinite(s)) return '—';
+  if(s === 0) return '0';
+  if(s < 1e-6) return (s*1e9).toFixed(1) + ' ns';
+  if(s < 1e-3) return (s*1e6).toFixed(2) + ' μs';
+  if(s < 1)    return (s*1e3).toFixed(2) + ' ms';
+  return s.toFixed(3) + ' s';
+}
+function fmtNum(n, d){
+  if(!isFinite(n)) return '—';
+  return n.toLocaleString('en-US', {maximumFractionDigits: d == null ? 2 : d});
+}
+function stepNote(title, body){
+  return `<div class="tip i"><span class="ti">${title}</span><span>${body}</span></div>`;
+}
+
+/* ============================================================
+   动画 01 · 分层封装与解封装
+   ============================================================ */
+const EN_L = ['应用层','传输层','网络层','数据链路层','物理层'];
+const EN_STEPS = [
+  { t:'① 应用层产生报文', up:0, cu:0,
+    note:'用户在浏览器里点了一个链接，应用层生成一个 HTTP 请求报文。<b>这一层看到的就是"数据"本身，它完全不知道下面会怎么传。</b>' },
+  { t:'② 传输层加 TCP 首部', up:1, cu:1,
+    note:'加源端口、目的端口、序号 —— <b>这些信息让接收方知道「该交给哪个进程、数据到哪了」</b>。此时的数据单元叫「报文段」。' },
+  { t:'③ 网络层加 IP 首部', up:2, cu:2,
+    note:'加源 IP、目的 IP、TTL —— <b>让分组能被送到正确的主机</b>。此时叫「分组 / IP 数据报」。' },
+  { t:'④ 数据链路层加帧头帧尾', up:3, cu:3,
+    note:'加目的 MAC、源 MAC 和 FCS 校验码 —— <b>这一层只管「相邻的这一跳」能不能正确送达</b>。此时叫「帧」。' },
+  { t:'⑤ 物理层变成比特流', up:4, cu:4,
+    note:'帧被编码成电信号/光信号送上线路。<b>到了物理层，一切差别都消失了 —— 全是 0 和 1。</b>' },
+  { t:'⑥ 接收方·链路层剥掉帧头帧尾', up:2, cu:3,
+    note:'先核对 FCS。正确就把帧头帧尾剥掉往上一层层交。<b>若校验失败这一帧直接丢弃 —— 但链路层不负责重传。</b>' },
+  { t:'⑦ 接收方·网络层剥掉 IP 首部', up:1, cu:2,
+    note:'核对目的 IP（是不是发给我的），看协议字段决定交给 TCP 还是 UDP，剥掉首部继续往上。' },
+  { t:'⑧ 接收方·传输层剥掉 TCP 首部', up:0, cu:1,
+    note:'按序号排序、按端口找到对应进程，剥掉 TCP 首部。<b>如果发现丢包，就在这一层请求重传 —— 这就是「端到端可靠」的含义。</b>' },
+  { t:'⑨ 应用层拿到原始报文', up:0, cu:0,
+    note:'经过四层剥离，接收方应用层拿到的<b>和发送方当初产生的完全一样</b>。这就是分层的意义：<b>每一层只关心自己那一层的信息。</b>' }
+];
+let EN_i = 0, EN_timer = null;
+
+function enUnitHTML(upto){
+  if(upto === 4){
+    let s = '';
+    for(let i=0;i<26;i++) s += (i % 3 === 0 ? '1' : '0');
+    return `<div class="enc-f h">${s} …</div>`;
+  }
+  let h = '';
+  if(upto >= 3) h += '<div class="enc-f h">帧头 · 目的MAC｜源MAC</div>';
+  if(upto >= 2) h += '<div class="enc-f b">IP首部 · 源IP｜目的IP｜TTL｜协议</div>';
+  if(upto >= 1) h += '<div class="enc-f t">TCP首部 · 源端口｜目的端口｜序号</div>';
+  h += '<div class="enc-f d">GET /index.html</div>';
+  if(upto >= 3) h += '<div class="enc-f t">FCS</div>';
+  return h;
+}
+function enRender(){
+  const s = EN_STEPS[EN_i];
+  $('enStage').innerHTML = '<div class="enc">' + EN_L.map((name, i)=>{
+    const has = i <= s.up;
+    const cls = (has ? 'on' : '') + (s.cu === i ? ' cur' : '');
+    const body = has ? enUnitHTML(Math.min(i, s.up)) : '<span style="color:#c8c2b8;font-size:12px">（还没有数据）</span>';
+    return `<div class="enc-r ${cls}"><div class="enc-l">${name}</div><div class="enc-u">${body}</div></div>`;
+  }).join('') + '</div>';
+  $('enOut').innerHTML = stepNote(s.t, s.note) +
+    `<div class="hint">第 ${EN_i + 1} / ${EN_STEPS.length} 步 · 点击「下一步」继续</div>`;
+}
+function enStop(){ if(EN_timer){ clearInterval(EN_timer); EN_timer = null; } }
+$('enPlay').onclick = ()=>{
+  enStop(); EN_i = 0; enRender();
+  EN_timer = setInterval(()=>{
+    if(EN_i >= EN_STEPS.length - 1){ enStop(); return; }
+    EN_i++; enRender();
+  }, 900);
+};
+$('enStep').onclick = ()=>{ enStop(); if(EN_i < EN_STEPS.length - 1){ EN_i++; enRender(); } };
+$('enReset').onclick = ()=>{ enStop(); EN_i = 0; enRender(); };
+enRender();
+
+/* ============================================================
+   动画 02 · 时延计算器
+   ============================================================ */
+const DL_V = 200000;   // km/s，铜缆/光纤中电磁波约 2×10⁸ m/s
+function renderDl(){
+  const L = numVal('dlLen', 1, 0.0001, 100000);        // MB
+  const R = numVal('dlRate', 100, 0.0001, 1000000);    // Mb/s
+  const D = numVal('dlDist', 1000, 0, 1000000);        // km
+
+  const bits  = L * 8 * 1e6;              // 1 MB = 10⁶ B
+  const tSend = bits / (R * 1e6);
+  const tProp = D / DL_V;
+  const total = tSend + tProp;
+  const bdp   = tProp * R * 1e6;          // 时延带宽积，单位 bit
+
+  const dots = Math.max(1, Math.min(46, Math.round(Math.log10(Math.max(1, bdp)) * 6)));
+  const W = 640, H = 108, x0 = 60, x1 = 580, cy = 48;
+  let dc = '';
+  for(let i=0;i<dots;i++){
+    const x = x0 + 14 + (x1 - x0 - 28) * (dots === 1 ? 0.5 : i / (dots - 1));
+    dc += `<circle cx="${x.toFixed(1)}" cy="${cy}" r="3.6" fill="#d97706"/>`;
+  }
+  $('dlStage').innerHTML =
+    `<div class="stage"><svg viewBox="0 0 ${W} ${H}">
+      <rect x="${x0}" y="${cy-16}" width="${x1-x0}" height="32" rx="16" fill="#fbf8f4" stroke="#ded8cf"/>
+      <rect x="${x0-46}" y="${cy-22}" width="42" height="44" rx="8" fill="#fff" stroke="#ded8cf"/>
+      <text x="${x0-25}" y="${cy+5}" text-anchor="middle" font-size="12" fill="#4b5665">发送方</text>
+      <rect x="${x1+4}" y="${cy-22}" width="42" height="44" rx="8" fill="#fff" stroke="#ded8cf"/>
+      <text x="${x1+25}" y="${cy+5}" text-anchor="middle" font-size="12" fill="#4b5665">接收方</text>
+      ${dc}
+      <text x="${W/2}" y="${H-14}" text-anchor="middle" font-size="11.5" fill="#a49db8">链路上同时"装"着 ${dots} 个比特（示意，按数量级缩放）</text>
+    </svg></div>
+    <div class="legend">
+      <span><i style="background:#d97706"></i>橙点 = 正在链路上传播的比特 —— 它们的<b>个数</b>就是时延带宽积</span>
+      <span><i style="background:#ded8cf"></i>灰色管道 = 链路本身</span>
+    </div>
+    <div class="res" style="margin-top:14px">
+      <div class="r"><span class="lbl">数据长度</span><span class="val">${fmtNum(bits, 0)} bit</span><span style="font-size:12px;color:var(--muted)">（${L} MB × 8 × 10⁶）</span></div>
+      <div class="r"><span class="lbl">① 发送时延</span><span class="val">${fmtT(tSend)}</span><span style="font-size:12px;color:var(--muted)">= 数据长度 ÷ 发送速率</span></div>
+      <div class="r"><span class="lbl">② 传播时延</span><span class="val">${fmtT(tProp)}</span><span style="font-size:12px;color:var(--muted)">= ${D} km ÷ ${DL_V} km/s</span></div>
+      <div class="r" style="border-top:1px dashed #e8e4de;padding-top:6px"><span class="lbl">单向总时延</span><span class="val" style="font-size:16px">${fmtT(total)}</span></div>
+      <div class="r"><span class="lbl">往返 RTT</span><span class="val">${fmtT(total*2)}</span><span style="font-size:12px;color:var(--muted)">（近似，不含处理与排队）</span></div>
+      <div class="r"><span class="lbl">时延带宽积</span><span class="val">${fmtNum(bdp, 0)} bit</span><span style="font-size:12px;color:var(--muted)">= 传播时延 × 带宽</span></div>
+    </div>`;
+
+  const ratio = tSend > 0 ? tProp / tSend : Infinity;
+  let concl;
+  if(!isFinite(ratio)) concl = '发送时延趋近于 0，此时<b>总时延几乎全由传播时延决定</b>。';
+  else if(ratio > 10)  concl = `<b>传播时延是发送时延的 ${ratio.toFixed(1)} 倍</b> —— 这时提高带宽几乎没用，瓶颈在「距离」。这就是长肥管道（高带宽长距离）的典型情形。`;
+  else if(ratio < 0.1) concl = `<b>发送时延是传播时延的 ${(1/ratio).toFixed(1)} 倍</b> —— 瓶颈在「带宽」。把速率翻倍，总时延差不多能砍一半。`;
+  else concl = `两者<b>差不多同一个量级</b>（相差 ${ratio.toFixed(1)} 倍），提升带宽和缩短距离的收益都有限。`;
+
+  $('dlOut').innerHTML = stepNote('看结论', concl +
+    `<br><br><b>动手试试：</b>把「链路长度」改成 20000 km（卫星链路量级），再把速率从 100 Mb/s 改成 10000 Mb/s ——
+     会看到<b>总时延几乎不变</b>。这就是「<span class="key">带宽不等于速度</span>」的直观含义。`) +
+    `<div class="hint">传播速率固定取 2×10⁸ m/s（铜缆 / 光纤），不参与输入；1 MB 按 10⁶ 字节计算（网络里的 M 是十进制）。</div>`;
+}
+['dlLen','dlRate','dlDist'].forEach(id=>{ $(id).oninput = renderDl; });
+renderDl();
+/* ============================================================
+   动画 03 · 奈氏准则 vs 香农公式
+   ============================================================ */
+function renderSh(){
+  const W  = numVal('shW', 3000, 1, 1e8);
+  const V  = numVal('shV', 16, 1, 1e6);
+  const sn = numVal('shSNR', 30, -60, 400);
+
+  const nx  = 2 * W * Math.log2(V);
+  const r   = Math.pow(10, sn / 10);
+  const cap = (isFinite(r) && isFinite(Math.log2(1 + r))) ? W * Math.log2(1 + r) : Infinity;
+  const real = Math.min(nx, cap);
+  const mx = Math.max(nx, cap, 1);
+  const pNx = Math.max(1.5, nx / mx * 100);
+  const pCp = Math.max(1.5, (isFinite(cap) ? cap : mx) / mx * 100);
+
+  const who = nx < cap ? '奈氏' : (cap < nx ? '香农' : '两者相等');
+
+  $('shStage').innerHTML =
+    `<div class="res">
+      <div class="r" style="margin:8px 0"><span class="lbl">奈氏上限</span>
+        <span style="display:inline-block;width:220px;height:14px;background:#efedea;border-radius:7px;overflow:hidden;vertical-align:-2px">
+          <i style="display:block;height:100%;width:${pNx.toFixed(1)}%;background:linear-gradient(90deg,#fcd34d,#d97706)"></i></span>
+        <span class="val">${fmtNum(nx, 0)} b/s</span></div>
+      <div class="r" style="margin:8px 0"><span class="lbl">香农上限</span>
+        <span style="display:inline-block;width:220px;height:14px;background:#efedea;border-radius:7px;overflow:hidden;vertical-align:-2px">
+          <i style="display:block;height:100%;width:${pCp.toFixed(1)}%;background:linear-gradient(90deg,#7dd3fc,#0891b2)"></i></span>
+        <span class="val" style="color:var(--accent)">${isFinite(cap) ? fmtNum(cap, 0) + ' b/s' : '∞'}</span></div>
+      <div class="r" style="margin-top:10px;border-top:1px dashed #e8e4de;padding-top:8px">
+        <span class="lbl">实际可取</span><span class="val" style="font-size:16px">${fmtNum(real, 0)} b/s</span>
+        <span style="font-size:12px;color:var(--muted)">取两者中<b>较小</b>的那个</span></div>
+    </div>`;
+
+  const detail =
+    `<div class="kv">
+      <span>带宽 W = <b>${fmtNum(W, 0)} Hz</b></span>
+      <span>码元状态数 V = <b>${fmtNum(V, 0)}</b></span>
+      <span>每码元携带 log₂V = <b>${Math.log2(V).toFixed(2)}</b> bit</span>
+      <span>信噪比 = <b>${sn} dB</b></span>
+      <span>S/N 比值 = <b>${isFinite(r) ? (r >= 1e6 ? r.toExponential(2) : fmtNum(r, 1)) : '∞'}</b></span>
+      <span>每码元上限 log₂(1+S/N) = <b>${isFinite(cap) ? Math.log2(1 + r).toFixed(2) : '∞'}</b> bit</span>
+    </div>`;
+
+  let concl;
+  if(who === '奈氏') concl = `当前 <b>奈氏上限更低</b> —— 说明「码元状态数太少」是短板。<br>解法：<b>增加 V</b>（更多电平或相位），或者当噪声较小、状态还能分辨时提高调制阶数。`;
+  else if(who === '香农') concl = `当前 <b>香农上限更低</b> —— 说明「噪声」是短板。<b>这时候再怎么增加电平 V 也没用</b>，因为噪声会把相邻状态混在一起，接收方分不出来。<br>解法：<b>扩带宽</b>或者<b>提高信噪比</b>（更好的介质、更短的线、更强的信号）。`;
+  else concl = `两个上限几乎相等 —— 此时系统正好处在「带宽、状态数、噪声」三者平衡的位置。`;
+
+  $('shOut').innerHTML = stepNote('谁在起作用', detail + concl +
+    `<br><br><b>动手试试：</b>把「码元状态数 V」从 16 调到 64，会看到<b>奈氏上限变成 3 倍</b>（log₂64 = 6，log₂16 = 4）——
+     但<b>香农上限一动不动</b>，因为噪声没变。<span class="key">这就是「信噪比决定天花板」的含义。</span>`) +
+    `<div class="hint">奈氏准则的前提是<b>理想无噪声信道</b>；香农公式的前提是<b>有噪声、带宽受限</b>。题目没给信噪比时用奈氏，给了信噪比就用香农。</div>`;
+}
+['shW','shV','shSNR'].forEach(id=>{ $(id).oninput = renderSh; });
+renderSh();
+
+/* ============================================================
+   动画 04 · 曼彻斯特 / 差分曼彻斯特编码
+   ============================================================ */
+const MC_NAME = { nrz:'不归零 NRZ', mch:'曼彻斯特编码', dmch:'差分曼彻斯特编码' };
+const MC_HALF = { nrz:1, mch:2, dmch:2 };
+function mcLevels(bits, type){
+  const out = []; let prev = 0;
+  for(let k=0;k<bits.length;k++){
+    const b = bits[k];
+    if(type === 'nrz'){ out.push(b === '1' ? 1 : 0); prev = out[out.length-1]; continue; }
+    if(type === 'mch'){
+      if(b === '1'){ out.push(0,1); prev = 1; }      // IEEE 802.3：低→高 = 1
+      else         { out.push(1,0); prev = 0; }      // 高→低 = 0
+    } else {
+      const start = (b === '0') ? (1 - prev) : prev; // 位开始处跳变=0，不跳=1
+      const mid = 1 - start;                         // 位中间必跳变
+      out.push(start, mid); prev = mid;
+    }
+  }
+  return out;
+}
+function renderMc(){
+  const bits = bitsVal('mcBits', '11010010');
+  const type = $('mcType').value || 'mch';
+  const half = MC_HALF[type] || 2;
+  const lv = mcLevels(bits, type);
+  const HW = 30, PAD = 44, yH = 32, yL = 84, W = PAD + lv.length * HW + 46, H = 128;
+
+  let path = '';
+  for(let i=0;i<lv.length;i++){
+    const x1 = PAD + i * HW, x2 = x1 + HW, y = lv[i] ? yH : yL;
+    path += (i === 0 ? `M${x1},${y}` : `L${x1},${y}`) + `L${x2},${y} `;
+  }
+  let grid = '';
+  for(let k=0;k<=bits.length;k++){
+    const x = PAD + k * half * HW;
+    grid += `<line x1="${x}" y1="18" x2="${x}" y2="102" stroke="#ded8cf" stroke-dasharray="3 3"/>`;
+  }
+  let lbl = '', marks = '';
+  for(let k=0;k<bits.length;k++){
+    const xc = PAD + (k * half + half / 2) * HW;
+    lbl += `<text x="${xc}" y="15" text-anchor="middle" font-size="12" font-weight="700" fill="#4b5665">${bits[k]}</text>`;
+    lbl += `<text x="${xc}" y="116" text-anchor="middle" font-size="10" fill="#b0a89b">${k+1}</text>`;
+    if(half === 2){
+      const xm = PAD + (k * half + 1) * HW;
+      marks += `<circle cx="${xm}" cy="${(yH+yL)/2}" r="3" fill="#dc2626" opacity=".75"/>`;
+    }
+  }
+  let lvlTxt = '';
+  if(type === 'nrz'){
+    lvlTxt = `<text x="${W-6}" y="${yH+4}" text-anchor="end" font-size="10" fill="#a49db8">高电平 1</text>
+              <text x="${W-6}" y="${yL+4}" text-anchor="end" font-size="10" fill="#a49db8">低电平 0</text>`;
+  }
+
+  $('mcStage').innerHTML =
+    `<div class="stage"><svg viewBox="0 0 ${W} ${H}">
+      ${grid}${lvlTxt}
+      <path d="${path}" fill="none" stroke="#d97706" stroke-width="2.6" stroke-linejoin="round"/>
+      ${marks}${lbl}
+    </svg></div>
+    <div class="legend">
+      <span><i style="background:#d97706"></i>信号电平（橙色折线）</span>
+      <span><i style="background:#ded8cf"></i>灰色虚线 = 每个位的边界</span>
+      ${half === 2 ? '<span><i style="background:#dc2626;border-radius:50%"></i>红点 = <b>位中间的跳变</b>（兼作时钟信号）</span>' : ''}
+      <span>上方数字 = 位序号</span>
+    </div>`;
+
+  const baud = lv.length, rate = bits.length;
+  let expl = '';
+  if(type === 'nrz'){
+    expl = `<b>不归零 NRZ</b>：一个位只用一个电平，最简单。<b>波特率 = 数据率</b>，效率最高。<br>
+      <b>致命缺陷：</b>如果连续出现很多个相同的位（比如 11111111），电平长时间不变 —— 接收方<b>找不到位的边界</b>，也就无法从信号里恢复时钟。`;
+  } else if(type === 'mch'){
+    expl = `<b>曼彻斯特编码</b>：每个位被劈成两半，<b>位中间一定发生跳变</b>。<br>
+      本页约定（IEEE 802.3 / 王道）：<b>高→低 = 0，低→高 = 1</b>，对照上面的波形验证一下。<br>
+      <b>优点：</b>跳变本身就是时钟信号，收发双方永远能同步 —— 这叫「自带时钟」。<br>
+      <b>代价：</b>波特率是数据率的 <b>2 倍</b>（${rate} 位需要 ${baud} 个码元），带宽利用率减半。`;
+  } else {
+    expl = `<b>差分曼彻斯特编码</b>：位中间<b>照样必跳变（只当时钟用）</b>，但<b>数据不看跳变方向，看「位开始处有没有跳变」</b>：<br>
+      <b>有跳变 = 0，无跳变 = 1</b>。<br>
+      <b>优点：</b>判断的是「变没变」而不是「是高还是低」，对外部干扰、极性接反都不敏感，比曼彻斯特更抗干扰。<br>
+      <b>代价：</b>同样是 2 倍波特率。`;
+  }
+
+  $('mcOut').innerHTML = stepNote(MC_NAME[type], expl +
+    `<div class="kv" style="margin-top:10px">
+      <span>数据率 = <b>${rate}</b> bit/位</span>
+      <span>波特率 = <b>${baud}</b> Baud（${half} 个码元/位）</span>
+      <span>带宽利用率 = <b>${(100/half).toFixed(0)}%</b></span>
+    </div>`) +
+    `<div class="hint">口径提醒：<b>曼彻斯特「哪个跳变代表 1」在不同教材里是反的。</b>本页统一采用 IEEE 802.3 约定（高→低 = 0）。做真题时<b>以题目附图为准</b>。</div>`;
+}
+$('mcBits').oninput = renderMc;
+$('mcType').onchange = renderMc;
+$('mcRand').onclick = ()=>{
+  let s = '';
+  const n = 8 + Math.floor(Math.random() * 5);
+  for(let i=0;i<n;i++) s += Math.random() < 0.5 ? '0' : '1';
+  $('mcBits').value = s;
+  renderMc();
+};
+renderMc();
+
+/* ============================================================
+   动画 05 · 零比特填充
+   ============================================================ */
+let ZB_i = 0, ZB_timer = null;
+function zbCompute(){
+  const bits = bitsVal('zbBits', '10111110111110');
+  const steps = [];
+  let out = '', ones = 0, cnt = 0;
+  for(let i=0;i<bits.length;i++){
+    out += bits[i];
+    let ins = -1;
+    if(bits[i] === '1'){
+      ones++;
+      if(ones === 5){ out += '0'; ins = out.length - 1; ones = 0; cnt++; }
+    } else ones = 0;
+    steps.push({ i, out, ins, cnt });
+  }
+  return { bits, steps };
+}
+function zbRender(){
+  const { bits, steps } = zbCompute();
+  const st = steps[Math.min(ZB_i, steps.length - 1)];
+  const src = bits.split('').map((c, i)=>
+    `<span class="bit ${i === st.i ? 'on' : (i > st.i ? 'mut' : '')}">${c}</span>`).join('');
+  const dst = st.out.split('').map((c, i)=>
+    `<span class="bit ${i === st.ins ? 'ins' : 'mk'}">${c}</span>`).join('');
+  const idx = st.out.split('').map(()=>'').join('');
+
+  $('zbStage').innerHTML =
+    `<div class="kv"><span>帧定界符 FLAG = <b>01111110</b></span>
+      <span>规则：数据中<b>每 5 个连续 1 后插一个 0</b></span>
+      <span>接收方：每 5 个连续 1 后<b>删掉紧跟的那个 0</b></span></div>
+      <div class="cap" style="font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;margin:12px 0 5px">原始数据（共 ${bits.length} 位）</div>
+      <div class="bits">${src}</div>
+      <div class="cap" style="font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;margin:14px 0 5px">填充后（共 ${st.out.length} 位，已插入 <b style="color:var(--green)">${st.cnt}</b> 个 0）</div>
+      <div class="bits">${dst}</div>
+      <div class="legend">
+        <span><i style="background:#d97706"></i>正在扫描的这一位</span>
+        <span><i style="background:#e8f6ec;border:1px solid #15803d"></i>新插入的 0</span>
+        <span><i style="background:#faf8f5;border:1px solid #ded8cf"></i>尚未扫描</span>
+      </div>`;
+
+  const atEnd = st.i >= bits.length - 1;
+  let note;
+  if(st.ins >= 0) note = `<b>发现 5 个连续 1！</b>紧跟插入一个 0 —— 这样数据里就<b>永远不会出现 6 个连续 1</b>，也就不会和 FLAG 的 01111110 撞上。`;
+  else if(atEnd) note = `扫描完毕。<b>填充后共插入 ${st.cnt} 个 0。</b>把这串发出去，接收方按同样规则删掉这些 0，就能<b>一位不差地还原</b>原始数据 —— 这叫<b>透明传输</b>。`;
+  else note = `继续扫描第 ${st.i + 1} 位（${bits[st.i]}）。<b>只有连续数到 5 个 1 才插 0</b>，遇到 0 就把计数器清空。`;
+
+  $('zbOut').innerHTML = stepNote(`第 ${st.i + 1} / ${bits.length} 位`, note) +
+    `<div class="hint">${atEnd ? '已完成 —— 点「重置」可重新看一遍。' : '点「下一步」逐位推进，或「自动播完」一次看完。'}</div>`;
+}
+function zbStop(){ if(ZB_timer){ clearInterval(ZB_timer); ZB_timer = null; } }
+$('zbStep').onclick = ()=>{ zbStop(); const n = zbCompute().steps.length; if(ZB_i < n - 1){ ZB_i++; zbRender(); } };
+$('zbRun').onclick = ()=>{
+  zbStop(); ZB_i = 0; zbRender();
+  ZB_timer = setInterval(()=>{
+    const n = zbCompute().steps.length;
+    if(ZB_i >= n - 1){ zbStop(); return; }
+    ZB_i++; zbRender();
+  }, 600);
+};
+$('zbReset').onclick = ()=>{ zbStop(); ZB_i = 0; zbRender(); };
+$('zbBits').oninput = ()=>{ zbStop(); ZB_i = 0; zbRender(); };
+zbRender();
+/* ============================================================
+   动画 06 · CRC 循环冗余校验
+   ============================================================ */
+function crcDivide(input, gen){
+  const r = gen.length - 1;
+  const arr = input.split('').map(Number);
+  const g = gen.split('').map(Number);
+  const steps = [];
+  for(let i = 0; i <= arr.length - g.length; i++){
+    if(arr[i] === 1){
+      const before = arr.slice(i, i + g.length).join('');
+      for(let j = 0; j < g.length; j++) arr[i + j] ^= g[j];
+      steps.push({ pos:i, before, after: arr.slice(i, i + g.length).join('') });
+    }
+  }
+  return { r, steps, rest: arr.join('') };
+}
+function renderCr(){
+  let data = bitsVal('crData', '101001');
+  let gen  = bitsVal('crGen', '1101');
+  if(gen.length < 2) gen = '11';
+  if(gen[0] !== '1') gen = '1' + gen.replace(/^0+/, '');
+  if(data.length + gen.length > 40){ data = data.slice(0, 24); }
+
+  const r = gen.length - 1;
+  const dividend = data + '0'.repeat(r);
+  const { steps, rest } = crcDivide(dividend, gen);
+  const rem = rest.slice(rest.length - r);
+  const frame = data + rem;
+  const check = crcDivide(frame, gen);
+  const checkRem = check.rest.slice(check.rest.length - r);
+  const ok = /^0+$/.test(checkRem);
+
+  const show = steps.slice(0, 8);
+  const stepRows = show.map((s, i)=>
+    `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span style="color:#b0a89b;min-width:74px">第 ${i+1} 轮 @${s.pos}</span>
+      <span style="color:#4b5665">${s.before}</span>
+      <span style="color:#b0a89b">XOR</span>
+      <span style="color:var(--primary)">${gen}</span>
+      <span style="color:#b0a89b">=</span>
+      <span style="color:var(--green);font-weight:800">${s.after}</span>
+     </div>`).join('');
+
+  $('crStage').innerHTML =
+    `<div class="kv">
+      <span>G(x) = <b>${gen}</b></span>
+      <span>阶 r = <b>${r}</b></span>
+      <span>数据位数 = <b>${data.length}</b></span>
+      <span>FCS 位数 = <b>${r}</b></span>
+     </div>
+     <div class="cap" style="font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;margin:12px 0 5px">① 数据后补 r 个 0，得到被除数</div>
+     <div class="mono" style="font-size:13.5px;letter-spacing:1px;color:#403a55">
+       <span style="color:var(--green);font-weight:800">${data}</span><span style="color:#c8c2b8">${'0'.repeat(r)}</span></div>
+     <div class="cap" style="font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;margin:14px 0 5px">② 模 2 除法（异或，不借位）—— 共 ${steps.length} 轮${steps.length > 8 ? '，只显示前 8 轮' : ''}</div>
+     <div class="logbox" style="max-height:200px;font-size:12px">${stepRows || '<span class="lg mut">被除数最高位不为 1，无需运算</span>'}</div>
+     <div class="cap" style="font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;margin:14px 0 5px">③ 余数就是 FCS，直接跟在原数据后面发出</div>
+     <div class="mono" style="font-size:13.5px;letter-spacing:1px">
+       <span style="color:#403a55;font-weight:800">${data}</span><span style="color:var(--primary);font-weight:800">${rem}</span>
+       <span style="color:#b0a89b;font-size:12px">   ← 前 ${data.length} 位数据 + 后 ${r} 位 FCS</span></div>`;
+
+  $('crOut').innerHTML = stepNote('接收方怎么验',
+    `接收方把收到的 <b>${frame}</b> 再除以 <b>${gen}</b>，余数 = <b style="color:${ok ? 'var(--green)' : 'var(--red)'}">${checkRem}</b> → ${ok ? '判定<b>无差错</b>，收下' : '判定<b>有错</b>，丢弃'}。<br>
+     <b>原理：</b>因为「数据 + FCS」这个整体恰好能被 G(x) 整除 —— 这是构造 FCS 时就保证的。<br><br>
+     <b>一个必须记住的局限：</b>CRC <b>只能检错、不能纠错</b>。余数只是个"信噪比"，不含出错位置的信息。
+     要纠错得用海明码（计组那章讲过）。`) +
+    `<div class="hint">试试把生成多项式改成 <b>1011</b> 或 <b>10011</b>，看 FCS 位数怎么变 —— <b>FCS 位数恒等于 G(x) 的阶 r</b>。</div>`;
+}
+$('crData').oninput = renderCr;
+$('crGen').oninput = renderCr;
+$('crDemo').onclick = ()=>{
+  const ds = ['101001','110101','1001','11110000','10110011'];
+  const gs = ['1101','1011','10011','10001000000100001'];
+  $('crData').value = ds[Math.floor(Math.random() * ds.length)];
+  $('crGen').value  = gs[Math.floor(Math.random() * 3)];
+  renderCr();
+};
+renderCr();
+
+/* ============================================================
+   动画 07 · CSMA/CD 冲突检测
+   ============================================================ */
+const CD_STEPS = [
+  { t:'① 两个站都想发，先"听"信道', aP:-1, bP:-1, a:'idle', b:'idle', jam:0,
+    note:'A 和 B 都有一帧要发。<b>CSMA/CD 的第一步是「先听后发」</b> —— 两个站都先监听总线，此刻总线上没有信号，所以两边都听到了「空闲」。' },
+  { t:'② A 先听到空闲，开始发送', aP:0.30, bP:-1, a:'send', b:'idle', jam:0,
+    note:'A 判定信道空闲，开始把帧推向总线。注意：<b>A 的信号要传播 τ 时间才能到达 B</b>，此刻还没到。' },
+  { t:'③ B 也判定空闲，同时发送 —— 冲突必然发生', aP:0.42, bP:0.72, a:'send', b:'send', jam:1,
+    note:'B 在这时还没收到 A 的信号，所以它<b>也判定为空闲</b>，于是也发了。<b>两个信号正在同一条总线上相向而行 —— 冲突已经不可避免。</b>这就是「先听后发」的固有缺陷。' },
+  { t:'④ 信号在中间相撞，波形叠加失真', aP:0.50, bP:0.62, a:'send', b:'send', jam:2,
+    note:'两个信号在总线上叠加，电压波形完全失真。<b>这就是冲突 —— 两边的数据都毁了。</b>' },
+  { t:'⑤ 边发边听，检测到冲突，立即停止', aP:0.50, bP:0.62, a:'jam', b:'jam', jam:3,
+    note:'因为「边发边听」，A 和 B <b>都发现自己发出的信号和听到的不一致</b>，于是立刻停止发送数据、改发<b>干扰信号（jam）</b>，让冲突扩散到全网，保证所有人都知道发生冲突了。' },
+  { t:'⑥ 截断二进制指数退避：各自随机等一段时间', aP:-1, bP:-1, a:'wait', b:'wait', jam:0,
+    note:'第 1 次冲突 → 从 [0, 1] 里随机取 r，等待 r × 512 比特时间。<b>A 抽到 0（短）</b>，B 抽到 1（长）—— 随机化的目的就是让两个站<b>错开重发时刻</b>，避免再次撞上。<br>若反复冲突，取值范围指数扩大：[0,2]、[0,4] … 最多到 [0,1023]，<b>冲突 16 次后放弃并报错</b>。' },
+  { t:'⑦ A 先重发，B 仍在等待 —— 这次成功', aP:0.86, bP:-1, a:'ok', b:'wait', jam:0,
+    note:'A 等待结束，再次监听信道（依然空闲），于是重发。<b>这一次 B 还在退避计时中，没有发</b>，所以 A 的帧顺利到达 B。<br><b>关键点：A 必须在「发完之前」一直能听到冲突</b> —— 所以帧不能太短。' }
+];
+let CD_i = 0, CD_timer = null;
+function cdSvg(s){
+  const W = 640, H = 186, bx = 92, bw = 456, by = 78, bh = 26;
+  const px = p => bx + 8 + (bw - 16 - 46) * p;
+  const yA = by + bh + 12, yB = by - 42;
+  const col = s.jam >= 2 ? '#dc2626' : (s.a === 'jam' ? '#dc2626' : '#d97706');
+  const frame = (x, y, txt, fill, stroke) =>
+    `<rect x="${x.toFixed(1)}" y="${y}" width="46" height="24" rx="6" fill="${fill}" stroke="${stroke}"/>
+     <text x="${(x+23).toFixed(1)}" y="${y+16}" text-anchor="middle" font-size="11" fill="#fff" font-weight="700">${txt}</text>`;
+  let gfx = '';
+  gfx += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="13" fill="#fbf8f4" stroke="#ded8cf"/>`;
+  gfx += `<text x="${bx+12}" y="${by+18}" font-size="11" fill="#b0a89b">共享总线（同一冲突域）</text>`;
+  // 站点
+  const station = (x, label, sub, state) => {
+    const c = state === 'send' ? '#d97706' : state === 'jam' ? '#dc2626' : state === 'ok' ? '#15803d' : state === 'wait' ? '#7d7890' : '#ded8cf';
+    const bg = state === 'idle' ? '#fff' : (state === 'jam' ? '#fdeceb' : state === 'ok' ? '#e8f6ec' : state === 'wait' ? '#f4f3f0' : '#fff4e3');
+    return `<rect x="${x}" y="${by-16}" width="58" height="58" rx="10" fill="${bg}" stroke="${c}" stroke-width="2"/>
+            <text x="${x+29}" y="${by+5}" text-anchor="middle" font-size="12" font-weight="800" fill="#2b3542">${label}</text>
+            <text x="${x+29}" y="${by+24}" text-anchor="middle" font-size="10" fill="#7d7890">${sub}</text>`;
+  };
+  gfx += station(bx - 74, 'A', s.a === 'wait' ? '退避中' : s.a === 'jam' ? '检测到冲突' : s.a === 'ok' ? '发送成功' : s.a === 'send' ? '正在发送' : '空闲', s.a);
+  gfx += station(bx + bw + 16, 'B', s.b === 'wait' ? '退避中' : s.b === 'jam' ? '检测到冲突' : s.b === 'send' ? '正在发送' : '空闲', s.b);
+  // 帧
+  if(s.aP >= 0) gfx += frame(px(s.aP), yA, s.a === 'jam' ? 'jam' : '帧 A', s.jam >= 2 ? '#fdeceb' : (s.a === 'jam' ? '#fdeceb' : '#fff4e3'), col);
+  if(s.bP >= 0) gfx += frame(px(s.bP), yB, s.b === 'jam' ? 'jam' : '帧 B', s.jam >= 2 ? '#fdeceb' : (s.b === 'jam' ? '#fdeceb' : '#fff4e3'), col);
+  if(s.jam === 2) gfx += `<text x="${W/2}" y="${by+bh+62}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#dc2626">冲突！两个信号叠加，波形失真</text>`;
+  if(s.jam === 3) gfx += `<text x="${W/2}" y="${by+bh+62}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#dc2626">已停止发送数据，正在发送干扰信号（jam）</text>`;
+  return `<div class="stage"><svg viewBox="0 0 ${W} ${H}">
+    <text x="${W/2}" y="18" text-anchor="middle" font-size="11.5" fill="#a49db8">↑ B 侧</text>
+    ${gfx}
+    <text x="${W/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="#a49db8">↓ A 侧（帧块在总线上相向传播）</text>
+  </svg></div>
+  <div class="legend">
+    <span><i style="background:#fff4e3;border:1px solid #d97706"></i>正在发送的帧</span>
+    <span><i style="background:#fdeceb;border:1px solid #dc2626"></i>冲突 / 干扰信号</span>
+    <span><i style="background:#e8f6ec;border:1px solid #15803d"></i>发送成功</span>
+    <span><i style="background:#f4f3f0;border:1px solid #7d7890"></i>退避等待中</span>
+  </div>`;
+}
+function cdRender(){
+  const s = CD_STEPS[CD_i];
+  $('cdStage').innerHTML = cdSvg(s);
+  $('cdOut').innerHTML = stepNote(s.t, s.note) +
+    `<div class="hint">第 ${CD_i + 1} / ${CD_STEPS.length} 步 —— 本动画要把「<b>为什么最小帧长 = 2τ × 数据率</b>」看明白：A 的信号到达 B 要 τ，B 的冲突信号回到 A 又要 τ，所以 A 必须<b>持续发送至少 2τ 这么久</b>，才可能听到冲突。</div>`;
+}
+function cdStop(){ if(CD_timer){ clearInterval(CD_timer); CD_timer = null; } }
+$('cdPlay').onclick = ()=>{
+  cdStop(); CD_i = 0; cdRender();
+  CD_timer = setInterval(()=>{
+    if(CD_i >= CD_STEPS.length - 1){ cdStop(); return; }
+    CD_i++; cdRender();
+  }, 1100);
+};
+$('cdStep').onclick = ()=>{ cdStop(); if(CD_i < CD_STEPS.length - 1){ CD_i++; cdRender(); } };
+$('cdReset').onclick = ()=>{ cdStop(); CD_i = 0; cdRender(); };
+cdRender();
+
+/* ============================================================
+   动画 08 · ARP 地址解析
+   ============================================================ */
+const AP_STEPS = [
+  { t:'① A 要发数据给 192.168.1.20，但不知道它的 MAC', mode:'none',
+    note:'主机 A（192.168.1.10）要发一个 IP 分组给 192.168.1.20。<b>IP 分组最终必须装进帧里才能上线，而帧需要目的 MAC 地址。</b><br>A 先查自己的 ARP 缓存 —— 没有 192.168.1.20 的记录，只能发起解析。' },
+  { t:'② A 广播 ARP 请求：谁是 192.168.1.20？', mode:'bcast',
+    note:'ARP 请求帧的<b>目的 MAC 填全 F（FF-FF-FF-FF-FF-FF），这就是广播</b>；但目的 IP 字段里填的是<b>具体的</b> 192.168.1.20。<br>同一局域网内的<b>所有主机都会收到</b>这个请求 —— 这是 A 在「广而告之」。' },
+  { t:'③ 只有 192.168.1.20 认领：IP 是我', mode:'recv',
+    note:'B、C、网关都收到了这个广播，但只有 <b>192.168.1.20 发现目的 IP 和自己一致</b>，于是准备应答。<br>其余主机（.30、网关）看不是自己的就<b>直接丢弃</b>，不作任何回应。' },
+  { t:'④ 192.168.1.20 单播应答：我的 MAC 是 0A-1B-2C-3D-4E-5F', mode:'unicast',
+    note:'应答是<b>单播</b> —— 因为它已经知道 A 的 MAC 了（从请求帧的源 MAC 字段里读到的）。<br>「<b>请求用广播、应答用单播</b>」是 ARP 最经典的考点，也是常考的细节题。' },
+  { t:'⑤ A 写入 ARP 缓存，现在可以发帧了', mode:'cache',
+    note:'A 把「192.168.1.20 → 0A-1B-2C-3D-4E-5F」写进 ARP 缓存（有老化时间，通常几分钟），然后就能把 IP 分组封装成帧发出去了。<br><b>补充考点：</b>如果目标 IP <b>不在同一网段</b>，A 解析的是<b>默认网关</b>的 MAC —— 因为它必须先把帧发给网关，让网关帮忙转出去。' }
+];
+let AP_i = 0, AP_timer = null;
+function apSvg(s){
+  const W = 640, H = 258, y = 92;
+  const hosts = [
+    { x:96,  ip:'192.168.1.10', mac:'…0A', name:'A（发起方）', self:true },
+    { x:288, ip:'192.168.1.20', mac:'…5F', name:'B（目标）', tgt:true },
+    { x:452, ip:'192.168.1.30', mac:'…73', name:'C', tgt:false },
+    { x:592, ip:'192.168.1.1',  mac:'…01', name:'网关', tgt:false }
+  ];
+  let g = '';
+  g += `<line x1="40" y1="${y}" x2="${W-16}" y2="${y}" stroke="#ded8cf" stroke-width="6" stroke-linecap="round"/>`;
+  g += `<text x="${W/2}" y="${y-58}" text-anchor="middle" font-size="11" fill="#b0a89b">同一个局域网（广播能到达所有主机）</text>`;
+  hosts.forEach(h=>{
+    const hi = (s.mode === 'recv' && h.tgt) || (s.mode === 'unicast' && h.self) || (s.mode === 'cache' && h.self);
+    const dim = (s.mode === 'recv' && !h.tgt && !h.self) || (s.mode === 'unicast' && !h.self) || (s.mode === 'bcast' && !h.self);
+    const stroke = hi ? '#15803d' : (dim ? '#e8e4de' : '#ded8cf');
+    const fill   = hi ? '#e8f6ec' : (dim ? '#faf8f5' : '#fff');
+    g += `<rect x="${h.x-46}" y="${y+8}" width="92" height="52" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+    g += `<text x="${h.x}" y="${y+26}" text-anchor="middle" font-size="11.5" font-weight="800" fill="${dim ? '#c8c2b8' : '#2b3542'}">${h.ip}</text>`;
+    g += `<text x="${h.x}" y="${y+42}" text-anchor="middle" font-size="10" fill="#b0a89b">MAC ${h.mac}</text>`;
+    g += `<text x="${h.x}" y="${y+78}" text-anchor="middle" font-size="10.5" fill="${dim ? '#c8c2b8' : '#7d7890'}">${h.name}</text>`;
+  });
+  const arrow = (x1, x2, yy, color, txt) => `
+    <line x1="${x1}" y1="${yy}" x2="${x2}" y2="${yy}" stroke="${color}" stroke-width="2" marker-end="url(#ah${color === '#dc2626' ? 'r' : color === '#15803d' ? 'g' : 'o'})"/>
+    <text x="${(x1+x2)/2}" y="${yy-6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${color}">${txt}</text>`;
+  g += `<defs>
+    <marker id="ahor" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#d97706"/></marker>
+    <marker id="ahr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#dc2626"/></marker>
+    <marker id="ahg" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#15803d"/></marker>
+  </defs>`;
+  if(s.mode === 'bcast'){
+    g += arrow(150, 540, y - 30, '#dc2626', '广播 ARP 请求：谁是 192.168.1.20？');
+  }
+  if(s.mode === 'recv'){
+    g += arrow(150, 540, y - 30, '#dc2626', '广播 ARP 请求（所有主机都收到了）');
+  }
+  if(s.mode === 'unicast'){
+    g += arrow(244, 148, y - 30, '#15803d', '单播应答：我是，MAC = …5F');
+  }
+  if(s.mode === 'cache'){
+    g += `<rect x="${30}" y="${y+96}" width="290" height="60" rx="9" fill="#fff4e3" stroke="#d97706"/>`;
+    g += `<text x="44" y="${y+116}" font-size="11.5" font-weight="800" fill="#8a5209">A 的 ARP 缓存</text>`;
+    g += `<text x="44" y="${y+136}" font-size="11" font-family="Consolas,monospace" fill="#403a55">192.168.1.20 → 0A-1B-2C-3D-4E-5F</text>`;
+    g += `<text x="44" y="${y+152}" font-size="10" fill="#a49db8">（带老化时间，几分钟后失效）</text>`;
+  } else {
+    g += `<rect x="${30}" y="${y+96}" width="290" height="60" rx="9" fill="#fbf8f4" stroke="#ded8cf" stroke-dasharray="4 3"/>`;
+    g += `<text x="44" y="${y+116}" font-size="11.5" font-weight="800" fill="#b0a89b">A 的 ARP 缓存</text>`;
+    g += `<text x="44" y="${y+136}" font-size="11" fill="#c8c2b8">（空 —— 没有 192.168.1.20 的记录）</text>`;
+  }
+  return `<div class="stage"><svg viewBox="0 0 ${W} ${H}">${g}</svg></div>
+  <div class="legend">
+    <span><i style="background:#dc2626"></i>ARP 请求（广播，目的 MAC 全 F）</span>
+    <span><i style="background:#15803d"></i>ARP 应答（单播）</span>
+    <span><i style="background:#e8f6ec;border:1px solid #15803d"></i>本次参与的主机</span>
+    <span><i style="background:#faf8f5;border:1px solid #e8e4de"></i>收到但直接丢弃的主机</span>
+  </div>`;
+}
+function apRender(){
+  const s = AP_STEPS[AP_i];
+  $('apStage').innerHTML = apSvg(s);
+  $('apOut').innerHTML = stepNote(s.t, s.note) +
+    `<div class="hint">第 ${AP_i + 1} / ${AP_STEPS.length} 步 · 点「下一步」继续</div>`;
+}
+function apStop(){ if(AP_timer){ clearInterval(AP_timer); AP_timer = null; } }
+$('apPlay').onclick = ()=>{
+  apStop(); AP_i = 0; apRender();
+  AP_timer = setInterval(()=>{
+    if(AP_i >= AP_STEPS.length - 1){ apStop(); return; }
+    AP_i++; apRender();
+  }, 1100);
+};
+$('apStep').onclick = ()=>{ apStop(); if(AP_i < AP_STEPS.length - 1){ AP_i++; apRender(); } };
+$('apReset').onclick = ()=>{ apStop(); AP_i = 0; apRender(); };
+apRender();
+/* ============================================================
+   动画 09 · IP 分片与重组
+   ============================================================ */
+const FR_HEAD = 20;
+function renderFr(){
+  const len = Math.round(numVal('frLen', 4000, 20, 65535, 1));
+  const mtu = Math.round(numVal('frMtu', 1500, 20, 65535, 1));
+  const df  = ($('frDF').value === '1');
+  const dl  = len - FR_HEAD;
+  const pkt = (fields) => `<div class="pkt">${fields.map(f=>
+    `<div class="pf ${f.c || ''}"><span class="pn">${f.n}</span><span class="pv">${f.v}</span></div>`).join('')}</div>`;
+
+  const src = pkt([
+    { n:'IP 首部', v:FR_HEAD + ' B', c:'act' },
+    { n:'数据部分', v:dl + ' B' },
+    { n:'总长度', v:len + ' B' }
+  ]);
+
+  let body = '';
+  if(dl <= 0){
+    body = `<div class="pkt"><div class="pf drop"><span class="pn">数据长度 ≤ 0</span><span class="pv">${dl}</span></div></div>`;
+  } else if(len <= mtu){
+    body = pkt([
+      { n:'无需分片', v:'单帧发出', c:'new' },
+      { n:'总长度', v:len + ' B' },
+      { n:'MF', v:'0' },
+      { n:'片偏移', v:'0' }
+    ]);
+  } else if(df){
+    body = pkt([
+      { n:'DF = 1 且总长 > MTU', v:'丢弃', c:'drop' },
+      { n:'并回送 ICMP 差错', v:'需要分片但 DF=1', c:'new' }
+    ]);
+  } else {
+    const maxPay = Math.floor((mtu - FR_HEAD) / 8) * 8;
+    if(maxPay <= 0){
+      body = `<div class="pkt"><div class="pf drop"><span class="pn">MTU 过小</span><span class="pv">装不下首部</span></div></div>`;
+    } else {
+      const parts = [];
+      let off = 0;
+      while(off < dl){
+        const d = Math.min(maxPay, dl - off);
+        parts.push({ off, d });
+        off += d;
+      }
+      body = parts.map((p, i)=>{
+        const last = (i === parts.length - 1);
+        return `<div style="margin-bottom:12px">
+          <div class="cap" style="font-size:11.5px;font-weight:800;color:var(--muted);margin-bottom:5px">片 ${i+1}${last ? '（最后一片）' : ''}</div>
+          ${pkt([
+            { n:'总长度', v:(p.d + FR_HEAD) + ' B', c:'act' },
+            { n:'数据长度', v:p.d + ' B', c: last ? '' : 'new' },
+            { n:'片偏移', v:(p.off / 8) + '', c:'new' },
+            { n:'MF', v: last ? '0' : '1', c: last ? '' : 'new' },
+            { n:'分片后数据范围', v:`第 ${p.off + 1} ~ ${p.off + p.d} 字节` }
+          ])}</div>`;
+      }).join('');
+    }
+  }
+
+  $('frStage').innerHTML =
+    `<div class="cap" style="font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;margin-bottom:6px">原始 IP 数据报</div>
+     ${src}
+     <div class="cap" style="font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;margin:16px 0 6px">经过 MTU = ${mtu} B 的链路之后</div>
+     ${body}`;
+
+  let concl;
+  if(dl <= 0) concl = '数据部分长度不为正，请把「数据报总长」调到大于 20。';
+  else if(len <= mtu) concl = `总长度 ${len} B ≤ MTU ${mtu} B，<b>不需要分片</b>，原样发送。`;
+  else if(df) concl = `<b>DF = 1 表示"禁止分片"。</b>总长 ${len} B 超过了 MTU ${mtu} B，路由器<b>只能丢弃</b>，并用 ICMP 差错报文告诉源主机「需要分片但 DF 被置位」。<br><b>这正是路径 MTU 发现的原理</b> —— 源主机收到这个差错后，下次就把报文改小。`;
+  else {
+    const maxPay = Math.floor((mtu - FR_HEAD) / 8) * 8;
+    const n = Math.ceil(dl / maxPay);
+    concl = `每片数据上限 = MTU − 首部 = ${mtu} − ${FR_HEAD} = ${mtu - FR_HEAD} B，<b>向下取到 8 的倍数 = ${maxPay} B</b>（因为片偏移的单位就是 8 字节）。<br>
+      数据共 ${dl} B → 切成 <b>${n} 片</b>。最后一片往往不满，其余都是 ${maxPay} B。<br>
+      <b>重组只在目的主机进行</b> —— 中间路由器只管转发，不管重组。`;
+  }
+
+  $('frOut').innerHTML = stepNote('分片规则', concl +
+    `<div class="kv" style="margin-top:10px">
+      <span>首部固定 <b>${FR_HEAD} B</b></span>
+      <span>片偏移单位 <b>8 B</b></span>
+      <span>每片都<b>各带一个首部</b></span>
+      <span>重组在<b>目的主机</b>完成</span>
+    </div>`) +
+    `<div class="hint">把总长度改成 <b>4000</b>、MTU 保持 <b>1500</b>，就是最经典的例题：3 片，总长 1500 / 1500 / 1040，偏移 0 / 185 / 370。自己先手算一遍再对照。</div>`;
+}
+['frLen','frMtu'].forEach(id=>{ $(id).oninput = renderFr; });
+$('frDF').onchange = renderFr;
+renderFr();
+
+/* ============================================================
+   动画 10 · 子网划分 / CIDR 计算器
+   ============================================================ */
+function ipToInt(s){
+  const p = String(s == null ? '' : s).trim().split('.');
+  if(p.length !== 4) return null;
+  let n = 0;
+  for(let i=0;i<4;i++){
+    if(!/^\d{1,3}$/.test(p[i])) return null;
+    const v = parseInt(p[i], 10);
+    if(v > 255) return null;
+    n = n * 256 + v;
+  }
+  return n >>> 0;
+}
+function intToIp(n){
+  n = n >>> 0;
+  return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join('.');
+}
+function bin32(n){
+  n = n >>> 0;
+  let s = '';
+  for(let i = 31; i >= 0; i--) s += ((n >>> i) & 1);
+  return s;
+}
+function ipClass(n){
+  const f = (n >>> 24) & 255;
+  if(f === 0) return '保留（0.0.0.0/8）';
+  if(f === 127) return '回环地址';
+  if(f < 128) return 'A 类（/8）';
+  if(f < 192) return 'B 类（/16）';
+  if(f < 224) return 'C 类（/24）';
+  if(f < 240) return 'D 类（组播）';
+  return 'E 类（保留）';
+}
+function isPriv(n){
+  const ip = n >>> 0;
+  if((ip >>> 24) === 10) return true;
+  if(ip >= ipToInt('172.16.0.0') && ip <= ipToInt('172.31.255.255')) return true;
+  if(ip >= ipToInt('192.168.0.0') && ip <= ipToInt('192.168.255.255')) return true;
+  return false;
+}
+function renderSn(){
+  const raw = $('snIp').value;
+  let ip = ipToInt(raw);
+  const bad = (ip === null);
+  if(bad) ip = ipToInt('192.168.10.130');
+  const pre = Math.round(numVal('snPre', 26, 0, 32, 1));
+  const mask = pre === 0 ? 0 : (0xFFFFFFFF << (32 - pre)) >>> 0;
+  const net = (ip & mask) >>> 0;
+  const bcast = (net | (~mask >>> 0)) >>> 0;
+  const first = ((net + 1) >>> 0);
+  const last  = ((bcast - 1) >>> 0);
+  const size  = Math.pow(2, 32 - pre);
+  const hosts = Math.max(0, size - 2);
+
+  const bIp = bin32(ip), bN = bin32(net), bM = bin32(mask);
+  const seg = (s, hi) => hi
+    ? `<span style="color:#d97706;font-weight:800">${s.slice(0, pre)}</span><span style="color:#b0a89b">${s.slice(pre)}</span>`
+    : `<span style="color:#403a55">${s}</span>`;
+  const ruler = `<span style="color:#b0a89b">${'·'.repeat(0)}</span>`;
+  const fmt4 = s => s.replace(/(.{8})(?=.)/g, '$1 ');
+
+  $('snStage').innerHTML =
+    `<div class="cap" style="font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;margin-bottom:6px">32 位二进制对照（橙色 = 网络前缀 ${pre} 位，灰色 = 主机号 ${32 - pre} 位）</div>
+     <div class="mono" style="font-size:13px;letter-spacing:.8px;line-height:2.1;background:#fbf8f4;border:1px solid var(--line);border-radius:9px;padding:11px 14px;overflow-x:auto">
+       <div>IP  &nbsp;${seg(bIp)}&nbsp;&nbsp;<span style="color:#b0a89b">${fmt4(bIp)}</span></div>
+       <div>掩码&nbsp;${seg(bM)}&nbsp;&nbsp;<span style="color:#b0a89b">${fmt4(bM)}</span></div>
+       <div style="border-top:1px dashed #e8e4de;margin-top:5px;padding-top:5px">网络&nbsp;${seg(bN)}&nbsp;&nbsp;<span style="color:#b0a89b">${fmt4(bN)}</span></div>
+     </div>
+     <div class="legend">
+       <span><i style="background:#d97706"></i>网络前缀（掩码为 1 的位）</span>
+       <span><i style="background:#b0a89b"></i>主机号（掩码为 0 的位）</span>
+       <span>网络地址 = IP <b>按位与</b> 掩码（主机号位清零）</span>
+     </div>
+     <div class="res" style="margin-top:14px">
+       <div class="r"><span class="lbl">输入地址</span><span class="val">${intToIp(ip)}</span><span style="font-size:12px;color:var(--muted)">${ipClass(ip)}${isPriv(ip) ? ' · <b style="color:var(--primary)">私有地址</b>' : ''}</span></div>
+       <div class="r"><span class="lbl">子网掩码</span><span class="val">${intToIp(mask)}</span><span style="font-size:12px;color:var(--muted)">/${pre}</span></div>
+       <div class="r"><span class="lbl">网络地址</span><span class="val">${intToIp(net)}</span><span style="font-size:12px;color:var(--muted)">主机号全 0，代表整个网络</span></div>
+       <div class="r"><span class="lbl">广播地址</span><span class="val">${intToIp(bcast)}</span><span style="font-size:12px;color:var(--muted)">主机号全 1</span></div>
+       <div class="r"><span class="lbl">可用地址范围</span><span class="val">${hosts > 0 ? intToIp(first) + ' ~ ' + intToIp(last) : '无'}</span></div>
+       <div class="r"><span class="lbl">地址块大小</span><span class="val">${fmtNum(size, 0)}</span><span style="font-size:12px;color:var(--muted)">= 2^(32−${pre})</span></div>
+       <div class="r"><span class="lbl">可用主机数</span><span class="val" style="font-size:16px">${fmtNum(hosts, 0)}</span><span style="font-size:12px;color:var(--muted)">= 块大小 − 2（减掉网络地址和广播地址）</span></div>
+     </div>`;
+
+  const netSeg = Math.floor(net / size);
+  const k2 = pre + 2 <= 32 ? pre + 2 : pre;
+  const size2 = Math.pow(2, 32 - k2);
+  let subRows = '';
+  if(k2 > pre){
+    for(let k=0;k<4;k++){
+      const sn = (net + k * size2) >>> 0;
+      subRows += `<tr><td class="mono">子网 ${k+1}</td><td class="mono">${intToIp(sn)}/${k2}</td>
+        <td class="mono">${intToIp(sn)} ~ ${intToIp((sn + size2 - 1) >>> 0)}</td>
+        <td class="mono">${fmtNum(Math.max(0, size2 - 2), 0)}</td></tr>`;
+    }
+  }
+
+  $('snOut').innerHTML = stepNote('手算三步', 
+    `<b>① 写掩码</b>：/${pre} 表示前 ${pre} 位是 1 —— 掩码就是 ${intToIp(mask)}。<br>
+     <b>② 求网络地址</b>：IP 和掩码<b>按位与</b>（等价于把主机号那 ${32 - pre} 位清零）→ ${intToIp(net)}。<br>
+     <b>③ 求广播地址</b>：网络地址把主机号那 ${32 - pre} 位全置 1 → ${intToIp(bcast)}。<br>
+     可用地址就是这两者<b>之间的部分</b>，共 <b>${fmtNum(hosts, 0)}</b> 个。` +
+    (subRows ? `<div style="margin-top:12px"><b>按 /${k2} 再划 4 个子网（每个 ${fmtNum(Math.max(0, size2 - 2), 0)} 台可用）：</b></div>
+      <table class="tb" style="margin-top:8px"><tr><th>编号</th><th>网络地址</th><th>地址范围</th><th>可用主机</th></tr>${subRows}</table>` : '') +
+    `<div class="hint">换几个地址练手：<b>10.0.0.5/8</b>、<b>172.16.33.7/20</b>、<b>192.168.200.60/27</b>。看二进制那行怎么变 ——
+       <b>子网划分就是把"主机号的高位"借过来当子网号用</b>。</div>`) +
+    (bad ? `<div class="tip e"><span class="ti">输入无效</span><span>「${String(raw)}」不是一个合法的 IPv4 地址，已按 192.168.10.130 计算。请按 a.b.c.d 的格式输入。</span></div>` : '');
+}
+$('snIp').oninput = renderSn;
+$('snPre').oninput = renderSn;
+$('snLs').onclick = ()=>{
+  const p = Math.round(numVal('snPre', 26, 0, 32, 1));
+  $('snPre').value = Math.min(32, p + 2);
+  renderSn();
+};
+$('snReset').onclick = ()=>{ $('snIp').value = '192.168.10.130'; $('snPre').value = 26; renderSn(); };
+renderSn();
+/* ============================================================
+   动画 11 · TCP 三次握手 / 四次挥手
+   ============================================================ */
+const HS_OPEN = [
+  { f:'init', msg:'双方都处于 CLOSED。客户端准备发起连接。',
+    c:'CLOSED', s:'LISTEN',
+    note:'服务器先调用 listen 进入 LISTEN 状态，等待连接请求。<b>此时双方还没有任何连接状态。</b>' },
+  { f:'c2s', txt:'SYN=1, seq=x', c:'SYN_SENT', s:'LISTEN',
+    note:'<b>第一次握手。</b>客户端发 SYN=1 请求建立连接，并给出自己的初始序号 x。<br><b>注意：SYN 报文段不能携带数据，但要消耗一个序号</b> —— 所以下一次客户端发的数据要从 x+1 开始。' },
+  { f:'s2c', txt:'SYN=1, ACK=1, seq=y, ack=x+1', c:'SYN_SENT', s:'SYN_RCVD',
+    note:'<b>第二次握手。</b>服务器同意连接：SYN=1 表示自己也要同步序号（初始序号 y），ACK=1 表示确认收到了对方的 SYN。<br><b>ack = x+1</b>：因为 SYN 占用了序号 x，所以期望对方下一个字节是 x+1。' },
+  { f:'c2s', txt:'ACK=1, seq=x+1, ack=y+1', c:'ESTABLISHED', s:'ESTABLISHED',
+    note:'<b>第三次握手。</b>客户端确认收到了服务器的 SYN。<b>这一步可以携带数据</b>（前两次都不行）。<br>双方都进入 <b>ESTABLISHED</b>，连接建立完成。' }
+];
+const HS_CLOSE = [
+  { f:'init', msg:'双方处于 ESTABLISHED，数据传输已结束。',
+    c:'ESTABLISHED', s:'ESTABLISHED',
+    note:'连接是<b>全双工</b>的：两个方向各自独立。所以关闭时不能一次性关掉两边。' },
+  { f:'c2s', txt:'FIN=1, seq=u', c:'FIN_WAIT_1', s:'ESTABLISHED',
+    note:'<b>第一次挥手。</b>客户端说「<b>我没有数据要发了</b>」（注意：不是「我不能收了」）。<br>客户端进入 FIN_WAIT_1。<b>FIN 同样消耗一个序号。</b>' },
+  { f:'s2c', txt:'ACK=1, seq=v, ack=u+1', c:'FIN_WAIT_2', s:'CLOSE_WAIT',
+    note:'<b>第二次挥手。</b>服务器先确认收到 FIN，客户端进入 FIN_WAIT_2。<br>服务器进入 <b>CLOSE_WAIT</b> —— 这就是<b>半关闭</b>状态：客户不再发数据了，但<b>服务器可能还有数据要发</b>，客户端仍然要正常接收。' },
+  { f:'s2c', txt:'FIN=1, ACK=1, seq=w, ack=u+1', c:'FIN_WAIT_2', s:'LAST_ACK',
+    note:'<b>第三次挥手。</b>服务器终于也把数据发完了，于是发出自己的 FIN（seq=w）。<br><b>看清这里：ACK 和 FIN 是分开发的两个报文</b> —— 这就是「挥手要四次、握手只要三次」的根本原因。' },
+  { f:'c2s', txt:'ACK=1, seq=u+1, ack=w+1', c:'TIME_WAIT', s:'CLOSED',
+    note:'<b>第四次挥手。</b>客户端确认服务器的 FIN，服务器收到后直接进入 CLOSED。<br>但客户端<b>不立刻关闭，而是进入 TIME_WAIT</b>，要等 <b>2MSL</b>（最长报文段寿命的两倍）。' },
+  { f:'wait', msg:'客户端等 2MSL 之后才真正关闭', c:'CLOSED', s:'CLOSED',
+    note:'<b>为什么要等 2MSL？</b><br><b>①</b> 万一最后那个 ACK 在路上丢了，服务器会超时重传 FIN，客户端还在等就能再确认一次。如果客户端已经关了，服务器就永远等不到确认了。<br><b>②</b> 让本次连接产生的所有报文段都从网络中彻底消失，避免它们干扰下一次使用相同四元组的新连接。' }
+];
+function hsSteps(){ return ($('hsMode').value === 'close') ? HS_CLOSE : HS_OPEN; }
+let HS_i = 0, HS_timer = null;
+function hsSvg(steps){
+  const W = 660, H = 60 + steps.length * 46 + 40;
+  const xc = 168, xs = 496, top = 62, gap = 46;
+  const yOf = k => top + k * gap;
+  let g = '';
+  g += `<line x1="${xc}" y1="44" x2="${xc}" y2="${H-30}" stroke="#ded8cf" stroke-width="2"/>`;
+  g += `<line x1="${xs}" y1="44" x2="${xs}" y2="${H-30}" stroke="#ded8cf" stroke-width="2"/>`;
+  g += `<rect x="${xc-62}" y="8" width="124" height="30" rx="8" fill="#fff4e3" stroke="#d97706"/>`;
+  g += `<text x="${xc}" y="28" text-anchor="middle" font-size="12.5" font-weight="800" fill="#8a5209">客户端</text>`;
+  g += `<rect x="${xs-62}" y="8" width="124" height="30" rx="8" fill="#e0f5f2" stroke="#0f766e"/>`;
+  g += `<text x="${xs}" y="28" text-anchor="middle" font-size="12.5" font-weight="800" fill="#0a5f58">服务器</text>`;
+  const arrow = (x1, x2, y, color, txt, up) => {
+    const id = color === '#15803d' ? 'hsg' : (color === '#7c3aed' ? 'hsp' : 'hso');
+    return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="2.2" marker-end="url(#${id})"/>
+      <text x="${(x1+x2)/2}" y="${y + (up ? -8 : -8)}" text-anchor="middle" font-size="11.5" font-weight="700" fill="${color}">${txt}</text>`;
+  };
+  g += `<defs>
+    <marker id="hso" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#d97706"/></marker>
+    <marker id="hsg" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#15803d"/></marker>
+    <marker id="hsp" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#7c3aed"/></marker>
+  </defs>`;
+  let done = 0;
+  steps.forEach((s, k)=>{
+    const y = yOf(k);
+    if(s.f === 'c2s'){
+      const col = /FIN/.test(s.txt) ? '#dc2626' : '#d97706';
+      g += arrow(xc + 6, xs - 8, y, col, s.txt);
+      done = k;
+    } else if(s.f === 's2c'){
+      const col = /SYN=1, ACK=1, seq=y/.test(s.txt) ? '#7c3aed' : (/ACK=1, seq=v/.test(s.txt) ? '#15803d' : '#dc2626');
+      g += arrow(xs - 6, xc + 8, y, col, s.txt);
+      done = k;
+    } else if(s.f === 'init'){
+      g += `<text x="${W/2}" y="${y+4}" text-anchor="middle" font-size="11.5" fill="#a49db8">${s.msg}</text>`;
+    } else if(s.f === 'wait'){
+      g += `<rect x="${xc-96}" y="${y-18}" width="192" height="34" rx="8" fill="#fdeceb" stroke="#dc2626"/>`;
+      g += `<text x="${xc}" y="${y+4}" text-anchor="middle" font-size="11.5" font-weight="800" fill="#8d2020">TIME_WAIT · 等 2MSL</text>`;
+    }
+  });
+  const cur = steps[done];
+  g += `<text x="${28}" y="${yOf(done)+4}" font-size="11" font-weight="700" fill="#8a5209">${cur.c}</text>`;
+  g += `<text x="${W-28}" y="${yOf(done)+4}" text-anchor="end" font-size="11" font-weight="700" fill="#0a5f58">${cur.s}</text>`;
+  return `<div class="stage"><svg viewBox="0 0 ${W} ${H}">${g}</svg></div>
+  <div class="legend">
+    <span><i style="background:#d97706"></i>客户端发出</span>
+    <span><i style="background:#7c3aed"></i>服务器发出的 SYN+ACK</span>
+    <span><i style="background:#15803d"></i>纯 ACK 确认</span>
+    <span><i style="background:#dc2626"></i>FIN（结束报文）</span>
+    <span>两端文字 = 各自当前状态</span>
+  </div>`;
+}
+function hsRender(){
+  const steps = hsSteps();
+  const idx = Math.min(HS_i, steps.length - 1);
+  const shown = steps.slice(0, idx + 1);
+  $('hsStage').innerHTML = hsSvg(shown);
+  const s = steps[idx];
+  $('hsOut').innerHTML = stepNote(s.f === 'init' ? '初始状态' : s.f === 'wait' ? '等待 2MSL' : '报文交互',
+    s.note) + `<div class="hint">第 ${idx + 1} / ${steps.length} 步 · 切换下拉框可看另一种过程</div>`;
+}
+function hsStop(){ if(HS_timer){ clearInterval(HS_timer); HS_timer = null; } }
+$('hsPlay').onclick = ()=>{
+  hsStop(); HS_i = 0; hsRender();
+  HS_timer = setInterval(()=>{
+    if(HS_i >= hsSteps().length - 1){ hsStop(); return; }
+    HS_i++; hsRender();
+  }, 1200);
+};
+$('hsStep').onclick = ()=>{ hsStop(); if(HS_i < hsSteps().length - 1){ HS_i++; hsRender(); } };
+$('hsReset').onclick = ()=>{ hsStop(); HS_i = 0; hsRender(); };
+$('hsMode').onchange = ()=>{ hsStop(); HS_i = 0; hsRender(); };
+hsRender();
+
+/* ============================================================
+   动画 12 · TCP 滑动窗口
+   ============================================================ */
+const SW_N = 12;
+function swBuild(){
+  const W = Math.round(numVal('swSize', 4, 1, 8, 1));
+  const lost = Math.round(numVal('swLost', 3, 1, SW_N, 1));
+  const sr = ($('swMode').value === 'sr');
+  const ev = [];
+  let base = 1;
+  let guard = 0;
+  while(base <= SW_N && guard++ < 30){
+    const winEnd = Math.min(SW_N, base + W - 1);
+    ev.push({ k:'send', from:base, to:winEnd, base, winEnd, lost,
+      t:`发送窗口 [${base} ~ ${winEnd}] —— 把这 ${winEnd - base + 1} 个报文段全部发出，然后等确认。` });
+    if(lost >= base && lost <= winEnd){
+      if(sr){
+        if(lost > base) ev.push({ k:'ack', upto:lost - 1, base, winEnd, lost,
+          t:`收到 ${lost - 1} 号及之前的确认。<b>${lost} 号丢失</b>，但后面的 ${lost + 1}~${winEnd} 号<b>被接收方缓存了下来</b>（SR 的接收窗口 > 1）。` });
+        ev.push({ k:'bad', base, winEnd, lost,
+          t:`<b>${lost} 号超时。</b>因为后面几个已经被缓存，接收方也明确告诉过它"我缺 ${lost} 号" —— 所以<b>只需重传 ${lost} 号这一个</b>。` });
+        ev.push({ k:'retx', from:lost, to:lost, base, winEnd, lost,
+          t:`重传 ${lost} 号。收到后接收方把缓存里的一起按序交给上层，窗口一次性右移。` });
+      } else {
+        if(lost > base) ev.push({ k:'ack', upto:lost - 1, base, winEnd, lost,
+          t:`收到累积确认 <b>ack = ${lost}</b>（表示 ${lost - 1} 号及之前都收到了）。<b>窗口只能停在 ${lost}</b>，后面的全部作废。` });
+        ev.push({ k:'bad', base, winEnd, lost,
+          t:`<b>${lost} 号超时。</b>GBN 的接收窗口只有 1，<b>乱序到达的帧一律丢弃</b> —— 所以 ${lost + 1}~${winEnd} 号虽然发过，但接收方根本没留。` });
+        ev.push({ k:'retx', from:lost, to:winEnd, base, winEnd, lost,
+          t:`<b>重传 ${lost} 号以及它之后的全部 ${winEnd - lost + 1} 个报文段</b> —— 这就是「后退 N 帧」名字的由来，代价明显更大。` });
+      }
+      ev.push({ k:'ack', upto:winEnd, base, winEnd, lost,
+        t:`${winEnd} 号全部确认。窗口右移到 [${winEnd + 1} ~ ${Math.min(SW_N, winEnd + W)}]。` });
+      base = winEnd + 1;
+    } else {
+      ev.push({ k:'ack', upto:winEnd, base, winEnd, lost,
+        t:`${base} ~ ${winEnd} 号全部按序到达并确认，窗口整体右移。` });
+      base = winEnd + 1;
+    }
+  }
+  return { ev, W, lost, sr };
+}
+let SW_i = 0, SW_timer = null;
+function swRender(){
+  const { ev, W, lost, sr } = swBuild();
+  const idx = Math.min(SW_i, ev.length - 1);
+  const st = new Array(SW_N + 1).fill('idle');
+  let curWin = null;
+  for(let k = 0; k <= idx; k++){
+    const e = ev[k];
+    curWin = { base:e.base, winEnd:e.winEnd };
+    if(e.k === 'send') for(let i=e.from;i<=e.to;i++) if(st[i] === 'idle') st[i] = 'tx';
+    if(e.k === 'ack')  for(let i=1;i<=e.upto;i++) st[i] = 'ok';
+    if(e.k === 'bad')  st[e.lost] = 'bad';
+    if(e.k === 'retx') for(let i=e.from;i<=e.to;i++) st[i] = 'tx2';
+  }
+  const clsOf = { idle:'', tx:'tx', tx2:'on', bad:'bad', ok:'ok' };
+  const titleOf = { idle:'未发送', tx:'已发送·等确认', tx2:'重传中', bad:'丢失', ok:'已确认' };
+
+  const cells = [];
+  for(let i=1;i<=SW_N;i++){
+    const inWin = curWin && i >= curWin.base && i <= curWin.winEnd;
+    cells.push(`<span class="bit ${clsOf[st[i]]}" style="${inWin ? 'box-shadow:0 0 0 2px #d97706;z-index:2' : ''}">${i}</span>`);
+  }
+  const nums = [];
+  for(let i=1;i<=SW_N;i++) nums.push(`<span style="width:26px;text-align:center;font-size:10px;color:#b0a89b;margin-left:-1px;display:inline-block">${st[i] === 'idle' ? '' : titleOf[st[i]]}</span>`);
+
+  const logs = ev.slice(Math.max(0, idx - 3), idx + 1).map((e, k2)=>
+    `<span class="lg ${k2 === Math.min(3, idx) ? 'ok' : 'mut'}">第 ${Math.max(1, idx - 3) + k2 + 1} 步 · ${e.t.replace(/<[^>]+>/g, '')}</span>`).join('');
+
+  $('swStage').innerHTML =
+    `<div class="kv">
+      <span>窗口大小 W = <b>${W}</b></span>
+      <span>要传 <b>${SW_N}</b> 个报文段</span>
+      <span>第 <b>${lost}</b> 号丢失</span>
+      <span>策略 <b>${sr ? '选择重传 SR' : '后退 N 帧 GBN'}</b></span>
+     </div>
+     <div class="cap" style="font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;margin:14px 0 6px">报文段序号（橙色描边 = 当前发送窗口）</div>
+     <div class="bits">${cells.join('')}</div>
+     <div style="display:flex;margin-top:4px">${nums.join('')}</div>
+     <div class="legend">
+       <span><i style="background:#fff;border:1px solid #ded8cf"></i>未发送</span>
+       <span><i style="background:#fff4e3;border:1px solid #d97706"></i>已发送·等待确认</span>
+       <span><i style="background:#d97706;border:1px solid #d97706"></i>重传中</span>
+       <span><i style="background:#fdeceb;border:1px solid #dc2626"></i>丢失</span>
+       <span><i style="background:#e8f6ec;border:1px solid #15803d"></i>已确认</span>
+     </div>
+     <div class="logbox" style="margin-top:14px">${logs}</div>`;
+
+  const e = ev[idx];
+  $('swOut').innerHTML = stepNote(`第 ${idx + 1} / ${ev.length} 步`, e.t) +
+    `<div class="hint">把「策略」在 GBN 和 SR 之间来回切换，<b>重点看丢包之后重传范围有什么不同</b> —— 这就是两者的全部区别。
+     <br>另外注意：<b>窗口右移的条件是「窗口内最左边那个已被确认」</b>，不是"收到任意一个确认"。</div>`;
+}
+function swStop(){ if(SW_timer){ clearInterval(SW_timer); SW_timer = null; } }
+$('swRun').onclick = ()=>{
+  swStop(); SW_i = 0; swRender();
+  SW_timer = setInterval(()=>{
+    if(SW_i >= swBuild().ev.length - 1){ swStop(); return; }
+    SW_i++; swRender();
+  }, 1100);
+};
+$('swStep').onclick = ()=>{ swStop(); if(SW_i < swBuild().ev.length - 1){ SW_i++; swRender(); } };
+$('swReset').onclick = ()=>{ swStop(); SW_i = 0; swRender(); };
+['swSize','swLost'].forEach(id=>{ $(id).oninput = ()=>{ swStop(); SW_i = 0; swRender(); }; });
+$('swMode').onchange = ()=>{ swStop(); SW_i = 0; swRender(); };
+swRender();
+/* ============================================================
+   动画 13 · TCP 拥塞控制曲线
+   ============================================================ */
+function ccBuild(){
+  const th0 = Math.round(numVal('ccTh', 16, 2, 64, 1));
+  const ev = $('ccEv').value || 'to';
+  const toR = ev === 'to' ? 12 : (ev === 'both' ? 10 : -1);
+  const a3R = ev === 'ack3' ? 12 : (ev === 'both' ? 16 : -1);
+  const pts = [];
+  let cwnd = 1, th = th0, phase = 'slow';
+  for(let r = 1; r <= 22; r++){
+    if(r === toR){
+      const old = cwnd;
+      th = Math.max(2, Math.floor(cwnd / 2));
+      pts.push({ r, cwnd, th, phase: 'slow', mark: '超时', old });
+      cwnd = 1; phase = 'slow';
+      continue;
+    }
+    if(r === a3R){
+      const old = cwnd;
+      th = Math.max(2, Math.floor(cwnd / 2));
+      pts.push({ r, cwnd, th, phase: 'avoid', mark: '3个ACK', old });
+      cwnd = th; phase = 'avoid';
+      continue;
+    }
+    pts.push({ r, cwnd, th, phase, mark: '' });
+    if(phase === 'slow'){
+      cwnd = cwnd * 2;
+      if(cwnd >= th){ cwnd = th; phase = 'avoid'; }
+    } else cwnd += 1;
+  }
+  return { pts, th0, toR, a3R, ev };
+}
+function renderCc(){
+  const { pts, th0, toR, a3R, ev } = ccBuild();
+  const W = 660, H = 250, PL = 56, PR = 24, PT = 26, PB = 42;
+  const maxY = Math.max(th0, ...pts.map(p=>p.cwnd)) * 1.15;
+  const X = r => PL + (r - 1) / 21 * (W - PL - PR);
+  const Y = v => H - PB - v / maxY * (H - PB - PT);
+
+  let grid = '';
+  for(let v = 0; v <= maxY; v += Math.max(4, Math.round(maxY / 6 / 4) * 4)){
+    if(v > maxY) break;
+    grid += `<line x1="${PL}" y1="${Y(v)}" x2="${W-PR}" y2="${Y(v)}" stroke="#eeecf5"/>
+             <text x="${PL-8}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="#a49db8">${v}</text>`;
+  }
+  for(let r = 1; r <= 22; r += 2){
+    grid += `<text x="${X(r)}" y="${H-PB+18}" text-anchor="middle" font-size="10" fill="#a49db8">${r}</text>`;
+  }
+  let line = '', dots = '', marks = '';
+  pts.forEach((p, i)=>{
+    const x = X(p.r), y = Y(p.cwnd);
+    line += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+    const c = p.mark ? '#dc2626' : (p.phase === 'slow' ? '#d97706' : '#0891b2');
+    dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${p.mark ? 5 : 3.2}" fill="${c}"/>`;
+    if(p.mark){
+      marks += `<line x1="${x.toFixed(1)}" y1="${(y-8).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y-26).toFixed(1)}" stroke="#dc2626" stroke-width="1.5"/>
+                <text x="${x.toFixed(1)}" y="${(y-31).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#dc2626">${p.mark}</text>`;
+    }
+  });
+  const thLine = (v, y0, y1, label) =>
+    `<line x1="${PL}" y1="${Y(v)}" x2="${W-PR}" y2="${Y(v)}" stroke="#7c3aed" stroke-width="1.4" stroke-dasharray="6 4"/>
+     <text x="${W-PR-4}" y="${Y(v)-6}" text-anchor="end" font-size="10.5" font-weight="700" fill="#7c3aed">ssthresh = ${v}</text>`;
+
+  const last = pts[pts.length - 1];
+  $('ccStage').innerHTML =
+    `<div class="stage"><svg viewBox="0 0 ${W} ${H}">
+      ${grid}
+      <line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="#d8d2c8" stroke-width="1.5"/>
+      <line x1="${PL}" y1="${PT-8}" x2="${PL}" y2="${H-PB}" stroke="#d8d2c8" stroke-width="1.5"/>
+      ${thLine(th0)}
+      ${line ? `<path d="${line}" fill="none" stroke="#d97706" stroke-width="2.4" stroke-linejoin="round" opacity=".95"/>` : ''}
+      ${dots}${marks}
+      <text x="${W/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="#a49db8">传输轮次（每轮 ≈ 一个 RTT）</text>
+      <text x="${PL-42}" y="${PT-6}" font-size="10" fill="#a49db8">cwnd</text>
+    </svg></div>
+    <div class="legend">
+      <span><i style="background:#d97706"></i>慢开始阶段（指数增长）</span>
+      <span><i style="background:#0891b2"></i>拥塞避免阶段（线性增长）</span>
+      <span><i style="background:#7c3aed"></i>紫色虚线 = ssthresh 门限</span>
+      <span><i style="background:#dc2626"></i>红点 = 发生拥塞事件</span>
+    </div>`;
+
+  let expl = '';
+  if(ev === 'to'){
+    const p = pts.find(x => x.mark === '超时');
+    expl = `第 ${toR} 轮发生<b>超时</b>（判为严重拥塞）：当时 cwnd = ${p ? p.old : '?'} → 新 ssthresh = ⌊cwnd/2⌋ = <b>${p ? p.th : '?'}</b>，cwnd <b>直接回到 1</b>，重新走慢开始。<br>
+      所以曲线在那一刻<b>垂直跌到最底部</b>，然后重新指数上升 —— 这是超时最典型的形状（锯齿的"深谷"）。`;
+  } else if(ev === 'ack3'){
+    const p = pts.find(x => x.mark === '3个ACK');
+    expl = `第 ${a3R} 轮收到<b>3 个重复 ACK</b>（快重传 + 快恢复）：当时 cwnd = ${p ? p.old : '?'} → 新 ssthresh = <b>${p ? p.th : '?'}</b>，cwnd <b>= ssthresh（${p ? p.th : '?'}），不回到 1</b>，直接进入拥塞避免。<br>
+      所以曲线只<b>掉一半就继续线性上升</b> —— 和超时那条"深谷"对比一下，就明白为什么说「快恢复说明网络只是轻微拥塞」。`;
+  } else {
+    expl = `两处事件都发生了：<br>
+      第 10 轮<b>超时</b> → ssthresh 减半、cwnd <b>= 1</b>，重新慢开始（深谷）；<br>
+      第 16 轮<b>3 个重复 ACK</b> → ssthresh 再减半、cwnd <b>= 新 ssthresh</b>，只掉一半（浅谷）。<br>
+      <b>两种拥塞事件在图上长得完全不一样</b>，这是这类题最常考的判断点。`;
+  }
+
+  $('ccOut').innerHTML = stepNote('这条曲线怎么读', expl +
+    `<div class="kv" style="margin-top:10px">
+      <span>初始 ssthresh = <b>${th0}</b></span>
+      <span>结束轮次 = <b>${last.r}</b></span>
+      <span>结束 cwnd = <b>${last.cwnd}</b></span>
+      <span>发送窗口 = min(cwnd, rwnd)</span>
+    </div>`) +
+    `<div class="hint">规律记牢：<b>每次拥塞后新的 ssthresh 总是「当时 cwnd 的一半」</b>，所以曲线会反复在同一个水平线附近触顶回落。
+     <br>改动「初始 ssthresh」看曲线的拐点怎么移动 —— 慢开始段永远是<b>翻倍</b>，拥塞避免段永远是<b>每轮 +1</b>。</div>`;
+}
+$('ccTh').oninput = renderCc;
+$('ccEv').onchange = renderCc;
+$('ccReset').onclick = ()=>{ $('ccTh').value = 16; $('ccEv').value = 'to'; renderCc(); };
+renderCc();
+
+/* ============================================================
+   动画 14 · DNS 域名解析
+   ============================================================ */
+const DN_NODES = [
+  { x:56,  y:158, n:'客户机', s:'发起解析' },
+  { x:216, y:158, n:'本地域名服务器', s:'ISP 提供' },
+  { x:370, y:52,  n:'根域名服务器', s:'13 组 · .' },
+  { x:492, y:52,  n:'顶级域名服务器', s:'.com' },
+  { x:604, y:52,  n:'权限域名服务器', s:'example.com' }
+];
+const DN_ITER = [
+  { a:0, b:1, t:'① 递归请求：www.example.com 的 IP 是？', c:'#d97706',
+    note:'客户机把请求交给本地域名服务器，并<b>要求它给出最终结果</b> —— 这就是<b>递归查询</b>：委托方不再自己动手。' },
+  { a:1, b:2, t:'② 问根：.com 的服务器地址？', c:'#0891b2',
+    note:'本地服务器不知道答案，去问根。根<b>不替它查</b>，只回答「<b>我不知道，你去问 .com 顶级域名服务器（地址是 …）</b>」。<br>这就是<b>迭代查询</b>：只指路，不代劳。' },
+  { a:1, b:3, t:'③ 问顶级：example.com 的权限服务器？', c:'#0891b2',
+    note:'本地服务器接着去问 .com 顶级服务器。同样地，顶级服务器<b>也不替它查</b>，只告诉他「<b>去问 example.com 的权限域名服务器</b>」。<br><b>注意：每一步都是本地服务器自己去问的</b> —— 这是迭代查询的关键特征。' },
+  { a:1, b:4, t:'④ 问权限：www.example.com 的 IP？', c:'#7c3aed',
+    note:'权限域名服务器是这个域名的<b>权威管理者</b>，它手里有真正的记录，直接回答：「<b>93.184.216.34</b>」。' },
+  { a:1, b:0, t:'⑤ 返回结果，并写入高速缓存', c:'#15803d',
+    note:'本地服务器把结果返回给客户机，同时<b>写进自己的高速缓存</b>（带 TTL）。<br><b>下次别人再问同一个域名，本地服务器直接回答，根本不用再去找根</b> —— 这就是 DNS 缓存能把根服务器负载压下来的原因。' }
+];
+const DN_REC = [
+  { a:0, b:1, t:'① 递归请求', c:'#d97706',
+    note:'客户机 → 本地域名服务器，同样是递归查询。' },
+  { a:1, b:2, t:'② 本地服务器请根"替我查到底"', c:'#0891b2',
+    note:'<b>关键区别在这里：</b>本地服务器要求根<b>替它把这件事办完</b>，而不是只给它指路。' },
+  { a:2, b:3, t:'③ 根继续请顶级代查', c:'#0891b2',
+    note:'根服务器替本地服务器去问 .com 顶级服务器。' },
+  { a:3, b:4, t:'④ 顶级继续请权限代查', c:'#7c3aed',
+    note:'顶级服务器替它去问 example.com 的权限服务器。' },
+  { a:4, b:3, t:'⑤ 权限答：93.184.216.34', c:'#15803d',
+    note:'权限服务器知道答案，返回给顶级服务器。' },
+  { a:3, b:2, t:'⑥ 逐级回传', c:'#15803d',
+    note:'顶级服务器把结果回传给根。' },
+  { a:2, b:1, t:'⑦ 回传到本地服务器', c:'#15803d',
+    note:'根再把结果回传给本地服务器 —— 至此请求才走完全程。' },
+  { a:1, b:0, t:'⑧ 返回给客户机', c:'#15803d',
+    note:'本地服务器把最终结果交给客户机。<br><b>看到代价了吗？</b>递归查询让每一级都参与了转发，链路更长、服务器负担更重 —— <b>所以现实中根和顶级服务器通常不提供递归服务</b>，本动画是为了对比两种查询方式才这样画。' }
+];
+function dnSteps(){ return ($('dnMode').value === 'rec') ? DN_REC : DN_ITER; }
+let DN_i = 0, DN_timer = null;
+function dnSvg(shown){
+  const W = 660, H = 214;
+  let g = '';
+  DN_NODES.forEach(n=>{
+    const active = shown.some(s => s.a === DN_NODES.indexOf(n) || s.b === DN_NODES.indexOf(n));
+    g += `<rect x="${n.x-50}" y="${n.y-23}" width="100" height="46" rx="9"
+            fill="${active ? '#fff4e3' : '#fff'}" stroke="${active ? '#d97706' : '#ded8cf'}" stroke-width="${active ? 2 : 1.4}"/>`;
+    g += `<text x="${n.x}" y="${n.y-3}" text-anchor="middle" font-size="11" font-weight="800" fill="${active ? '#8a5209' : '#4b5665'}">${n.n}</text>`;
+    g += `<text x="${n.x}" y="${n.y+14}" text-anchor="middle" font-size="9.5" fill="#b0a89b">${n.s}</text>`;
+  });
+  g += `<defs><marker id="dna" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L7,3 L0,6 z" fill="#7d7890"/></marker></defs>`;
+  const yOff = {};
+  shown.forEach((s, k)=>{
+    const A = DN_NODES[s.a], B = DN_NODES[s.b];
+    const key = s.a + '-' + s.b;
+    yOff[key] = (yOff[key] || 0);
+    const dy = yOff[key] * 13;
+    const x1 = A.x + (B.x > A.x ? 50 : -50);
+    const x2 = B.x + (B.x > A.x ? -52 : 52);
+    const y1 = A.y + dy, y2 = B.y + dy;
+    g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${s.c}" stroke-width="2" marker-end="url(#dna)" opacity=".9"/>`;
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    g += `<text x="${mx}" y="${my - 6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${s.c}">${s.t}</text>`;
+  });
+  return `<div class="stage"><svg viewBox="0 0 ${W} ${H}">${g}</svg></div>
+  <div class="legend">
+    <span><i style="background:#d97706"></i>客户机 ↔ 本地服务器（递归）</span>
+    <span><i style="background:#0891b2"></i>本地服务器逐级询问（迭代）</span>
+    <span><i style="background:#7c3aed"></i>问到权限服务器</span>
+    <span><i style="background:#15803d"></i>返回结果</span>
+  </div>`;
+}
+function dnRender(){
+  const steps = dnSteps();
+  const idx = Math.min(DN_i, steps.length - 1);
+  const shown = steps.slice(0, idx + 1);
+  $('dnStage').innerHTML = dnSvg(shown);
+  const s = steps[idx];
+  const mode = ($('dnMode').value === 'rec') ? '递归查询' : '迭代查询';
+  $('dnOut').innerHTML = stepNote(`${mode} · 第 ${idx + 1} / ${steps.length} 步`, s.note) +
+    `<div class="hint">切换上方下拉框对比两种模式：<b>迭代 = 每一步都是本地服务器自己在问</b>；<b>递归 = 上一级替下一级问到底</b>。</div>`;
+}
+function dnStop(){ if(DN_timer){ clearInterval(DN_timer); DN_timer = null; } }
+$('dnPlay').onclick = ()=>{
+  dnStop(); DN_i = 0; dnRender();
+  DN_timer = setInterval(()=>{
+    if(DN_i >= dnSteps().length - 1){ dnStop(); return; }
+    DN_i++; dnRender();
+  }, 1200);
+};
+$('dnStep').onclick = ()=>{ dnStop(); if(DN_i < dnSteps().length - 1){ DN_i++; dnRender(); } };
+$('dnReset').onclick = ()=>{ dnStop(); DN_i = 0; dnRender(); };
+$('dnMode').onchange = ()=>{ dnStop(); DN_i = 0; dnRender(); };
+dnRender();
+</script>
+</body>
+</html>

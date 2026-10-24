@@ -1,0 +1,2889 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>408 操作系统 · 交互式全景</title>
+<style>
+:root{
+  --bg:#f4f6fa; --panel:#fff; --text:#171a21; --muted:#6b7280; --line:#e3e8ef;
+  --primary:#0f766e; --primary-l:#e4f5f2;
+  --accent:#d97706; --accent-l:#fff4e3;
+  --green:#15803d; --green-l:#e8f6ec;
+  --red:#dc2626; --red-l:#fdeceb;
+  --purple:#7c3aed; --purple-l:#f2ecfe;
+  --blue:#2563eb; --blue-l:#eaf0ff;
+  --cyan:#0891b2; --cyan-l:#e2f7fb;
+  --radius:12px;
+  --shadow:0 1px 2px rgba(16,24,40,.035),0 8px 22px -14px rgba(16,24,40,.15);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);font-size:15px;line-height:1.8;
+  font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#cdd5e0;border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#b4bfcd}
+
+.progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;
+  background:linear-gradient(90deg,var(--primary),var(--cyan));transition:width .1s linear}
+
+/* ---------- 布局 ---------- */
+.app{display:flex;align-items:flex-start}
+.sidebar{position:fixed;top:0;left:0;width:256px;height:100vh;background:var(--panel);
+  border-right:1px solid var(--line);padding:20px 14px;overflow-y:auto;z-index:50}
+.brand{padding:4px 10px 16px;border-bottom:1px dashed var(--line);margin-bottom:14px}
+.brand-t{font-size:15px;font-weight:800;letter-spacing:.2px}
+.brand-s{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav-sep{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#b6c0cc;padding:12px 10px 5px}
+.speed{margin-top:20px;padding:13px 10px 2px;border-top:1px dashed var(--line)}
+.speed-t{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#bcb6cc;margin-bottom:8px}
+.speed-b{display:flex;gap:5px}
+.speed-b button{flex:1;font-family:inherit;font-size:12px;font-weight:650;padding:6px 0;border-radius:7px;
+  border:1px solid var(--line);background:#fff;color:#6b6580;cursor:pointer;transition:.16s}
+.speed-b button:hover{border-color:var(--primary);color:var(--primary)}
+.speed-b button.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.speed-note{font-size:10.5px;color:#bcb6cc;margin-top:7px;line-height:1.6}
+.nav-i{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;
+  text-decoration:none;color:#455061;font-size:13px;transition:.18s;border-left:2px solid transparent}
+.nav-i b{font-size:11px;font-weight:700;color:#9aa4b2;font-variant-numeric:tabular-nums;min-width:16px}
+.nav-i:hover{background:#f2f5f9;color:var(--text)}
+.nav-i.on{background:var(--primary-l);color:var(--primary);font-weight:650;border-left-color:var(--primary)}
+.nav-i.on b{color:var(--primary)}
+.nav-tag{font-size:10px;padding:1px 5px;border-radius:4px;margin-left:auto;font-weight:600}
+.t3{background:var(--red-l);color:var(--red)}
+.t2{background:var(--accent-l);color:var(--accent)}
+.t1{background:#eef2f7;color:#7b8798}
+
+.content{margin-left:256px;flex:1;min-width:0;max-width:1100px;padding:0 34px 90px}
+/* ---------- 小屏：顶部条 + 抽屉式章节导航 ---------- */
+.mtop{display:none}
+.navbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  width:38px;height:38px;flex-shrink:0;padding:0;border-radius:10px;cursor:pointer;
+  border:1px solid var(--line);background:#fff}
+.navbtn i{display:block;width:16px;height:2px;border-radius:2px;background:#5c5773;transition:.2s}
+.navbtn.on i:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.navbtn.on i:nth-child(2){opacity:0}
+.navbtn.on i:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.mtop-t{font-size:13.5px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scrim{position:fixed;inset:0;z-index:70;background:rgba(18,23,33,.45);
+  opacity:0;pointer-events:none;transition:opacity .22s}
+
+@media(max-width:980px){
+  .mtop{display:flex;align-items:center;gap:11px;position:fixed;top:0;left:0;right:0;z-index:90;
+    height:56px;padding:0 14px;background:rgba(255,255,255,.94);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);box-shadow:0 8px 20px -16px rgba(16,24,40,.6)}
+  .sidebar{top:56px;height:calc(100vh - 56px);transform:translateX(-100%);
+    transition:transform .22s ease;z-index:80;box-shadow:none}
+  .sidebar.open{transform:none;box-shadow:0 20px 60px -18px rgba(16,24,40,.5)}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .content{margin-left:0;padding:58px 16px 60px}
+  .hero{padding-top:20px}
+}
+
+/* ---------- Hero ---------- */
+.hero{padding:58px 0 34px;border-bottom:1px solid var(--line);margin-bottom:44px}
+.hero-k{font-size:11.5px;letter-spacing:2.6px;color:var(--primary);font-weight:700;text-transform:uppercase}
+.hero h1{font-size:32px;margin:14px 0 12px;font-weight:800;letter-spacing:-.4px;line-height:1.32}
+.hero p{color:var(--muted);margin:0 0 28px;max-width:620px;font-size:14px;line-height:1.9}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-width:660px}
+@media(max-width:820px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 16px;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:21px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums;line-height:1.35}
+.stat span{display:block;font-size:11px;color:var(--muted);line-height:1.45}
+
+/* ---------- 四门课地图 ---------- */
+.subj{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0 0}
+@media(max-width:980px){.subj{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sj{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.2s}
+.sj.cur{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l),var(--shadow)}
+.sj.cur::before{content:"当前";position:absolute;top:0;right:0;background:var(--primary);color:#fff;
+  font-size:9.5px;font-weight:800;letter-spacing:.6px;padding:3px 9px;border-radius:0 0 0 9px}
+.sj-n{font-size:11px;font-weight:800;color:#b6c0cc;letter-spacing:1px}
+.sj-t{font-size:14.5px;font-weight:800;margin:3px 0 7px}
+.sj-s{font-size:11.5px;color:var(--muted);line-height:1.7}
+.sj-bar{height:6px;border-radius:3px;background:#eef2f7;margin-top:10px;overflow:hidden}
+.sj-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#5eead4,var(--primary))}
+.sj.mut .sj-bar i{background:#c9d3e0}
+.sj.mut .sj-t{color:#8b95a3}
+/* ---------- 四门课地图的跳转（2026-09-29 补） ---------- */
+.hero-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.home-link{margin-left:auto;font-size:12px;font-weight:700;color:var(--muted);text-decoration:none;
+  border:1px solid var(--line);border-radius:20px;padding:4px 14px;transition:.18s;background:#fff;white-space:nowrap}
+.home-link:hover{color:var(--primary);border-color:var(--primary);box-shadow:0 4px 12px -8px rgba(16,24,40,.4)}
+a.sj{text-decoration:none;color:inherit;cursor:pointer}
+a.sj:hover{border-color:var(--primary);transform:translateY(-2px);
+  box-shadow:0 10px 22px -12px rgba(16,24,40,.34),var(--shadow)}
+a.sj:hover .sj-t{color:var(--primary)}
+a.sj::after{content:"进入 →";position:absolute;right:12px;bottom:8px;font-size:10.5px;font-weight:800;
+  color:var(--primary);opacity:0;transform:translateX(-4px);transition:.2s}
+a.sj:hover::after{opacity:1;transform:translateX(0)}
+.sj.cur::after{content:"本页";position:absolute;right:12px;bottom:8px;font-size:10.5px;
+  font-weight:800;color:#8b95a3;letter-spacing:.4px}
+
+/* ---------- 章节分值权重 ---------- */
+.rank{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 22px;margin:28px 0 0;box-shadow:var(--shadow)}
+.rank-h{margin-bottom:16px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
+.rank-t{font-size:13.5px;font-weight:750;color:#2b3542}
+.rank-s{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.7}
+.rank-r{display:grid;grid-template-columns:134px minmax(0,1fr) 66px 54px;gap:12px;align-items:center;
+  margin-bottom:9px;font-size:12px}
+@media(max-width:620px){.rank-r{grid-template-columns:110px minmax(0,1fr) 58px 48px;gap:8px}}
+.rank-n{color:#3c4654;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-bar{height:10px;background:#eef2f7;border-radius:5px;overflow:hidden}
+.rank-bar i{display:block;height:100%;border-radius:5px;width:0;
+  transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.rank-v{text-align:right;color:#4b5665;font-variant-numeric:tabular-nums;font-weight:700}
+.rank-b{font-size:10px;font-weight:800;padding:2px 0;border-radius:5px;text-align:center;letter-spacing:.4px}
+.tier1{background:var(--red-l);color:var(--red)}
+.tier2{background:var(--primary-l);color:var(--primary)}
+.tier3{background:#eef2f7;color:#7b8798}
+.rank-sum{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+.rank-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-bottom:14px}
+.rank-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.rank-sum-r{display:grid;grid-template-columns:106px minmax(0,1fr) 42px;gap:12px;align-items:center;
+  margin-bottom:9px;font-size:12px}
+.rank-sum-bar{height:11px;background:#eef2f7;border-radius:6px;overflow:hidden}
+.rank-sum-bar i{display:block;height:100%;border-radius:6px;width:0;transition:width .9s ease .3s}
+.rank-sum-v{text-align:right;color:#4b5665;font-weight:700;font-variant-numeric:tabular-nums}
+.rank-note{margin-top:14px;font-size:12.2px;color:#4b5665;line-height:1.8;
+  background:#f7f9fc;border:1px solid var(--line);border-left:3px solid var(--primary);
+  border-radius:9px;padding:12px 15px}
+
+/* ---------- Section ---------- */
+.sec{padding:56px 0 20px;scroll-margin-top:20px}
+.sec-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:16px;
+  border-bottom:2px solid var(--line);margin-bottom:28px}
+.sec-num{font-size:11px;font-weight:800;letter-spacing:1.6px;color:#fff;background:var(--primary);
+  padding:4px 9px;border-radius:6px}
+.sec-head h2{font-size:23px;margin:0;font-weight:800;letter-spacing:-.2px}
+.weight{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;margin-left:auto}
+.w3{background:var(--red-l);color:var(--red)}
+.w2{background:var(--accent-l);color:var(--accent)}
+.w1{background:#eef2f7;color:#7b8798}
+
+.sub{font-size:16px;font-weight:750;margin:40px 0 16px;display:flex;align-items:center;gap:9px}
+.sub::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--primary)}
+.sub.g::before{background:var(--green)} .sub.a::before{background:var(--accent)}
+.sub.p::before{background:var(--purple)} .sub.b::before{background:var(--blue)}
+
+/* ---------- 卡片 ---------- */
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;box-shadow:var(--shadow);min-width:0}
+.card h4{margin:0 0 11px;padding-bottom:9px;border-bottom:1px solid #f0f3f7;
+  font-size:13.5px;font-weight:750;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.card h4 .pt{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--primary-l);color:var(--primary)}
+.card h4 .pt.hot{background:var(--red-l);color:var(--red)}
+.card h4 .pt.b{background:var(--blue-l);color:var(--blue)}
+.card p{margin:0 0 7px;font-size:13.5px;color:#3c4654}
+.card ul{margin:6px 0 0;padding-left:17px;font-size:13.5px;color:#3c4654}
+.card li{margin:4px 0}
+.card li::marker{color:var(--primary)}
+
+.fm{background:#f7f9fc;border:1px solid var(--line);border-left:3px solid var(--primary);
+  border-radius:8px;padding:9px 13px;margin:9px 0;font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px;line-height:1.9;color:#1e293b;overflow-x:auto;white-space:pre-wrap}
+.fm.g{border-left-color:var(--green)} .fm.a{border-left-color:var(--accent)}
+.fm.b{border-left-color:var(--blue)} .fm.p{border-left-color:var(--purple)}
+.key{background:linear-gradient(transparent 62%,#ffe9a8 62%);font-weight:650;padding:0 1px}
+.tip{display:flex;gap:9px;font-size:12.8px;padding:10px 13px;border-radius:9px;margin:10px 0;line-height:1.7}
+.tip .ti{font-weight:800;flex-shrink:0}
+.tip.e{background:var(--red-l);color:#8d2020}
+.tip.m{background:var(--accent-l);color:#8a5209}
+.tip.i{background:var(--cyan-l);color:#0b5d70}
+.tip.s{background:var(--green-l);color:#0a6b4a}
+
+table.tb{width:100%;border-collapse:collapse;font-size:12.8px;margin:11px 0;
+  border:1px solid var(--line);border-radius:9px;overflow:hidden}
+table.tb th{background:#f4f7fb;text-align:left;padding:8px 11px;font-weight:700;font-size:12.2px;
+  color:#38424f;border-bottom:1px solid var(--line);white-space:nowrap}
+table.tb td{padding:8px 11px;border-bottom:1px solid #f0f3f7;color:#3c4654;vertical-align:top}
+table.tb tr:last-child td{border-bottom:0}
+table.tb tr:hover td{background:#fafbfd}
+/* 窄屏：宽表自己横向滚动，不把整页撑出横向滚动条 */
+@media(max-width:700px){
+  table.tb{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* 少数动画的图形/表格本身比卡片宽，给一条横向滚动，别让内容被裁掉 */
+  .demo-b{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+.mono{font-family:"Cascadia Mono",Consolas,monospace;font-size:12.5px}
+
+/* ---------- 跨科目连接 ---------- */
+.xlink{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
+  padding:16px 18px;box-shadow:var(--shadow);border-left:4px solid var(--purple)}
+.xlink h4{margin:0 0 10px;font-size:13.5px;font-weight:750;display:flex;align-items:center;gap:8px}
+.xlink h4 .tagx{font-size:10px;font-weight:800;padding:2px 8px;border-radius:5px;background:var(--purple-l);color:var(--purple)}
+.xitem{display:grid;grid-template-columns:130px 1fr;gap:10px;padding:8px 0;border-top:1px dashed #eef2f7;font-size:12.8px}
+.xitem:first-of-type{border-top:0}
+.xitem .xa{font-weight:700;color:#5b21b6}
+.xitem .xb{color:#3c4654}
+
+/* ---------- 演示区 ---------- */
+.demo{background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);padding:0;margin:18px 0 30px;overflow:hidden;box-shadow:var(--shadow)}
+.demo-h{display:flex;align-items:center;gap:9px;padding:12px 20px;background:#f7f9fc;
+  border-bottom:1px solid var(--line);font-size:13px;font-weight:750;color:#2b3542}
+.demo-h .dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 0 3px rgba(21,128,61,.16);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.demo-h .tag{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--primary);
+  background:var(--primary-l);padding:2px 8px;border-radius:5px}
+.demo-b{padding:22px 20px}
+@media(max-width:860px){.demo-b{padding:15px}}
+
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.ctl label{font-size:12.5px;color:#4b5665;font-weight:600}
+.ctl>input,.ctl>select{margin-right:7px}
+input[type=number],input[type=text],select{font-family:inherit;font-size:13px;padding:6px 10px;
+  border:1px solid #cdd5e0;border-radius:8px;background:#fff;color:var(--text);outline:none;transition:.15s;width:120px}
+input[type=text]{width:160px}
+select{width:auto;cursor:pointer}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
+.btn{font-family:inherit;font-size:12.5px;font-weight:650;padding:7px 15px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--primary);background:var(--primary);color:#fff;transition:.16s}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.gh{background:#fff;color:var(--primary)}
+.btn.gy{background:#fff;color:#4b5665;border-color:#cdd5e0}
+.btn.sm{padding:5px 11px;font-size:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+
+.res{font-family:"Cascadia Mono",Consolas,monospace;font-size:13px;line-height:1.95;
+  background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:12px 15px;overflow-x:auto}
+.res .r{display:flex;gap:11px;flex-wrap:wrap;align-items:center;margin:4px 0}
+.res .lbl{display:inline-block;min-width:82px;color:var(--muted);font-size:12px}
+.res .val{font-weight:700;color:var(--primary);letter-spacing:.6px}
+
+/* 步骤条 */
+.steps{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.step{display:flex;gap:11px;align-items:flex-start;padding:10px 13px;border:1px solid var(--line);
+  border-radius:10px;background:#fff;transition:.3s;opacity:.5}
+.step.act{opacity:1;border-color:var(--primary);background:var(--primary-l);
+  box-shadow:0 0 0 3px rgba(15,118,110,.09)}
+.step.dn{opacity:1;background:#fafbfd;border-color:#d8e2f2}
+.step .n{width:21px;height:21px;border-radius:50%;background:#e6ebf2;color:#7b8798;font-size:11px;
+  font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step.act .n{background:var(--primary);color:#fff}
+.step.dn .n{background:var(--green);color:#fff}
+.step .t{font-size:13px;font-weight:700;margin-bottom:2px}
+.step .d{font-size:12px;color:#5c6779;font-family:"Cascadia Mono",Consolas,monospace;line-height:1.7}
+
+/* 甘特图 */
+.gantt{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.grow{display:grid;grid-template-columns:66px 1fr;gap:9px;align-items:center}
+.glabel{font-size:11.5px;font-weight:700;color:#4b5665;text-align:right;font-family:Consolas,monospace}
+.gtrack{position:relative;height:26px;background:#f4f7fb;border-radius:6px;overflow:hidden}
+.gbar{position:absolute;top:0;height:100%;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700;color:#fff;transition:.4s;overflow:hidden;white-space:nowrap}
+.gaxis{display:grid;grid-template-columns:66px 1fr;gap:9px;margin-top:4px}
+.gticks{position:relative;height:16px;font-size:10px;color:#b6c0cc}
+.gticks span{position:absolute;transform:translateX(-50%)}
+
+/* 状态机 */
+.fsm{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:center;padding:8px 0}
+.nodex{padding:11px 20px;border-radius:12px;font-size:13.5px;font-weight:750;border:2px solid;
+  transition:.3s;cursor:pointer;text-align:center;min-width:104px}
+.arrowx{font-size:12px;color:#94a3b8;text-align:center;line-height:1.3}
+
+/* 位图 / 格子 */
+.cells{display:flex;gap:4px;flex-wrap:wrap;font-family:Consolas,monospace;font-size:12px}
+.cellx{width:34px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;
+  border:1px solid #d8dfe9;background:#fff;color:#5c6779;transition:.3s}
+.cellx.on{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
+.cellx.hit{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.cellx.miss{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.cellx.free{background:#f4f7fb;color:#aab3c0}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:11px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
+footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--muted);text-align:center;line-height:2}
+.totop{position:fixed;right:24px;bottom:24px;width:40px;height:40px;border-radius:50%;
+  background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#64748b;font-size:15px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:60}
+.totop.on{opacity:1;pointer-events:auto}
+.totop:hover{color:var(--primary);border-color:var(--primary)}
+/* ##CSS## */
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-t">408 操作系统</div>
+    <div class="brand-s">交互式原理全景 · 考点 / 原理 / 动画</div>
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-sep">408 全局</div>
+    <a href="#g0" class="nav-i"><b>00</b><span>四门课全景定位</span><em class="nav-tag t3">先看</em></a>
+    <div class="nav-sep">操作系统</div>
+    <a href="#os1" class="nav-i"><b>01</b><span>操作系统概述</span><em class="nav-tag t2">中</em></a>
+    <a href="#os2" class="nav-i"><b>02</b><span>进程与线程</span><em class="nav-tag t3">高频</em></a>
+    <a href="#os3" class="nav-i"><b>03</b><span>同步与互斥</span><em class="nav-tag t3">大题</em></a>
+    <a href="#os4" class="nav-i"><b>04</b><span>死锁</span><em class="nav-tag t2">中</em></a>
+    <a href="#os5" class="nav-i"><b>05</b><span>内存管理</span><em class="nav-tag t3">核心</em></a>
+    <a href="#os6" class="nav-i"><b>06</b><span>文件管理</span><em class="nav-tag t2">中</em></a>
+    <a href="#os7" class="nav-i"><b>07</b><span>输入/输出管理</span><em class="nav-tag t2">中</em></a>
+  </nav>
+  <div class="speed">
+    <div class="speed-t">动画速度</div>
+    <div class="speed-b">
+      <button data-sp="2.6">慢</button>
+      <button data-sp="1.7" class="on">中</button>
+      <button data-sp="1">快</button>
+    </div>
+    <div class="speed-note">切换后对<b>下一次播放</b>生效</div>
+  </div>
+</aside>
+
+<div class="scrim" id="scrim"></div>
+
+<main class="content">
+
+<div class="mtop">
+  <button class="navbtn" id="navbtn" type="button" aria-label="章节导航" aria-expanded="false" aria-controls="nav"><i></i><i></i><i></i></button>
+  <span class="mtop-t" data-subj="操作系统">操作系统</span>
+</div>
+
+<header class="hero">
+  <div class="hero-top">
+    <div class="hero-k">408 · Operating Systems</div>
+    <a class="home-link" href="408-全景总览.html">← 回 408 全景总览</a>
+  </div>
+  <h1>操作系统<br>交互式原理全景</h1>
+  <p>408 四门课里，操作系统是「承上启下」的那一门：向上承接数据结构提供的队列、树、图、位图，向下直连计算机组成原理的中断、地址转换与 I/O 机制。这一页把它放回四门课的整体框架里讲，每个关键考点都标出跨科目的接口。</p>
+  <div class="stats">
+    <div class="stat"><b>35</b><span>本科分值（满分 150）</span></div>
+    <div class="stat"><b>7</b><span>章节全覆盖</span></div>
+    <div class="stat"><b>16</b><span>交互动画</span></div>
+    <div class="stat"><b>100%</b><span>可离线打开</span></div>
+  </div>
+
+  <div class="subj">
+    <a class="sj mut" href="数据结构-交互式全景.html">
+      <div class="sj-n">01</div>
+      <div class="sj-t">数据结构</div>
+      <div class="sj-s">线性表 / 树 / 图 / 查找 / 排序<br>OS 的队列、目录树、位图都源于此</div>
+      <div class="sj-bar"><i style="width:100%"></i></div>
+    </a>
+    <a class="sj mut" href="计算机组成原理-交互式全景.html">
+      <div class="sj-n">02</div>
+      <div class="sj-t">计算机组成原理</div>
+      <div class="sj-s">存储层次 / 中断 / 指令周期 / I/O<br>与 OS 交叉最深的科目</div>
+      <div class="sj-bar"><i style="width:100%"></i></div>
+    </a>
+    <div class="sj cur">
+      <div class="sj-n">03</div>
+      <div class="sj-t">操作系统</div>
+      <div class="sj-s">进程 / 内存 / 文件 / I/O 管理<br>本页</div>
+      <div class="sj-bar"><i style="width:78%"></i></div>
+    </div>
+    <a class="sj mut" href="计算机网络-交互式全景.html">
+      <div class="sj-n">04</div>
+      <div class="sj-t">计算机网络</div>
+      <div class="sj-s">体系结构 / TCP-IP / 应用层<br>进程通信的延伸</div>
+      <div class="sj-bar"><i style="width:56%"></i></div>
+    </a>
+  </div>
+
+  <div class="rank">
+    <div class="rank-h">
+      <div class="rank-t">各章分值权重与复习优先级</div>
+      <div class="rank-s">按历年统考真题中的<b>大致分值降序</b>排列 —— 排在前面的章节，复习投入应当明显更多。分值区间为估计值，用于确定复习顺序，<b>非官方数据</b>。</div>
+    </div>
+
+    <div class="rank-r"><div class="rank-n">05 内存管理</div><div class="rank-bar"><i data-w="100" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-v">7-9</div><div class="rank-b tier1">核心</div></div>
+    <div class="rank-r"><div class="rank-n">03 同步与互斥</div><div class="rank-bar"><i data-w="100" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-v">7-9</div><div class="rank-b tier1">核心</div></div>
+    <div class="rank-r"><div class="rank-n">02 进程与线程</div><div class="rank-bar"><i data-w="88" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-v">6-8</div><div class="rank-b tier1">核心</div></div>
+    <div class="rank-r"><div class="rank-n">04 死锁</div><div class="rank-bar"><i data-w="50" style="background:linear-gradient(90deg,#5eead4,#0f766e)"></i></div><div class="rank-v">3-5</div><div class="rank-b tier2">主力</div></div>
+    <div class="rank-r"><div class="rank-n">06 文件管理</div><div class="rank-bar"><i data-w="44" style="background:linear-gradient(90deg,#5eead4,#0f766e)"></i></div><div class="rank-v">3-4</div><div class="rank-b tier2">主力</div></div>
+    <div class="rank-r"><div class="rank-n">07 输入/输出管理</div><div class="rank-bar"><i data-w="38" style="background:linear-gradient(90deg,#5eead4,#0f766e)"></i></div><div class="rank-v">2-4</div><div class="rank-b tier2">主力</div></div>
+    <div class="rank-r"><div class="rank-n">01 操作系统概述</div><div class="rank-bar"><i data-w="31" style="background:linear-gradient(90deg,#dde3ec,#b6c0cc)"></i></div><div class="rank-v">2-3</div><div class="rank-b tier3">补充</div></div>
+
+    <div class="rank-sum">
+      <div class="rank-legend">
+        <span><i style="background:#dc2626"></i>核心章（≥6 分）—— 大题高发区，要反复练</span>
+        <span><i style="background:#0f766e"></i>主力章（3-5 分）—— 题型固定，吃透公式</span>
+        <span><i style="background:#b6c0cc"></i>补充章（&lt;3 分）—— 单选为主，快速过</span>
+      </div>
+      <div class="rank-sum-r"><div>核心 3 章</div><div class="rank-sum-bar"><i data-w="65" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-sum-v">65%</div></div>
+      <div class="rank-sum-r"><div>主力 3 章</div><div class="rank-sum-bar"><i data-w="28" style="background:linear-gradient(90deg,#5eead4,#0f766e)"></i></div><div class="rank-sum-v">28%</div></div>
+      <div class="rank-sum-r"><div>补充 1 章</div><div class="rank-sum-bar"><i data-w="7" style="background:linear-gradient(90deg,#dde3ec,#b6c0cc)"></i></div><div class="rank-sum-v">7%</div></div>
+      <div class="rank-note">
+        <b>怎么用这张表：</b>核心 3 章占了本科约 <b>65%</b> 的分值，而且正是<b>大题的高发区</b> ——
+        「用信号量写同步互斥代码」和「地址转换 + 页面置换」几乎每年都出现。主力 3 章题型固定（银行家算法、索引计算、磁盘调度），
+        吃透公式就能拿分；概述只出单选，花半天过一遍概念即可。<br>
+        <b>与其它科目的联动：</b>第 05 章（内存管理）与计组的「存储系统」、第 07 章（I/O 管理）与计组的「I/O 系统」
+        是两对孪生章节，<b>建议同步学</b>，它们合起来是 80 分里的重头。
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== 408 全局定位 ==================== -->
+<section class="sec" id="g0">
+  <div class="sec-head">
+    <span class="sec-num">SECTION 00</span>
+    <h2>四门课全景定位</h2>
+    <span class="weight w3">先看这一节</span>
+  </div>
+
+  <div class="tip i"><span class="ti">为什么先看这个</span><span>408 的四门课不是四条平行线。命题人最喜欢出的题，恰恰<b>落在两门课的交界处</b>——比如「虚拟地址怎么变成物理地址」既考 OS 的页表也考计组的地址转换；「生产者-消费者用信号量怎么写」既考 OS 的同步机制也用数据结构的队列。把交界处想明白了，四门课才是通的。</span></div>
+
+  <div class="sub">四门课的分值与章节骨架</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>分值分布（共 150 分）</h4>
+      <table class="tb">
+        <tr><th>科目</th><th>分值</th><th>占比</th></tr>
+        <tr><td>数据结构</td><td class="mono">45</td><td>30%</td></tr>
+        <tr><td>计算机组成原理</td><td class="mono">45</td><td>30%</td></tr>
+        <tr><td><b>操作系统</b></td><td class="mono"><b>35</b></td><td>约 23%</td></tr>
+        <tr><td>计算机网络</td><td class="mono">25</td><td>约 17%</td></tr>
+      </table>
+      <div class="fm">计组 + 操作系统 = 80 分，超过一半
+两门课共享「存储管理」和「I/O」两条主线</div>
+    </div>
+    <div class="card">
+      <h4>操作系统内部结构（35 分的分布）</h4>
+      <table class="tb">
+        <tr><th>章节</th><th>权重</th><th>典型题</th></tr>
+        <tr><td>进程与线程</td><td>高</td><td>状态转换、调度计算</td></tr>
+        <tr><td>同步与互斥</td><td>高</td><td><b>大题常客</b>：信号量编程</td></tr>
+        <tr><td>内存管理</td><td>高</td><td>地址转换、页面置换</td></tr>
+        <tr><td>文件管理</td><td>中</td><td>索引结构、空闲空间</td></tr>
+        <tr><td>I/O 管理</td><td>中</td><td>磁盘调度计算</td></tr>
+        <tr><td>概述</td><td>低</td><td>概念辨析（单选）</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="sub p">跨科目接口图：OS 与另外三门的连接点</div>
+  <div class="grid g2">
+    <div class="xlink">
+      <h4><span class="tagx">OS × 计组</span>交叉最深，80 分里有大半在这里</h4>
+      <div class="xitem"><div class="xa">虚拟存储</div><div class="xb">OS 的页式管理要用计组的地址转换硬件；TLB 就是 Cache 思想用在页表上</div></div>
+      <div class="xitem"><div class="xa">中断与异常</div><div class="xb">计组讲中断响应的硬件流程，OS 讲中断处理程序做什么（时钟中断驱动调度）</div></div>
+      <div class="xitem"><div class="xa">I/O 方式</div><div class="xb">程序查询 / 中断 / DMA / 通道——计组讲硬件原理，OS 讲软件层次怎么管</div></div>
+      <div class="xitem"><div class="xa">进程切换</div><div class="xb">保存/恢复的正是计组里的 PC、PSW、通用寄存器</div></div>
+      <div class="xitem"><div class="xa">存储层次</div><div class="xb">寄存器—Cache—主存—辅存，OS 管的是后两级的调度</div></div>
+    </div>
+    <div class="xlink" style="border-left-color:var(--blue)">
+      <h4><span class="tagx" style="background:var(--blue-l);color:var(--blue)">OS × 数据结构</span>算法与结构的直接应用</h4>
+      <div class="xitem"><div class="xa">调度队列</div><div class="xb">就绪队列、阻塞队列本质就是队列；多级反馈队列是队列的组合</div></div>
+      <div class="xitem"><div class="xa">目录结构</div><div class="xb">树形目录 = 树；无环图目录 = 有向无环图</div></div>
+      <div class="xitem"><div class="xa">死锁检测</div><div class="xb">资源分配图化简 = 图的拓扑/环检测</div></div>
+      <div class="xitem"><div class="xa">空闲空间管理</div><div class="xb">位示图 = 位图；成组链接 = 链表 + 数组</div></div>
+      <div class="xitem"><div class="xa">页面置换</div><div class="xb">LRU 的实现要用栈或链表（计组的 Cache 替换同理）</div></div>
+    </div>
+    <div class="xlink" style="border-left-color:var(--cyan)">
+      <h4><span class="tagx" style="background:var(--cyan-l);color:#0b5d70">OS × 计网</span>进程通信向外延伸</h4>
+      <div class="xitem"><div class="xa">进程间通信</div><div class="xb">socket 是消息传递机制在网络上的延伸</div></div>
+      <div class="xitem"><div class="xa">缓冲区</div><div class="xb">OS 的缓冲池思想，与 TCP 的发送/接收缓冲区同源</div></div>
+      <div class="xitem"><div class="xa">中断处理</div><div class="xb">网卡收包是靠中断通知 CPU 的（NAPI 是中断 + 轮询的混合）</div></div>
+    </div>
+    <div class="xlink" style="border-left-color:var(--accent)">
+      <h4><span class="tagx" style="background:var(--accent-l);color:#8a5209">复习路线建议</span></h4>
+      <div class="xitem"><div class="xa">先修</div><div class="xb">学 OS 前先过一遍计组的<b>存储层次</b>和<b>中断机制</b></div></div>
+      <div class="xitem"><div class="xa">同步推进</div><div class="xb">OS 的「内存管理」和计组的「存储系统」放在一起学，一次打通</div></div>
+      <div class="xitem"><div class="xa">难点排序</div><div class="xb">同步互斥（信号量编程）＞ 内存管理 ＞ 进程调度计算 ＞ 文件索引 ＞ 概念辨析</div></div>
+      <div class="xitem"><div class="xa">大题分布</div><div class="xb">408 的 OS 大题通常出「信号量编程」或「地址转换 + 页面置换」</div></div>
+    </div>
+  </div>
+
+  <div class="sub">学这一页之前，你需要先知道</div>
+  <div class="grid g3">
+    <div class="card">
+      <h4>计组 · 存储层次</h4>
+      <p>寄存器 — Cache — 主存 — 辅存。OS 管的是<b>主存与辅存之间的调度</b>（虚拟内存），而 Cache 归硬件管。这个分工要分清。</p>
+    </div>
+    <div class="card">
+      <h4>计组 · 中断</h4>
+      <p>中断隐指令做了三件事：<b>关中断、保存断点、取中断服务程序入口</b>。OS 的中断处理程序就是在它之后接手的。</p>
+    </div>
+    <div class="card">
+      <h4>计组 · 地址</h4>
+      <p>逻辑地址 vs 物理地址的区别，是理解 OS 内存管理的前提。计组讲的是「怎么转」，OS 讲的是「谁来管这张表」。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 1 章 ==================== -->
+<section class="sec" id="os1">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 01</span>
+    <h2>操作系统概述</h2>
+    <span class="weight w2">基础 · 单选为主</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>概念密度大、几乎不考大题，但有两个点会连着后面章节一起考：<b>内核态 / 用户态与特权指令</b>（理解系统调用和中断的前提）、<b>并发与共享</b>（后面所有同步问题的根）。这章快速过，但这两个点要真懂。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 操作系统的功能</h4>
+      <ul>
+        <li><b>处理机管理</b>：进程控制、同步、通信、调度</li>
+        <li><b>存储器管理</b>：内存分配回收、地址映射、内存保护、内存扩充</li>
+        <li><b>文件管理</b>：文件存储空间、目录、读写管理、共享保护</li>
+        <li><b>设备管理</b>：缓冲、设备分配、设备处理（虚拟设备）</li>
+        <li>接口：<b>命令接口</b>（联机/脱机）、<b>程序接口</b>（系统调用）、GUI</li>
+      </ul>
+      <div class="tip m"><span class="ti">辨析</span><span>「编译程序」「汇编程序」属于<b>语言处理程序</b>，是系统软件但不属于 OS。「数据库管理系统」也是系统软件。</span></div>
+    </div>
+    <div class="card">
+      <h4>2. 四大特征 <span class="pt hot">必考</span></h4>
+      <table class="tb">
+        <tr><th>特征</th><th>含义</th></tr>
+        <tr><td><b>并发</b></td><td>宏观上同时、微观上交替。单核同一时刻只有一个程序在运行</td></tr>
+        <tr><td><b>共享</b></td><td>互斥共享（打印机）、同时共享（磁盘）</td></tr>
+        <tr><td><b>虚拟</b></td><td>时分复用（CPU）、空分复用（内存）</td></tr>
+        <tr><td><b>异步</b></td><td>进程走走停停，以不可预知的速度推进</td></tr>
+      </table>
+      <div class="fm g">并发 ≠ 并行
+并发：单核也能做到（宏观同时、微观交替）
+并行：必须多核，同一时刻真正同时执行</div>
+      <div class="tip s"><span class="ti">关系</span><span><b>并发和共享互为存在条件</b>：没有并发就谈不上共享，没有共享并发也无法有效工作。这是常考的一句话。</span></div>
+    </div>
+    <div class="card">
+      <h4>3. 运行机制：两种状态 <span class="pt hot">核心</span></h4>
+      <table class="tb">
+        <tr><th></th><th>用户态（目态）</th><th>内核态（管态）</th></tr>
+        <tr><td>能执行的指令</td><td>只能非特权指令</td><td>全部指令</td></tr>
+        <tr><td>典型场景</td><td>应用程序运行</td><td>中断处理、系统调用、内核代码</td></tr>
+      </table>
+      <div class="fm">特权指令（只能内核态执行）
+  开/关中断、I/O 指令、置时钟、清主存、
+  修改 PSW、设置页表寄存器、加载页表
+
+用户态 → 内核态：唯一途径是 <b>中断 / 异常 / 系统调用</b>
+内核态 → 用户态：执行特权指令修改 PSW</div>
+      <div class="tip e"><span class="ti">易错</span><span>「陷阱指令（trap）」是<b>用户态主动引发</b>的，属于内部异常，不是特权指令。用户程序可以执行 trap，但 trap 执行后 CPU 就进了内核态。另外，<b>陷入（trap）</b>一词也可以泛指「进入内核态」这件事。</span></div>
+    </div>
+    <div class="card">
+      <h4>4. 中断与异常</h4>
+      <table class="tb">
+        <tr><th>类型</th><th>来源</th><th>例子</th></tr>
+        <tr><td><b>外中断</b><br>（中断）</td><td>CPU 外部</td><td>时钟中断、I/O 完成、键盘</td></tr>
+        <tr><td><b>内中断</b><br>（异常）</td><td>CPU 内部</td><td>陷入 trap、除零、缺页、非法操作码、地址越界</td></tr>
+      </table>
+      <div class="fm a">异常再分三类
+故障 fault：可修复，返回当前指令（如缺页）
+自陷 trap：有意引发，如系统调用
+终止 abort：不可恢复，如除零</div>
+      <div class="tip i"><span class="ti">与计组的接口</span><span>这里就是 OS 与计组的交叉点：计组讲<b>中断响应</b>的硬件流程（中断隐指令），OS 讲<b>中断处理程序</b>进去之后做什么。见本页「408 全局定位」。</span></div>
+    </div>
+    <div class="card">
+      <h4>5. 系统调用 <span class="pt hot">必考</span></h4>
+      <ul>
+        <li>操作系统提供给应用程序的<b>程序接口</b>，是用户态使用内核功能的唯一入口</li>
+        <li>发生系统调用时 CPU 从<b>用户态切换到内核态</b>，由内核代为完成，再返回用户态</li>
+        <li>分类：设备管理、文件管理、进程控制、进程通信、内存管理</li>
+      </ul>
+      <div class="fm b">库函数 vs 系统调用
+printf() 是库函数 —— 它内部可能调用 write() 系统调用
+但也有一些库函数（如 strcpy）完全不涉及系统调用</div>
+      <div class="tip m"><span class="ti">考点</span><span>「哪些操作需要进内核态」是经典送分题：进程切换、文件读写、内存分配、设备操作 <b>需要</b>；算术运算、字符串比较、向变量赋值 <b>不需要</b>。</span></div>
+    </div>
+    <div class="card">
+      <h4>6. 内核结构</h4>
+      <table class="tb">
+        <tr><th>结构</th><th>特点</th></tr>
+        <tr><td><b>宏内核</b><br>（大内核）</td><td>所有功能都在内核，性能高；但结构复杂、难维护。<b>Linux 属于此类</b></td></tr>
+        <tr><td><b>微内核</b></td><td>只留最基本功能（进程管理、中断），其余移到用户态。可靠性高、易扩展；但<b>态切换频繁、性能开销大</b></td></tr>
+        <tr><td>分层</td><td>自底向上分层，便于调试，但效率低</td></tr>
+        <tr><td>模块化</td><td>内核模块可动态加载，Linux 支持</td></tr>
+      </table>
+      <div class="tip s"><span class="ti">一句话</span><span>微内核的核心思想是<b>机制与策略分离</b>：内核只提供机制（如消息传递），把策略（如具体怎么调度）交给用户态服务进程。</span></div>
+    </div>
+    <div class="card">
+      <h4>7. 引导与其它</h4>
+      <ul>
+        <li>启动流程：<b>CPU 复位 → BIOS 自检 → 读 MBR（主引导记录）→ 引导程序 → 加载 OS 内核</b></li>
+        <li>OS 的分类：批处理（单道 / 多道）、分时、实时（硬实时 / 软实时）、网络、分布式、嵌入式</li>
+        <li>分时系统的时间片用完就切换，<b>交互性</b>是它的核心目标</li>
+        <li>实时系统的首要目标是<b>在截止期限内完成</b>，而不是快</li>
+        <li>分布式系统各节点<b>无主从之分</b>；网络系统有</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 01 · 系统调用：用户态是怎么进内核态的<span class="tag">逐步播放</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <button class="btn" id="scPlay">自动播放</button>
+        <button class="btn gh" id="scNext">下一步 ▸</button>
+        <button class="btn gy" id="scReset">重置</button>
+        <label style="margin-left:8px">选择调用</label>
+        <select id="scPick">
+          <option value="read">read()　读文件</option>
+          <option value="fork">fork()　创建进程</option>
+          <option value="ioctl">设备 I/O 指令（特权指令）</option>
+        </select>
+      </div>
+      <div id="scStage"></div>
+      <div class="steps" id="scSteps" style="margin-top:16px"></div>
+      <div id="scNote" style="margin-top:12px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 2 章 ==================== -->
+<section class="sec" id="os2">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 02</span>
+    <h2>进程与线程</h2>
+    <span class="weight w3">高频 · 必有大题</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>OS 分值最集中的一块。<b>进程状态转换</b>是选择题的常客，<b>调度算法的计算</b>几乎每年都有一道（求周转时间、带权周转时间、画甘特图）。这两类题都有固定套路，把动画点几遍就熟了。章节末尾的调度对比器可以直接输入数据验算你的手算结果。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 进程与 PCB <span class="pt">必考</span></h4>
+      <div class="fm">进程 = 程序段 + 数据段 + PCB
+PCB 是进程存在的<b>唯一标志</b></div>
+      <ul>
+        <li>PCB 内容：进程描述信息（PID/UID）、控制与管理信息、资源分配清单、处理机相关信息（各寄存器值）</li>
+        <li>进程特征：<b>动态性</b>（最基本）、并发性、独立性、异步性、结构性</li>
+        <li>进程是<b>资源分配</b>的基本单位，线程是<b>调度</b>的基本单位</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>2. 进程状态转换 <span class="pt hot">必考</span></h4>
+      <div class="fm g">三态：运行 → 就绪 → 阻塞
+五态：再加 创建、终止
+七态：再加 就绪挂起、阻塞挂起
+
+合法转换
+  就绪 → 运行：被调度程序选中
+  运行 → 就绪：时间片用完 / 被抢占
+  运行 → 阻塞：主动请求资源（如等 I/O）★主动
+  阻塞 → 就绪：等待的事件发生了 ★被动
+  创建 → 就绪、运行 → 终止
+
+<b>不可能</b>：阻塞 → 运行（必须经过就绪）</div>
+      <div class="tip e"><span class="ti">高频陷阱</span><span>「<b>阻塞→运行</b>」永远错。进程被唤醒后只是回到就绪队列，还要再被调度才能运行。另外「运行→阻塞」是进程<b>主动</b>行为，「运行→就绪」是<b>被动</b>（被剥夺）。</span></div>
+    </div>
+    <div class="card">
+      <h4>3. 进程控制原语</h4>
+      <ul>
+        <li>原语的特点：<b>执行期间不可中断</b>（靠关中断实现）</li>
+        <li>创建：申请 PCB → 分配资源 → 初始化 PCB → 插入就绪队列</li>
+        <li>终止：找到 PCB → 若在运行则剥夺 CPU → 释放资源 → 移出队列</li>
+        <li>阻塞 / 唤醒：<b>成对使用</b>，阻塞是主动的，唤醒是其他进程或中断处理程序做的</li>
+        <li>进程切换要保存上下文（PC、PSW、通用寄存器）→ <b>这正是计组的接口点</b></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>4. 进程通信</h4>
+      <table class="tb">
+        <tr><th>方式</th><th>特点</th></tr>
+        <tr><td>共享存储</td><td>最快，但需要同步互斥；分「基于数据结构」和「基于存储区」</td></tr>
+        <tr><td>消息传递</td><td>以格式化消息为单位；直接（指名收/发）或间接（信箱）</td></tr>
+        <tr><td>管道通信</td><td>半双工、写入缓冲区、需要同步互斥；本质是共享文件</td></tr>
+      </table>
+      <div class="tip m"><span class="ti">注意</span><span>共享存储的两种方式中，<b>基于存储区</b>的共享速度更快、更灵活，因为不受数据结构格式的限制。</span></div>
+    </div>
+    <div class="card">
+      <h4>5. 线程 <span class="pt hot">必考</span></h4>
+      <div class="fm b">线程私有：程序计数器、寄存器、栈、线程 ID
+线程共享：地址空间、全局变量、打开的文件、信号处理</div>
+      <table class="tb">
+        <tr><th></th><th>用户级线程</th><th>内核级线程</th></tr>
+        <tr><td>管理者</td><td>用户库函数</td><td>操作系统内核</td></tr>
+        <tr><td>切换开销</td><td>小（不用进内核）</td><td>大（要进内核）</td></tr>
+        <tr><td>并发能力</td><td>一个线程阻塞则<b>整个进程阻塞</b></td><td>可多线程真正并行</td></tr>
+        <tr><td>内核是否可见</td><td>不可见</td><td>可见</td></tr>
+      </table>
+      <div class="tip s"><span class="ti">多线程模型</span><span>多对一（用户级，效率低）、一对一（内核级，开销大）、<b>多对多</b>（前两者折中，最优）。</span></div>
+    </div>
+    <div class="card">
+      <h4>6. 处理机调度</h4>
+      <ul>
+        <li>三级调度：<b>高级</b>（作业调度，外存→内存）、<b>中级</b>（内存调度，对换）、<b>低级</b>（进程调度，最高频）</li>
+        <li>调度时机：创建、终止、阻塞、唤醒、时间片到、更高优先级进程就绪</li>
+        <li><b>不能</b>进行调度的情况：中断处理过程中、进程访问临界资源时、原子操作中</li>
+        <li>抢占式 vs 非抢占式：抢占式响应快但切换开销大、可能影响一致性</li>
+      </ul>
+      <div class="fm a">调度评价指标
+周转时间    = 完成时间 − 到达时间
+带权周转时间 = 周转时间 ÷ 服务时间   （≥1，越小越好）
+等待时间    = 周转时间 − 服务时间
+响应时间    = 首次响应时刻 − 提交时刻</div>
+    </div>
+    <div class="card">
+      <h4>7. 调度算法 <span class="pt hot">大题</span></h4>
+      <table class="tb">
+        <tr><th>算法</th><th>特点</th></tr>
+        <tr><td>FCFS 先来先服务</td><td>公平、非抢占；对<b>长作业有利、短作业不利</b></td></tr>
+        <tr><td>SJF/SPF 短作业优先</td><td><b>平均等待时间最短</b>；可能饥饿；分抢占/非抢占</td></tr>
+        <tr><td>HRRN 高响应比</td><td>响应比 =(等待+要求服务)/要求服务，折中，不饥饿</td></tr>
+        <tr><td>优先级</td><td>分抢占/非抢占；可能饥饿</td></tr>
+        <tr><td>RR 时间片轮转</td><td><b>响应快</b>、适合分时；时间片太小切换开销大</td></tr>
+        <tr><td>多级反馈队列</td><td>综合最优，不需预知运行时间；<b>越往下时间片越长、优先级越低</b></td></tr>
+      </table>
+      <div class="tip e"><span class="ti">易错</span><span>「<b>SJF 的平均周转时间最短</b>」是所有算法里严格成立的结论，但「SJF 对短作业有利」≠「对长作业不利到永不执行」——那是<b>饥饿</b>的表述。多级反馈队列里，新进程<b>总是先进入第 1 级队列</b>。</span></div>
+    </div>
+    <div class="card">
+      <h4>8. 上下文切换</h4>
+      <ul>
+        <li>切换内容：保存当前进程的 PC、PSW、通用寄存器到 PCB，再从新进程 PCB 恢复</li>
+        <li>切换<b>有开销</b>（纯开销，不产生有效工作）</li>
+        <li>进程切换比线程切换开销大（要换地址空间、刷新 TLB）</li>
+        <li>同进程内的线程切换不用换页表，所以更快</li>
+      </ul>
+      <div class="tip i"><span class="ti">与计组的接口</span><span>切换时保存的 PC、PSW、通用寄存器，正是计组第 5 章讲的 CPU 内部寄存器。计组告诉你这些寄存器是什么，OS 告诉你为什么要保存它们。</span></div>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 02 · 进程状态转换机：哪些转换不可能发生<span class="tag">点击状态看转换</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>状态模型</label>
+        <select id="fsmMode">
+          <option value="3">三态（运行 / 就绪 / 阻塞）</option>
+          <option value="5">五态（+ 创建 / 终止）</option>
+          <option value="7">七态（+ 挂起）</option>
+        </select>
+        <button class="btn gh" id="fsmTry">测试「阻塞 → 运行」</button>
+      </div>
+      <div id="fsmStage"></div>
+      <div id="fsmOut" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 03 · 调度算法对比器：自动算周转时间<span class="tag">重点 · 可改数据验算</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>进程数据（到达时间,服务时间）</label>
+        <input type="text" id="schData" value="0,7;2,4;4,1;5,4" style="width:230px">
+        <button class="btn gh sm" data-sch="0,7;2,4;4,1;5,4">例一</button>
+        <button class="btn gh sm" data-sch="0,3;2,6;4,4;6,5">例二</button>
+        <label>时间片</label><input type="number" id="schQ" value="2" min="1" style="width:60px">
+      </div>
+      <div class="ctl">
+        <label>算法</label>
+        <select id="schAlgo">
+          <option value="fcfs">FCFS 先来先服务</option>
+          <option value="sjf">SJF 短作业优先（非抢占）</option>
+          <option value="hrrn">HRRN 高响应比优先</option>
+          <option value="rr">RR 时间片轮转</option>
+          <option value="prio">优先级调度（编号越小优先级越高）</option>
+        </select>
+        <button class="btn" id="schAll">对比全部算法</button>
+      </div>
+      <div id="schStage"></div>
+      <div id="schStat" style="margin-top:16px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 3 章 ==================== -->
+<section class="sec" id="os3">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 03</span>
+    <h2>同步与互斥</h2>
+    <span class="weight w3">大题主战场</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>408 操作系统大题<b>出现频率最高</b>的一章。典型形态：给一个场景（几个进程、几类资源、若干约束），要求<b>用信号量写出同步互斥代码</b>。评分看的是信号量设置对不对、PV 顺序对不对。这章别背题，要练「分析约束 → 定信号量初值 → 安排 P/V 位置」这套动作。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 基本概念与四原则 <span class="pt hot">必考</span></h4>
+      <ul>
+        <li><b>临界资源</b>：一次只允许一个进程使用的资源（打印机、共享变量、缓冲区）</li>
+        <li><b>临界区</b>：访问临界资源的那段代码</li>
+        <li>进入区 / 临界区 / 退出区 / 剩余区</li>
+      </ul>
+      <div class="fm g">临界区互斥的四条准则
+① 空闲让进 —— 没人在用就必须能进
+② 忙则等待 —— 有人用就必须等
+③ 有限等待 —— 不能让人无限期等（不能饥饿）
+④ 让权等待 —— 进不去要放弃 CPU（不能忙等占着处理机）</div>
+      <div class="tip m"><span class="ti">记忆</span><span>前三条是<b>正确性</b>要求，第四条是<b>效率</b>要求。软件方法和硬件方法大多满足前三条，但普遍<b>不满足第四条</b>（都是忙等）。</span></div>
+    </div>
+    <div class="card">
+      <h4>2. 软件实现四法 <span class="pt">理解即可</span></h4>
+      <table class="tb">
+        <tr><th>方法</th><th>问题</th></tr>
+        <tr><td>单标志法</td><td>违背<b>空闲让进</b>（必须交替进入）</td></tr>
+        <tr><td>双标志·先检查</td><td>违背<b>忙则等待</b>（双方同时检查、同时进入）</td></tr>
+        <tr><td>双标志·后检查</td><td>违背<b>空闲让进</b>与<b>有限等待</b>（可能互相谦让，都进不去）</td></tr>
+        <tr><td><b>Peterson 算法</b></td><td><b>正确</b>，但仍是忙等</td></tr>
+      </table>
+      <div class="fm b">Peterson 算法的核心（双标志 + 单标志 组合）
+flag[i] = true;    // 我要求进入
+turn = j;          // 但先让给你
+while (flag[j] && turn == j);   // 你要是坚持，我就等
+  ...临界区...
+flag[i] = false;</div>
+    </div>
+    <div class="card">
+      <h4>3. 硬件实现</h4>
+      <ul>
+        <li><b>中断屏蔽</b>：关中断 → 临界区 → 开中断。单核有效，多核不行</li>
+        <li><b>TestAndSet（TS）</b>：原子地读出并置真</li>
+        <li><b>Swap / Exchange</b>：原子地交换两个字的内容</li>
+        <li>共同缺点：<b>不满足「让权等待」</b>，都是忙等；且可能不满足「有限等待」（TS 可能让某个进程一直抢不到）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>4. 信号量机制 <span class="pt hot">核心</span></h4>
+      <div class="fm">整型信号量：只用一个整数，<b>不满足让权等待</b>（忙等）
+记录型信号量：整数 + 等待队列，<b>四个条件全满足</b></div>
+      <div class="fm g">记录型信号量的 P / V（原语，不可中断）
+
+P(S) / wait(S)          V(S) / signal(S)
+  S.value--;              S.value++;
+  if (S.value &lt; 0)          if (S.value &lt;= 0)
+     block(S.queue);         wakeup(S.queue);</div>
+      <div class="tip s"><span class="ti">读懂这两行</span><span>S.value 初值代表<b>可用资源数</b>。执行 P 后若 value <b>小于 0</b>，说明资源不够，自己阻塞；这个负数的绝对值就是<b>等待队列里的进程数</b>。V 操作后有进程在等（value ≤ 0），就唤醒一个。<b>理解这个语义，编程题就不会写反。</b></span></div>
+      <div class="tip e"><span class="ti">顺序陷阱</span><span>用信号量实现<b>互斥</b>时，P 操作必须在临界区之前、V 操作之后（P 在前）；用信号量实现<b>同步</b>时，V 操作写在前驱动作之后、P 操作写在后继动作之前。<b>P 和 V 谁前谁后写反，就会死锁</b>——这是最常扣分的地方。</span></div>
+    </div>
+    <div class="card">
+      <h4>5. 信号量的三种用法</h4>
+      <table class="tb">
+        <tr><th>用途</th><th>初值</th><th>要点</th></tr>
+        <tr><td><b>互斥</b></td><td class="mono">1</td><td>P、V 夹住临界区，同一进程内成对</td></tr>
+        <tr><td><b>同步</b>（前驱）</td><td class="mono">0</td><td>前操作后 V，后操作前 P</td></tr>
+        <tr><td><b>资源计数</b></td><td class="mono">n</td><td>初值 = 资源总数</td></tr>
+      </table>
+      <div class="fm a">一个信号量既能互斥又能同步吗？
+能，但通常<b>分开设</b>更清晰。
+经典生产者-消费者就用了三个：
+  empty（同步，初值 n）
+  full （同步，初值 0）
+  mutex（互斥，初值 1）</div>
+    </div>
+    <div class="card">
+      <h4>6. 经典问题信号量设置 <span class="pt hot">必背</span></h4>
+      <div class="fm">【生产者-消费者】缓冲区大小 n
+semaphore mutex = 1;   // 互斥访问缓冲区
+semaphore empty = n;   // 空槽位数
+semaphore full  = 0;   // 产品数
+
+生产者：            消费者：
+  P(empty);           P(full);
+  P(mutex);           P(mutex);
+    ...放入...          ...取出...
+  V(mutex);           V(mutex);
+  V(full);            V(empty);
+
+★ 两个 P 的顺序：<b>必须先 P 资源信号量，再 P 互斥信号量</b>
+  反了就死锁（拿了锁却等不到槽位，别人也进不来）</div>
+      <div class="fm g">【读者-写者】
+读优先（可能饿死写者）：
+  semaphore rw = 1;       // 读写互斥
+  semaphore mutex = 1;    // 保护 count
+  int count = 0;          // 读者数
+
+  读者：P(mutex); if(++count==1) P(rw); V(mutex);
+        读... 
+        P(mutex); if(--count==0) V(rw); V(mutex);
+  写者：P(rw); 写...; V(rw);
+
+写优先：再加一个 w = 1 信号量，读者进门先 P(w)、出门 V(w)</div>
+      <div class="fm p">【哲学家进餐】5 人 5 筷，每人需两筷
+方案① 最多允许 4 人同时拿筷（设信号量初值 4）
+方案② 奇数号先拿左、偶数号先拿右
+方案③ 只有左右两支筷都可用时才允许拿（AND 型信号量）</div>
+    </div>
+    <div class="card">
+      <h4>7. 管程</h4>
+      <ul>
+        <li>把<b>共享变量 + 对它的操作</b>封装在一起，进程只能通过管程的过程访问</li>
+        <li>管程内的操作<b>互斥</b>执行（编译器保证，不用手写 PV）</li>
+        <li><b>条件变量</b>：wait（阻塞并释放管程）/ signal（唤醒等待者）</li>
+        <li>与信号量的区别：信号量<b>分散</b>在进程里，管程<b>集中</b>封装；管程的互斥是自动的</li>
+      </ul>
+      <div class="tip m"><span class="ti">对比</span><span>Java 的 <span class="mono">synchronized</span> 就是管程思想。管程 = 类 + 自动加锁。</span></div>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 04 · PV 操作模拟器：生产者-消费者的三个信号量<span class="tag">重点 · 逐步执行</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>缓冲区大小</label><input type="number" id="pcBuf" value="3" min="1" max="6" style="width:60px">
+        <button class="btn" id="pcReset">重置</button>
+        <button class="btn gh" id="pcProd">生产者投递一次</button>
+        <button class="btn gh" id="pcCons">消费者取走一次</button>
+        <button class="btn gy" id="pcAuto">自动跑一轮</button>
+      </div>
+      <div id="pcStage"></div>
+      <div id="pcSems" style="margin-top:16px"></div>
+      <div id="pcNote" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 05 · 两个 P 操作写反了会死锁<span class="tag">对比两种顺序</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <button class="btn" id="ordPlay">模拟一遍</button>
+        <button class="btn gy" id="ordReset">重置</button>
+      </div>
+      <div id="ordStage"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 4 章 ==================== -->
+<section class="sec" id="os4">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 04</span>
+    <h2>死锁</h2>
+    <span class="weight w2">中频 · 概念 + 计算</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>分值不如前后两章高，但<b>银行家算法</b>是稳定考点（选择题常给一张表让你判断某个请求能否满足）。另外「四个必要条件」和「预防 vs 避免 vs 检测」的区分是必考辨析。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 死锁的概念与辨析</h4>
+      <ul>
+        <li><b>死锁</b>：多个进程因竞争资源而互相等待，没有外力介入谁都无法推进</li>
+        <li><b>饥饿</b>：某个进程长期得不到资源（如 SJF 下的长作业）。<b>饥饿不一定死锁</b>，死锁也不一定饥饿</li>
+        <li><b>死循环</b>：程序逻辑问题，不是资源分配问题，OS 不负责</li>
+        <li>死锁进程<b>至少两个</b>（自己等自己不算死锁）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>2. 四个必要条件 <span class="pt hot">必背</span></h4>
+      <div class="fm">① 互斥条件      资源排他使用
+② 不可剥夺      不能强行抢走
+③ 请求并保持    拿着手里的，还要申请新的
+④ 循环等待      存在一个进程—资源的循环等待链</div>
+      <div class="tip s"><span class="ti">记忆</span><span>四个条件是<b>必要不充分</b>——四个都满足不一定死锁，但死锁一定四个都满足。所以「破坏任意一个」就能预防死锁。</span></div>
+    </div>
+    <div class="card">
+      <h4>3. 四种处理策略 <span class="pt hot">必考</span></h4>
+      <table class="tb">
+        <tr><th>策略</th><th>做法</th><th>代价</th></tr>
+        <tr><td><b>预防</b></td><td>破坏四个必要条件之一</td><td>资源利用率低</td></tr>
+        <tr><td><b>避免</b></td><td>银行家算法，动态判断本次分配是否安全</td><td>计算开销大，需预知最大需求</td></tr>
+        <tr><td><b>检测</b></td><td>允许发生，定期用资源分配图找环路</td><td>检测开销 + 解除代价</td></tr>
+        <tr><td><b>解除</b></td><td>剥夺资源 / 撤销进程 / 进程回退</td><td>可能丢工作</td></tr>
+      </table>
+      <div class="fm a">预防的四种破坏方式
+破坏互斥      → 很难（有些资源天生互斥）
+破坏不可剥夺  → 允许抢，但可能丢工作
+破坏请求并保持→ <b>资源静态分配</b>（一次要够）或释放后再申请
+破坏循环等待  → <b>资源有序分配</b>（编号小的先申请）</div>
+    </div>
+    <div class="card">
+      <h4>4. 银行家算法 <span class="pt hot">高频</span></h4>
+      <div class="fm b">四个数据结构（n 个进程，m 类资源）
+Available[j]   ：系统现有可分配的第 j 类资源数
+Max[i][j]      ：进程 i 对资源 j 的最大需求
+Allocation[i][j]：已分配
+Need[i][j]     = Max − Allocation  ：还需要多少
+
+安全性算法（找安全序列）
+while (存在 Pi 满足 Need[i] ≤ Available) {
+    Available += Allocation[i];   // 它跑完了，资源还回来
+    把 Pi 加入安全序列;
+}
+若能纳入全部进程 → 安全；否则不安全</div>
+      <div class="tip e"><span class="ti">易错</span><span>银行家算法判的是「<b>本次分配后系统是否仍处于安全状态</b>」。请求能不能满足，要先判断 <span class="mono">Request ≤ Need</span> 且 <span class="mono">Request ≤ Available</span>，再<b>试分配</b>跑一遍安全性算法，安全才真的分配。</span></div>
+    </div>
+    <div class="card">
+      <h4>5. 资源分配图与检测</h4>
+      <ul>
+        <li>图形：圆圈是进程，方框是资源（框内小圆点表示实例数）</li>
+        <li>申请边 Pi → Rj，分配边 Rj → Pi</li>
+        <li><b>每类资源只有一个实例</b>时：图中有环 ⟺ 死锁</li>
+        <li><b>每类资源有多个实例</b>时：有环<b>不一定</b>死锁，要化简图</li>
+        <li>化简方法：找「需求能被满足」的进程，去掉它的所有边（假设它跑完归还资源），反复直到不能再化简。<b>能消去所有边则无死锁</b></li>
+      </ul>
+      <div class="tip s"><span class="ti">与数据结构接口</span><span>资源分配图化简本质是<b>图的遍历 / 拓扑消解</b>，和数据结构里的图论是同一套思路。</span></div>
+    </div>
+    <div class="card">
+      <h4>6. 常见结论速记</h4>
+      <ul>
+        <li>系统发生死锁时，一定存在循环等待，但存在循环等待<b>不一定</b>死锁（多实例时）</li>
+        <li>资源有序分配法破坏了<b>循环等待</b>条件</li>
+        <li>资源静态分配法破坏了<b>请求并保持</b>条件</li>
+        <li>银行家算法属于<b>死锁避免</b>，不属于预防</li>
+        <li>单道批处理系统中<b>不会发生死锁</b> —— 死锁至少需要两个进程互相等待，而单道同一时刻只有一个程序在运行</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 06 · 银行家算法：试分配 + 安全性检查<span class="tag">重点 · 可改数据</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>Available</label><input type="text" id="bkAvail" value="3,3,2" style="width:100px">
+        <button class="btn" id="bkRun">跑一遍安全性算法</button>
+        <button class="btn gy" id="bkReset">重置示例</button>
+      </div>
+      <div id="bkStage"></div>
+      <div id="bkOut" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 07 · 资源分配图：什么时候有环也不死锁<span class="tag">切换实例数看差别</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>资源实例数</label>
+        <select id="ragMode">
+          <option value="1">每类资源 1 个实例</option>
+          <option value="2">R1 有 2 个实例</option>
+        </select>
+        <button class="btn" id="ragRun">化简资源分配图</button>
+      </div>
+      <div id="ragStage"></div>
+      <div id="ragOut" style="margin-top:16px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 5 章 ==================== -->
+<section class="sec" id="os5">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 05</span>
+    <h2>内存管理</h2>
+    <span class="weight w3">核心 · 与计组交叉最深</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>OS 里<b>与计组结合最紧</b>的一章，也是大题的高产区。两条主线：<b>地址转换</b>（逻辑地址怎么变成物理地址）和<b>页面置换</b>（内存不够了换出谁）。这两件事在计组里叫「虚拟存储」，在 OS 里叫「内存管理」——是同一套机制的两种讲法，建议两本书对照着看。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 装入与链接</h4>
+      <table class="tb">
+        <tr><th>装入方式</th><th>特点</th></tr>
+        <tr><td>绝对装入</td><td>编译时就知道放哪，只适用于单道</td></tr>
+        <tr><td>静态重定位</td><td>装入时一次性改地址。<b>运行期间不能移动</b></td></tr>
+        <tr><td><b>动态重定位</b></td><td>运行时由<b>重定位寄存器（基址）</b>换算，可移动，是现代 OS 的基础</td></tr>
+      </table>
+      <div class="fm b">链接方式
+静态链接：装入前全部链接好
+装入时动态链接：边装入边链接
+运行时动态链接：用到才链接（最灵活，省空间）</div>
+      <div class="tip m"><span class="ti">保护</span><span>内存保护常用<b>基址寄存器 + 限长寄存器</b>：地址必须满足 基址 ≤ 物理地址 &lt; 基址+限长，否则越界中断。</span></div>
+    </div>
+    <div class="card">
+      <h4>2. 连续分配管理 <span class="pt">基础</span></h4>
+      <table class="tb">
+        <tr><th>方式</th><th>碎片</th></tr>
+        <tr><td>单一连续分配</td><td>只支持单道</td></tr>
+        <tr><td>固定分区分配</td><td><b>内部碎片</b>（分区内用不完）</td></tr>
+        <tr><td>动态分区分配</td><td><b>外部碎片</b>（空闲区太小用不上）</td></tr>
+      </table>
+      <div class="fm g">动态分区的四种分配算法
+首次适应 FF  ：从低地址找第一个够用的  → 综合最好，性能最优
+最佳适应 BF  ：找最小的够用分区      → 产生最多外部碎片
+最坏适应 WF  ：找最大的分区         → 大分区很快被切光
+邻近适应 NF  ：从上次结束处继续找    → 高地址大块容易被切碎</div>
+      <div class="tip e"><span class="ti">结论</span><span>四种算法里 <b>首次适应通常最好</b>（不是最佳适应！名字有迷惑性）。最佳适应的名字指的是"最省空间"，但它会留下大量极小的碎片，反而最差。</span></div>
+    </div>
+    <div class="card">
+      <h4>3. 基本分页 <span class="pt hot">必考</span></h4>
+      <div class="fm">逻辑地址 = 页号 P + 页内偏移 W
+物理地址 = 页框号 F + 页内偏移 W
+（偏移不变！）</div>
+      <ul>
+        <li>页面大小 = 页框大小，通常 4 KB（偏移占 12 位）</li>
+        <li>页表：页号 → 页框号，存放在<b>内存</b>中，页表基址寄存器 PTBR 指向它</li>
+        <li><b>无 TLB 时访存 2 次</b>：一次查页表、一次取数据</li>
+        <li><b>有 TLB 命中时访存 1 次</b>；TLB 未命中仍是 2 次</li>
+        <li>页表项长度固定，所以「页号」字段可以省略（用索引隐式给出）</li>
+      </ul>
+      <div class="tip i"><span class="ti">与计组的接口</span><span>TLB 就是「用 SRAM 做的页表缓存」，本质是 Cache 思想：把最常用的页表项放在离 CPU 最近的地方。有效访问时间 <span class="mono">EAT</span> 的计算和 Cache 平均访问时间完全同构。</span></div>
+    </div>
+    <div class="card">
+      <h4>4. 分段与段页式</h4>
+      <table class="tb">
+        <tr><th></th><th>分页</th><th>分段</th></tr>
+        <tr><td>划分依据</td><td>物理，固定大小</td><td>逻辑，大小不等</td></tr>
+        <tr><td>对用户</td><td><b>不可见</b></td><td><b>可见</b></td></tr>
+        <tr><td>地址</td><td>一维（一个数）</td><td>二维（段号+段内偏移）</td></tr>
+        <tr><td>碎片</td><td>内部碎片</td><td>外部碎片</td></tr>
+        <tr><td>共享保护</td><td>不易</td><td><b>易于</b>（按逻辑模块）</td></tr>
+      </table>
+      <div class="fm p">段页式：先分段，段内再分页
+地址 = 段号 S + 页号 P + 页内偏移 W
+无 TLB 时访存 <b>3 次</b>（查段表 → 查页表 → 取数）
+有 TLB 命中时 1 次</div>
+    </div>
+    <div class="card">
+      <h4>5. 请求分页与页表项 <span class="pt hot">必考</span></h4>
+      <div class="fm">请求分页的页表项比基本分页多了几位
+  页框号 | 状态位(有效位) | 访问位 | 修改位 | 外存地址
+
+状态位：该页是否在内存中（0 → 缺页）
+访问位：最近是否被访问过（供置换算法用）
+修改位：调入后是否被改过（脏位，决定换出时要不要写回）</div>
+      <ul>
+        <li>缺页时产生<b>缺页中断</b>，属于<b>内中断 / 故障（fault）</b></li>
+        <li>缺页中断处理完要<b>重新执行</b>那条引发缺页的指令</li>
+        <li>一条指令可能产生<b>多次缺页中断</b>（比如指令本身跨页、操作数又跨页）</li>
+        <li>地址变换顺序：<b>查 TLB → 查页表（未命中）→ 缺页则调页</b></li>
+      </ul>
+      <div class="tip e"><span class="ti">常考判断</span><span>缺页中断<b>不是</b>外部中断；缺页中断处理时进程会阻塞（等待 I/O），属于「运行 → 阻塞」的转换。</span></div>
+    </div>
+    <div class="card">
+      <h4>6. 页面置换算法 <span class="pt hot">大题常客</span></h4>
+      <table class="tb">
+        <tr><th>算法</th><th>特点</th></tr>
+        <tr><td><b>OPT</b> 最佳</td><td>淘汰<b>未来最久不用</b>的页。<b>缺页最少</b>，但不可实现，只作标尺</td></tr>
+        <tr><td><b>FIFO</b></td><td>淘汰最早进入的。<b>可能出现 Belady 异常</b>（增加页框反而缺页更多）</td></tr>
+        <tr><td><b>LRU</b></td><td>淘汰<b>过去最久未用</b>的。性能接近 OPT，但需要硬件支持、开销大</td></tr>
+        <tr><td>CLOCK</td><td>环形队列 + 访问位，访问位为 1 则清零并跳过</td></tr>
+        <tr><td><b>改进 CLOCK</b></td><td>同时看<b>访问位 A 和 修改位 M</b>，优先淘汰 A=0,M=0（不用写回）</td></tr>
+      </table>
+      <div class="fm a">改进型 CLOCK 的淘汰顺序（四轮扫描）
+① 找 A=0, M=0  → 直接淘汰（最理想，不用写回）
+② 找 A=0, M=1  → 淘汰并写回
+   扫描过程中把经过的 A 置 0
+③ 重复第①轮（此时 M=1 的都变 A=0,M=1）
+④ 重复第②轮</div>
+      <div class="tip s"><span class="ti">只考三种</span><span>考试真正要手算的通常只有 <b>OPT、FIFO、LRU</b> 三种。CLOCK 系列多考概念和淘汰次序。</span></div>
+    </div>
+    <div class="card">
+      <h4>7. 抖动与工作集</h4>
+      <ul>
+        <li><b>抖动（颠簸）</b>：刚换出的页马上又要用，频繁缺页。根因是<b>分配的页框数少于局部性所需</b></li>
+        <li><b>工作集</b>：某段时间窗口内实际访问的页面集合。窗口大小 Δ 的选取影响结果</li>
+        <li>解决办法：按工作集大小分配页框；或挂起部分进程（降低多道程度）</li>
+        <li>页面大小的影响：太大 → 内部碎片多、调入慢；太小 → 页表大、缺页频繁</li>
+      </ul>
+      <div class="fm g">页面分配策略三种
+固定分配局部置换：页框数固定，只能换自己的页
+可变分配全局置换：可从整个系统取空闲页框
+可变分配局部置换：页框数可变，但只在自身页之间换（<b>最合理</b>）</div>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 08 · 分页地址转换：从逻辑地址到物理地址<span class="tag">动手输入</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>逻辑地址（十进制）</label><input type="number" id="vmAddr" value="8196" min="0" style="width:120px">
+        <label>页面大小</label>
+        <select id="vmPage"><option value="1024">1 KB</option><option value="4096" selected>4 KB</option><option value="8192">8 KB</option></select>
+        <button class="btn gh sm" data-vm="0">页首</button>
+        <button class="btn gh sm" data-vm="8196">跨页</button>
+      </div>
+      <div class="ctl">
+        <button class="btn" id="vmPlay">逐步演示</button>
+        <button class="btn gh" id="vmNext">下一步 ▸</button>
+        <button class="btn gy" id="vmReset">重置</button>
+      </div>
+      <div id="vmStage"></div>
+      <div id="vmOut" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 09 · 页面置换算法对比：OPT / FIFO / LRU<span class="tag">重点 · 输入访问串</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>页面访问串</label><input type="text" id="pgRef" value="7,0,1,2,0,3,0,4,2,3,0,3,2,1,2,0,1,7,0,1" style="width:300px">
+        <label>页框数</label><input type="number" id="pgFrames" value="3" min="1" max="5" style="width:56px">
+      </div>
+      <div class="ctl">
+        <button class="btn gh sm" data-pg="7,0,1,2,0,3,0,4,2,3,0,3,2,1,2,0,1,7,0,1">经典例题</button>
+        <button class="btn gh sm" data-pg="1,2,3,4,1,2,5,1,2,3,4,5">FIFO 异常例</button>
+        <label>演示算法</label>
+        <select id="pgAlgo">
+          <option value="all">三种一起对比</option>
+          <option value="opt" selected>OPT</option>
+          <option value="fifo">FIFO</option>
+          <option value="lru">LRU</option>
+        </select>
+      </div>
+      <div id="pgStage"></div>
+      <div id="pgStat" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 10 · 动态分区分配：四种算法怎么选空闲块<span class="tag">对比看碎片</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>空闲分区（KB，逗号分隔）</label><input type="text" id="ffFree" value="100,500,200,300,600" style="width:200px">
+        <label>请求大小</label><input type="number" id="ffReq" value="180" style="width:70px">
+        <label>算法</label>
+        <select id="ffAlgo">
+          <option value="ff">首次适应 FF</option>
+          <option value="bf">最佳适应 BF</option>
+          <option value="wf">最坏适应 WF</option>
+          <option value="nf">邻近适应 NF</option>
+        </select>
+      </div>
+      <div id="ffStage"></div>
+      <div id="ffOut" style="margin-top:16px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 6 章 ==================== -->
+<section class="sec" id="os6">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 06</span>
+    <h2>文件管理</h2>
+    <span class="weight w2">中频 · 计算为主</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>概念多但题型固定。<b>混合索引的最大文件大小计算</b>和<b>位示图的字号位号换算</b>是两个稳定的计算考点，都有固定公式，练熟就是送分。文件分配方式的优劣对比是概念题的常客。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 文件与目录</h4>
+      <ul>
+        <li><b>FCB（文件控制块）</b>：存放文件名、物理位置、逻辑结构、存取权限等，是文件存在的标志</li>
+        <li><b>索引结点（inode）</b>：把<b>文件名</b>留在目录项，其余信息全放到索引结点里。这样目录项变小，检索更快</li>
+        <li>目录结构：单级 → 两级 → 树形 → 无环图</li>
+        <li><b>树形目录</b>支持路径名和分类，但<b>不便于共享</b>；<b>无环图</b>解决了共享问题</li>
+      </ul>
+      <div class="fm">树形目录的两种路径
+绝对路径：从根目录开始 /home/user/a.txt
+相对路径：从当前目录开始 ../user/a.txt</div>
+    </div>
+    <div class="card">
+      <h4>2. 文件共享 <span class="pt">易混</span></h4>
+      <table class="tb">
+        <tr><th></th><th>硬链接</th><th>软链接</th></tr>
+        <tr><td>本质</td><td>多个目录项指向<b>同一个 inode</b></td><td>新建一个文件，内容是<b>路径</b></td></tr>
+        <tr><td>计数</td><td>inode 的链接计数 +1</td><td>不影响原文件计数</td></tr>
+        <tr><td>删除原文件</td><td>文件仍可用（计数&gt;0）</td><td><b>链接失效</b></td></tr>
+        <tr><td>跨文件系统</td><td>不行</td><td>可以</td></tr>
+      </table>
+      <div class="tip m"><span class="ti">记忆</span><span>硬链接是「<b>同一份东西多个名字</b>」，软链接是「<b>一张写着地址的纸条</b>」。</span></div>
+    </div>
+    <div class="card">
+      <h4>3. 文件物理结构 <span class="pt hot">必考</span></h4>
+      <table class="tb">
+        <tr><th>方式</th><th>随机访问</th><th>问题</th></tr>
+        <tr><td>连续分配</td><td>快</td><td>不利于扩展、<b>外部碎片</b></td></tr>
+        <tr><td>隐式链接</td><td><b>只能顺序</b></td><td>指针占空间、可靠性差</td></tr>
+        <tr><td>显式链接（FAT）</td><td>可以（FAT 常驻内存）</td><td>FAT 表占内存</td></tr>
+        <tr><td>索引分配</td><td>快</td><td>索引块本身占空间</td></tr>
+      </table>
+      <div class="fm g">索引分配的三种形式
+单级索引：一个索引块
+多级索引：索引块指向索引块（文件很大时）
+混合索引：直接块 + 一级/二级/三级间接（UNIX 采用）</div>
+    </div>
+    <div class="card">
+      <h4>4. 混合索引计算 <span class="pt hot">高频</span></h4>
+      <div class="fm b">典型参数（UNIX 风格）
+索引结点含 13 个地址项：
+  10 个直接地址项
+  1 个一级间接
+  1 个二级间接
+  1 个三级间接
+
+设磁盘块大小 4 KB，每个地址项 4 B
+  则一个索引块能放 4 KB ÷ 4 B = <b>1024</b> 个地址项
+
+最大文件大小
+  直接：10 × 4 KB
+  一级：1024 × 4 KB
+  二级：1024² × 4 KB
+  三级：1024³ × 4 KB
+  合计 ≈ 4 TB 量级</div>
+      <div class="tip s"><span class="ti">怎么考</span><span>通常给一个逻辑块号（如「第 5000 块」），问需要几次访盘。做法：先减掉直接块（10），再减一级间接（1024），看落在哪一级，然后算 <b>1 次索引块 + 1 次数据块</b>（二级间接就是 2 次索引 + 1 次数据）。</span></div>
+    </div>
+    <div class="card">
+      <h4>5. 空闲空间管理 <span class="pt hot">计算题</span></h4>
+      <table class="tb">
+        <tr><th>方法</th><th>特点</th></tr>
+        <tr><td>空闲表法</td><td>连续分配适用，记录起始块号和块数</td></tr>
+        <tr><td>空闲链表法</td><td>空闲盘块链 / 空闲盘区链</td></tr>
+        <tr><td><b>位示图法</b></td><td>一个二进制位对应一个盘块，<b>1 表示占用、0 表示空闲</b>（或相反，看约定）</td></tr>
+        <tr><td>成组链接法</td><td>UNIX 采用。把空闲块分组，每组第一块记录下一组的块号和数量</td></tr>
+      </table>
+      <div class="fm a">位示图换算公式（字长为 n 位，编号从 1 开始）
+盘块号 b  →  字号 = (b−1) ÷ n + 1
+            位号 = (b−1) mod n + 1
+
+反过来：盘块号 = (字号−1) × n + 位号</div>
+      <div class="tip e"><span class="ti">易错</span><span>「从 0 开始编号」和「从 1 开始编号」公式差 1，做题<b>一定先看清题干怎么约定</b>。位示图里 0/1 哪个表示占用，也依题干而定。</span></div>
+    </div>
+    <div class="card">
+      <h4>6. 文件系统层次</h4>
+      <div class="fm">用户接口
+  ↓
+文件目录系统
+  ↓
+存取控制验证
+  ↓
+逻辑文件系统与文件信息缓冲区
+  ↓
+物理文件系统
+  ↓
+辅助分配模块 / 设备管理模块</div>
+      <ul>
+        <li><b>挂载</b>：把一个文件系统接到目录树的某个节点上</li>
+        <li>虚拟文件系统 VFS：屏蔽不同文件系统的差异，提供统一接口</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 11 · 混合索引寻址：第 N 块要访盘几次<span class="tag">动手输入块号</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>逻辑块号</label><input type="number" id="ixBlk" value="5000" min="0" style="width:110px">
+        <label>块大小</label><input type="number" id="ixSize" value="4096" style="width:90px"><span style="font-size:12px">B</span>
+        <label>地址项大小</label><input type="number" id="ixPtr" value="4" style="width:70px"><span style="font-size:12px">B</span>
+      </div>
+      <div id="ixStage"></div>
+      <div id="ixOut" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 12 · 位示图：盘块号与字号 / 位号的互换<span class="tag">输入即算</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>字长（位）</label><input type="number" id="bmW" value="32" style="width:70px">
+        <label>编号起点</label>
+        <select id="bmBase"><option value="1">从 1 开始</option><option value="0">从 0 开始</option></select>
+        <label>盘块号</label><input type="number" id="bmBlk" value="100" style="width:80px">
+      </div>
+      <div id="bmStage"></div>
+      <div id="bmOut" style="margin-top:16px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 7 章 ==================== -->
+<section class="sec" id="os7">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 07</span>
+    <h2>输入/输出管理</h2>
+    <span class="weight w2">中频 · 与计组交叉</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>与计组的 I/O 系统是<b>同一件事的两面</b>：计组讲硬件怎么发起和完成 I/O，OS 讲软件怎么组织和管理它。<b>磁盘调度算法</b>（求移臂总量）是稳定考点，<b>缓冲区的处理时间计算</b>是易错考点。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. I/O 控制方式 <span class="pt hot">与计组重叠</span></h4>
+      <table class="tb">
+        <tr><th>方式</th><th>CPU 参与度</th><th>单位</th></tr>
+        <tr><td>程序查询</td><td>全程忙等</td><td>字/字节</td></tr>
+        <tr><td>程序中断</td><td>每传一次打断一次</td><td>字/字节</td></tr>
+        <tr><td>DMA</td><td>只在开始结束参与</td><td><b>数据块</b></td></tr>
+        <tr><td>通道</td><td>几乎不参与</td><td><b>一组数据块</b></td></tr>
+      </table>
+      <div class="tip s"><span class="ti">一句话分工</span><span>计组告诉你 <b>DMA 控制器怎么抢总线</b>，OS 告诉你<b>驱动程序怎么把请求交给它</b>。</span></div>
+    </div>
+    <div class="card">
+      <h4>2. I/O 软件层次</h4>
+      <div class="fm">用户层 I/O 软件（库函数，如 printf）
+  ↓
+设备独立性软件（统一接口、缓冲、分配）
+  ↓
+设备驱动程序（把抽象请求变成设备指令）★厂商写
+  ↓
+中断处理程序
+  ↓
+硬件</div>
+      <ul>
+        <li><b>设备独立性</b>：上层用逻辑设备名，不关心具体是什么设备</li>
+        <li>设备驱动程序<b>与硬件直接相关</b>，通常由设备厂商提供</li>
+        <li>设备按传输单位分：块设备（磁盘）、字符设备（键盘）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>3. 缓冲技术 <span class="pt hot">易错计算</span></h4>
+      <div class="fm b">设：T = 输入一块到缓冲区的时间
+    C = CPU 处理一块的时间
+    M = 把缓冲区数据送到用户区的时间
+
+单缓冲：处理一块耗时 = <b>max(C, T) + M</b>
+双缓冲：处理一块耗时 = <b>max(C + M, T)</b>
+
+系统处理 n 块的总时间
+  单缓冲：n × (max(C,T) + M)
+  双缓冲：n × max(C+M, T)  （或再加首块开销）</div>
+      <div class="tip e"><span class="ti">易错</span><span>单缓冲里那个 <span class="mono">M</span> 是<b>加在 max 外面</b>的，不是里面 —— 因为把数据从缓冲区搬到用户区时，设备和 CPU 都闲着，这段是纯粹串行的开销。这一点很容易记反。</span></div>
+      <ul>
+        <li>缓冲池（buffer pool）：多个缓冲区统一管理，分空白缓冲队列、输入队列、输出队列</li>
+        <li>缓冲的作用：缓和 CPU 与 I/O 的速度差、减少中断频率、解决数据粒度不匹配</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>4. 设备分配与 SPOOLing</h4>
+      <ul>
+        <li>设备分配考虑：设备固有属性（独占/共享/虚拟）、分配算法（FCFS / 优先级）、安全性</li>
+        <li><b>SPOOLing（假脱机）</b>：用磁盘上的输入井/输出井模拟独占设备，把独占设备改造为<b>共享设备</b></li>
+        <li>典型例子：<b>打印机</b>。多个进程的打印请求排成队列，由守护进程依次输出</li>
+        <li>SPOOLing 提高了 I/O 速度，把独占设备虚拟成共享设备</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>5. 磁盘</h4>
+      <div class="fm g">磁盘访问时间 = 寻道时间 + 旋转延迟 + 传输时间
+  寻道时间：磁头移动到目标磁道   ← 主导，占大部分
+  旋转延迟：扇区转到磁头下
+    平均旋转延迟 = 转一圈时间 ÷ 2
+    转一圈时间 = 60 ÷ 转速(r/min) 秒
+  传输时间 = 读取字节数 ÷ 传输速率</div>
+      <div class="fm">磁盘地址 = 柱面号 + 磁头号 + 扇区号
+（柱面号 = 磁道号；磁头号 = 盘面号）</div>
+      <ul>
+        <li>格式化容量比非格式化容量小</li>
+        <li>坏块处理：扇区备用、扇区滑动</li>
+        <li>引导块：磁盘第一个扇区（MBR）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>6. 磁盘调度算法 <span class="pt hot">必考计算</span></h4>
+      <table class="tb">
+        <tr><th>算法</th><th>做法</th><th>特点</th></tr>
+        <tr><td>FCFS</td><td>按请求顺序</td><td>公平，但移臂距离大</td></tr>
+        <tr><td><b>SSTF</b></td><td>优先最近的</td><td>平均寻道最短；<b>可能饥饿</b></td></tr>
+        <tr><td><b>SCAN</b>（电梯）</td><td>单向扫到头再折返</td><td>不会饥饿；中间磁道更占便宜</td></tr>
+        <tr><td>C-SCAN</td><td>单向扫到头后<b>直接回到起点</b></td><td>更公平，回程不做服务</td></tr>
+        <tr><td>LOOK</td><td>SCAN 的改进：到<b>最远请求</b>就折返</td><td>不必扫到物理末端</td></tr>
+        <tr><td>C-LOOK</td><td>C-SCAN 的改进版</td><td>到最远请求就返回起点</td></tr>
+      </table>
+      <div class="tip m"><span class="ti">关键区别</span><span><b>SCAN / C-SCAN 扫到磁盘物理末端</b>，<b>LOOK / C-LOOK 扫到最远的那个请求就返回</b>。这是最容易混的一处，看题干问的是哪种。</span></div>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 13 · 磁盘调度：移臂总量对比<span class="tag">重点 · 可改序列</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>磁道请求序列</label><input type="text" id="dkSeq" value="98,183,37,122,14,124,65,67" style="width:250px">
+        <label>当前磁头</label><input type="number" id="dkHead" value="53" style="width:70px">
+        <label>磁道总数</label><input type="number" id="dkMax" value="200" style="width:70px">
+      </div>
+      <div class="ctl">
+        <label>算法</label>
+        <select id="dkAlgo">
+          <option value="all">全部对比</option>
+          <option value="fcfs">FCFS</option>
+          <option value="sstf" selected>SSTF</option>
+          <option value="scan">SCAN（先向大号）</option>
+          <option value="cscan">C-SCAN</option>
+          <option value="look">LOOK</option>
+        </select>
+        <button class="btn gh sm" data-dk="98,183,37,122,14,124,65,67">经典例题</button>
+      </div>
+      <div id="dkStage"></div>
+      <div id="dkStat" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 14 · 单缓冲 vs 双缓冲：那块时间到底加在哪<span class="tag">改参数看公式</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>T 输入一块</label><input type="number" id="bfT" value="100" style="width:70px"><span style="font-size:12px">μs</span>
+        <label>C 处理一块</label><input type="number" id="bfC" value="50" style="width:70px"><span style="font-size:12px">μs</span>
+        <label>M 传送到用户区</label><input type="number" id="bfM" value="20" style="width:70px"><span style="font-size:12px">μs</span>
+        <label>块数 n</label><input type="number" id="bfN" value="10" style="width:60px">
+      </div>
+      <div id="bfStage"></div>
+      <div id="bfOut" style="margin-top:16px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ##INSERT## -->
+
+<footer>
+  408 操作系统 · 交互式原理全景<br>
+  分值分布按历年统考真题的常见情况估计，用于确定复习优先级，非官方数据。
+</footer>
+</main>
+</div>
+
+<div class="totop" id="totop">↑</div>
+
+<script>
+/* ============================================================
+   通用工具
+   ============================================================ */
+/* ============================================================
+   动画速度总控 —— 所有动画的 setTimeout / setInterval 延迟统一乘倍率
+   只放大 300~2000ms 区间（动画用的范围），不影响其它短延迟逻辑
+   ============================================================ */
+let ANIM_SPEED = 1.7;                    // 1 = 原始速度，越大越慢
+(function(){
+  const _st = window.setTimeout.bind(window);
+  const _si = window.setInterval.bind(window);
+  const scale = ms => (typeof ms === 'number' && ms >= 300 && ms <= 2000)
+    ? Math.round(ms * ANIM_SPEED) : ms;
+  window.setTimeout = function(fn, ms){ return _st(fn, scale(ms)); };
+  window.setInterval = function(fn, ms){ return _si(fn, scale(ms)); };
+})();
+
+const $ = id => document.getElementById(id);
+const qsa = s => Array.prototype.slice.call(document.querySelectorAll(s));
+
+/* 速度切换 */
+qsa('[data-sp]').forEach(b=>{
+  b.onclick = ()=>{
+    ANIM_SPEED = parseFloat(b.dataset.sp) || 1.7;
+    qsa('[data-sp]').forEach(x=>x.classList.toggle('on', x === b));
+  };
+});
+
+window.addEventListener('scroll', ()=>{
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  $('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  $('totop').classList.toggle('on', window.scrollY > 500);
+});
+$('totop').onclick = ()=>window.scrollTo({top:0,behavior:'smooth'});
+
+/* ---------- 小屏抽屉导航 ---------- */
+(function(){
+  const btn = $('navbtn'), side = document.querySelector('.sidebar'), scrim = $('scrim');
+  if(!btn || !side || !scrim) return;
+  function close(){
+    side.classList.remove('open'); scrim.classList.remove('on');
+    btn.classList.remove('on'); btn.setAttribute('aria-expanded','false');
+  }
+  function open(){
+    side.classList.add('open'); scrim.classList.add('on');
+    btn.classList.add('on'); btn.setAttribute('aria-expanded','true');
+  }
+  btn.onclick = ()=>{ side.classList.contains('open') ? close() : open(); };
+  scrim.onclick = close;
+  qsa('.nav-i').forEach(a=>a.addEventListener('click', close));
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape') close(); });
+  window.addEventListener('resize', ()=>{ if(window.innerWidth > 980) close(); });
+
+  /* 顶部条上的「当前章节」按滚动位置算，跳转后不会滞后 */
+  function syncTitle(){
+    const t = document.querySelector('.mtop-t');
+    if(!t) return;
+    const secs = qsa('section.sec');
+    let cur = secs[0];
+    for(let i = 0; i < secs.length; i++){ if(secs[i].getBoundingClientRect().top <= 96) cur = secs[i]; }
+    const link = qsa('.nav-i').filter(a=>a.getAttribute('href') === '#'+cur.id)[0];
+    if(link) t.textContent = t.dataset.subj + ' · ' + link.querySelector('span').textContent;
+  }
+  window.addEventListener('scroll', syncTitle, {passive:true});
+  syncTitle();
+})();
+
+const navLinks = qsa('.nav-i');
+const secs = qsa('.sec');
+const obs = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const cur = navLinks.filter(a=>a.getAttribute('href') === '#'+e.target.id)[0];
+      navLinks.forEach(a=>a.classList.toggle('on', a === cur));
+    }
+  });
+},{rootMargin:'-15% 0px -70% 0px'});
+secs.forEach(s=>obs.observe(s));
+
+/* 分值权重条形入场动画 */
+setTimeout(()=>{ qsa('.rank-bar i, .rank-sum-bar i').forEach(f=>f.style.width = f.dataset.w + '%'); }, 300);
+
+/* ============================================================
+   动画 01 · 系统调用：用户态 → 内核态
+   ============================================================ */
+const SC = {
+  read: {
+    title: 'read() 读文件',
+    kind: 'normal',
+    steps: [
+      ['用户程序调用 read()', '应用程序执行到 read(fd, buf, n)。此刻 CPU 处于<b>用户态</b>，只能执行非特权指令。', '用户态'],
+      ['准备系统调用参数', '把 fd、buf、n 依次放进约定的寄存器，并把「系统调用号」写入指定寄存器（如 eax）。', '用户态'],
+      ['执行陷入指令 trap', '执行陷入指令（<span class="mono">int 0x80</span> / <span class="mono">syscall</span>）。这是<b>用户态进入内核态的唯一途径</b>——用户程序无法直接跳进内核。', '用户态 → 内核态'],
+      ['硬件切换状态', '硬件保存现场（PC、PSW 压栈），按中断向量跳到系统调用的统一入口。此时 CPU 已在<b>内核态</b>。', '内核态'],
+      ['按调用号分发', '内核用系统调用号查系统调用表，找到对应的服务例程 sys_read。', '内核态'],
+      ['内核执行实际工作', '检查参数合法性 → 查文件系统定位数据 → 启动磁盘 I/O。这些涉及特权指令，<b>只能在核心态完成</b>。', '内核态'],
+      ['返回用户态', '把返回值写入寄存器，用特权指令恢复 PSW，CPU 回到用户态，应用程序从下一行继续。', '内核态 → 用户态']
+    ],
+    note: '<div class="tip s"><span class="ti">要点</span><span>系统调用过程中<b>至少发生两次状态切换</b>（进内核、回用户态），每次切换都有开销。这就是为什么「尽量减少系统调用次数」是性能优化的常见手段（比如用缓冲一次性读写，而不是一个字节一个字节地读）。</span></div>'
+  },
+  fork: {
+    title: 'fork() 创建进程',
+    kind: 'normal',
+    steps: [
+      ['用户程序调用 fork()', '进程希望创建子进程。当前处于<b>用户态</b>。', '用户态'],
+      ['执行陷入指令', '同样通过 trap 进入内核态。', '用户态 → 内核态'],
+      ['内核态处理', '内核为子进程申请 PCB、分配 PID、复制父进程的地址空间和打开的文件表，然后把子进程插入就绪队列。', '内核态'],
+      ['返回时的差异', 'fork() 在父进程里返回子进程的 PID，在子进程里返回 0。<b>同一个调用点，两个进程拿到不同的返回值</b>。', '内核态 → 用户态'],
+      ['父进程继续', '父进程拿到子进程 PID，可以继续做别的事。', '用户态'],
+      ['子进程被调度', '子进程处于就绪态，等调度程序选中它之后才开始执行 fork() 之后的代码。', '用户态']
+    ],
+    note: '<div class="tip i"><span class="ti">考点</span><span>fork() 之后子进程<b>从 fork 的返回处继续执行</b>，而不是从头开始。这是它和「加载一个新程序」的本质区别（后者是 exec）。另外，创建进程的整个过程必须在内核态完成，因为它要操作 PCB 和就绪队列这些内核数据结构。</span></div>'
+  },
+  ioctl: {
+    title: '用户程序直接执行特权指令',
+    kind: 'illegal',
+    steps: [
+      ['用户程序试图直接操作设备', '比如直接执行一条 I/O 指令去读磁盘。当前处于<b>用户态</b>。', '用户态'],
+      ['CPU 检查指令权限', 'CPU 发现这是一条<b>特权指令</b>，而当前处于用户态 —— 权限不足。', '用户态'],
+      ['触发非法指令异常', '硬件产生一个内部异常（非法操作码 / 特权指令异常），这是<b>内中断</b>。', '用户态 → 内核态'],
+      ['内核介入处理', '操作系统捕获这个异常，通常认定为程序错误，向该进程发送信号（如 SIGILL）。', '内核态'],
+      ['进程被终止', '进程收到信号后通常被<b>强制终止</b>，不会真的执行那条 I/O 指令。', '内核态 → 终止']
+    ],
+    note: '<div class="tip e"><span class="ti">为什么</span><span>如果用户程序能直接执行 I/O 指令，就可以绕过操作系统随意读写磁盘、破坏其他进程的数据。<b>特权指令 + 两种执行状态，正是操作系统保护自身和进程隔离的硬件基础。</b>要操作设备，唯一正路是发起系统调用让内核代劳。</span></div>'
+  }
+};
+let scIdx = -1, scTimer = null;
+function renderSC(){
+  const d = SC[$('scPick').value];
+  const cur = scIdx >= 0 ? d.steps[scIdx] : null;
+  const inKernel = cur && cur[2].indexOf('内核态') >= 0 && cur[2].indexOf('→ 用户态') < 0;
+
+  $('scStage').innerHTML =
+    `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <div style="flex:1;min-width:120px;padding:10px 14px;border-radius:10px;text-align:center;font-size:13px;font-weight:750;
+        background:${inKernel?'#f4f7fb':'var(--primary-l)'};color:${inKernel?'#aab3c0':'var(--primary)'};
+        border:1px solid ${inKernel?'#e3e8ef':'var(--primary)'};transition:.3s">
+        用户态<span style="display:block;font-size:10.5px;font-weight:500">只能执行非特权指令</span></div>
+      <div style="display:flex;align-items:center;font-size:18px;color:${inKernel?'var(--primary)':'#cbd5e1'}">⇄</div>
+      <div style="flex:1;min-width:120px;padding:10px 14px;border-radius:10px;text-align:center;font-size:13px;font-weight:750;
+        background:${inKernel?'var(--primary-l)':'#f4f7fb'};color:${inKernel?'var(--primary)':'#aab3c0'};
+        border:1px solid ${inKernel?'var(--primary)':'#e3e8ef'};transition:.3s">
+        内核态<span style="display:block;font-size:10.5px;font-weight:500">可执行全部指令</span></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;padding:14px;background:#f7f9fc;border:1px solid var(--line);border-radius:10px">
+      ${['用户程序','库函数','trap 陷入','内核服务例程','返回用户态'].map((t,i)=>{
+        const act = cur && i <= scIdx;
+        return `<span style="font-size:12px;padding:6px 12px;border-radius:8px;font-weight:650;transition:.3s;
+          background:${act?'var(--primary)':'#fff'};color:${act?'#fff':'#8b95a3'};
+          border:1px solid ${act?'var(--primary)':'#e3e8ef'}">${t}</span>` +
+          (i<4?'<span style="color:#c3cbd7">→</span>':'');
+      }).join('')}
+    </div>`;
+
+  $('scSteps').innerHTML = d.steps.map((s,i)=>{
+    const cls = i < scIdx ? 'dn' : (i === scIdx ? 'act' : '');
+    return `<div class="step ${cls}"><div class="n">${i+1}</div><div style="flex:1">
+      <div class="t">${s[0]}
+        <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:4px;background:#eef2f7;color:#6b7280;margin-left:6px">${s[2]}</span></div>
+      <div class="d">${s[1]}</div></div></div>`;
+  }).join('');
+
+  $('scNote').innerHTML = (scIdx >= d.steps.length-1) ? d.note
+    : (scIdx < 0 ? '<div class="tip i"><span class="ti">怎么看</span><span>点「自动播放」或「下一步」，逐步看这次调用的完整过程。注意顶部两个状态框哪个是亮的 —— 那就是 CPU 当前所处的状态。把选择器切到第三个（特权指令），看用户程序硬来会发生什么。</span></div>' : '');
+}
+$('scNext').onclick = ()=>{ clearInterval(scTimer); scTimer=null; if(scIdx < SC[$('scPick').value].steps.length-1){ scIdx++; renderSC(); } };
+$('scReset').onclick = ()=>{ clearInterval(scTimer); scTimer=null; scIdx=-1; renderSC(); };
+$('scPlay').onclick = ()=>{
+  clearInterval(scTimer); scIdx = -1; renderSC();
+  scTimer = setInterval(()=>{
+    const n = SC[$('scPick').value].steps.length;
+    if(scIdx < n-1){ scIdx++; renderSC(); } else { clearInterval(scTimer); scTimer=null; }
+  }, 1400);
+};
+$('scPick').onchange = ()=>{ clearInterval(scTimer); scTimer=null; scIdx=-1; renderSC(); };
+renderSC();
+
+/* ============================================================
+   动画 02 · 进程状态转换机
+   ============================================================ */
+const FSM = {
+  3: {
+    nodes: [
+      {k:'new', t:'创建'},
+      {k:'ready', t:'就绪'},
+      {k:'run', t:'运行'},
+      {k:'block', t:'阻塞'},
+      {k:'exit', t:'终止'}
+    ],
+    edges: [
+      ['创建','就绪','创建完成',1],
+      ['就绪','运行','被调度程序选中',1],
+      ['运行','就绪','时间片用完 / 被抢占',1],
+      ['运行','阻塞','主动请求资源（如等 I/O）',1],
+      ['阻塞','就绪','等待的事件发生了',1],
+      ['运行','终止','进程结束',1]
+    ],
+    illegal: [['阻塞','运行','必须先进就绪队列，不能直接运行']]
+  }
+};
+const FSM_INFO = {
+  '创建': '进程正在被创建：申请 PCB、分配资源、初始化。此时还不能被调度。',
+  '就绪': '万事俱备，只差 CPU。已经获得除处理机之外的所有资源，排在就绪队列里等调度。',
+  '运行': '正在 CPU 上执行。单核系统中，同一时刻最多只有一个进程处于运行态。',
+  '阻塞': '因为等待某个事件（I/O 完成、信号量、消息）而暂停。<b>此时就算给它 CPU 也没用</b>，所以它不在就绪队列里。',
+  '终止': '进程正常结束或被强制杀死，正在回收资源。'
+};
+function renderFSM(){
+  const mode = $('fsmMode').value;
+  let nodes = ['创建','就绪','运行','阻塞','终止'];
+  let edges = FSM[3].edges;
+  if(mode === '7'){
+    nodes = ['创建','就绪','运行','阻塞','终止','就绪挂起','阻塞挂起'];
+    edges = edges.concat([
+      ['就绪','就绪挂起','挂起（内存不够）',1],
+      ['阻塞','阻塞挂起','挂起',1],
+      ['就绪挂起','就绪','激活（调入内存）',1],
+      ['阻塞挂起','阻塞','激活',1],
+      ['阻塞挂起','就绪挂起','等待的事件发生了',1]
+    ]);
+  } else if(mode === '5'){
+    nodes = ['创建','就绪','运行','阻塞','终止'];
+  } else {
+    nodes = ['就绪','运行','阻塞'];
+    edges = edges.filter(e => ['就绪','运行','阻塞'].indexOf(e[0])>=0 && ['就绪','运行','阻塞'].indexOf(e[1])>=0);
+  }
+
+  const color = { '创建':'#94a3b8', '就绪':'#d97706', '运行':'#0f766e', '阻塞':'#dc2626', '终止':'#94a3b8', '就绪挂起':'#7c3aed', '阻塞挂起':'#7c3aed' };
+  const bg = { '创建':'#f4f7fb', '就绪':'#fff4e3', '运行':'#e4f5f2', '阻塞':'#fdeceb', '终止':'#f4f7fb', '就绪挂起':'#f2ecfe', '阻塞挂起':'#f2ecfe' };
+
+  $('fsmStage').innerHTML =
+    `<div class="fsm">
+      ${nodes.map(n=>`<div class="nodex" data-st="${n}" style="border-color:${color[n]};background:${bg[n]};color:${color[n]}">${n}</div>`).join('')}
+    </div>
+    <div class="legend">
+      ${['运行','就绪','阻塞'].map(n=>`<span><i style="background:${color[n]}"></i>${n}态</span>`).join('')}
+      ${mode==='7'?'<span><i style="background:#7c3aed"></i>挂起态（进程被换出到外存）</span>':''}
+    </div>`;
+
+  qsa('#fsmStage [data-st]').forEach(el=>{
+    el.onclick = ()=>{
+      const st = el.dataset.st;
+      const outs = edges.filter(e=>e[0]===st);
+      const ins = edges.filter(e=>e[1]===st);
+      $('fsmOut').innerHTML =
+        `<div class="res">
+          <div class="r"><span class="lbl">当前状态</span><span class="val" style="color:${color[st]}">${st}</span></div>
+          <div class="r" style="margin-top:5px"><span class="lbl">含义</span><span style="font-size:13px">${FSM_INFO[st]||'（挂起态：进程被换出到外存，不占用内存）'}</span></div>
+          <div class="r" style="margin-top:5px"><span class="lbl">能转出到</span><span style="font-size:13px">${
+            outs.length ? outs.map(e=>`<b>${e[1]}</b>（${e[2]}）`).join('　·　') : '无（终态或不可能）'}</span></div>
+          <div class="r" style="margin-top:5px"><span class="lbl">能从哪来</span><span style="font-size:13px">${
+            ins.length ? ins.map(e=>`<b>${e[0]}</b>`).join('、') : '无'}</span></div>
+        </div>`;
+    };
+  });
+  $('fsmOut').innerHTML = '<div class="tip i"><span class="ti">点一下</span><span>上方任意状态，看它的含义和进出条件。注意<b>挂起态</b>和阻塞态的区别：阻塞是「等事件」，挂起是「被换出内存」—— 一个进程可以同时是「阻塞且挂起」。</span></div>';
+}
+$('fsmMode').onchange = renderFSM;
+$('fsmTry').onclick = ()=>{
+  $('fsmOut').innerHTML =
+    `<div class="tip e"><span class="ti">不可能</span><span>
+      被唤醒的进程只是从「阻塞」回到「<b>就绪</b>」队列，<b>不会直接变成「运行」</b>。
+      它还要再被调度程序选中才能上 CPU —— 因为可能有好几个进程同时被唤醒，而 CPU 只有一个。<br><br>
+      所以「阻塞 → 运行」这个转换在任何状态模型里都<b>不存在</b>。这是选择题的高频陷阱。<br><br>
+      顺带记：<b>运行 → 阻塞</b>是进程<b>主动</b>的（自己去等 I/O）；<b>运行 → 就绪</b>是<b>被动</b>的（被时间片或高优先级进程剥夺）。</span></div>`;
+};
+renderFSM();
+
+/* ============================================================
+   动画 03 · 调度算法对比器
+   ============================================================ */
+function parseProcs(str){
+  return str.split(';').map(s=>s.trim()).filter(Boolean).map((s,i)=>{
+    const p = s.split(',').map(x=>parseInt(x.trim(),10));
+    return { id:'P'+(i+1), arr:p[0]||0, svc:p[1]||1 };
+  });
+}
+function runSched(procs, algo, q){
+  const P = procs.map(p=>({...p, left:p.svc, done:false, start:null, end:null}));
+  const segs = [];
+  let t = Math.min.apply(null, P.map(p=>p.arr));
+  let guard = 0;
+  if(algo === 'rr'){
+    const qq = Math.max(1, q||1);
+    const queue = [];
+    let arrived = new Set();
+    P.filter(p=>p.arr <= t).sort((a,b)=>a.arr-b.arr).forEach(p=>{ queue.push(p.id); arrived.add(p.id); });
+    let cur = null, used = 0;
+    while((queue.length || P.some(p=>!p.done)) && guard++ < 3000){
+      if(!cur){
+        if(!queue.length){ t++; P.filter(p=>p.arr<=t && !arrived.has(p.id)).forEach(p=>{queue.push(p.id);arrived.add(p.id);}); continue; }
+        const nid = queue.shift();          // 必须先取出，不能写在 find 回调里 —— 回调会对每个元素执行一次，导致重复 shift
+        cur = P.find(p=>p.id===nid);
+        used = 0;
+        if(cur.start === null) cur.start = t;
+      }
+      segs.push({ id:cur.id, from:t, to:t+1 });
+      cur.left--; used++; t++;
+      P.filter(p=>p.arr<=t && !arrived.has(p.id)).forEach(p=>{queue.push(p.id);arrived.add(p.id);});
+      if(cur.left === 0){ cur.done = true; cur.end = t; cur = null; }
+      else if(used >= qq){ queue.push(cur.id); cur = null; }
+    }
+    return { segs: merge(segs), procs:P };
+  }
+  while(P.some(p=>!p.done) && guard++ < 3000){
+    const ready = P.filter(p=>!p.done && p.arr <= t);
+    if(!ready.length){ t = Math.min.apply(null, P.filter(p=>!p.done).map(p=>p.arr)); continue; }
+    let pick;
+    if(algo === 'fcfs') pick = ready.sort((a,b)=>a.arr-b.arr || a.id.localeCompare(b.id))[0];
+    else if(algo === 'sjf') pick = ready.sort((a,b)=>a.svc-b.svc || a.arr-b.arr)[0];
+    else if(algo === 'prio') pick = ready.sort((a,b)=>a.id.localeCompare(b.id))[0];
+    else if(algo === 'hrrn'){
+      pick = ready.map(p=>{
+        const wait = t - p.arr;
+        return { p, r:(wait + p.svc) / p.svc };
+      }).sort((a,b)=>b.r-a.r)[0].p;
+    } else pick = ready[0];
+    pick.start = pick.start===null ? t : pick.start;
+    segs.push({ id:pick.id, from:t, to:t+pick.svc });
+    t += pick.svc;
+    pick.end = t; pick.done = true;
+  }
+  return { segs: merge(segs), procs:P };
+}
+function merge(segs){
+  const out = [];
+  segs.forEach(s=>{
+    const last = out[out.length-1];
+    if(last && last.id === s.id && last.to === s.from) last.to = s.to;
+    else out.push({...s});
+  });
+  return out;
+}
+const ALGO_NAME = { fcfs:'FCFS 先来先服务', sjf:'SJF 短作业优先', hrrn:'HRRN 高响应比优先', rr:'RR 时间片轮转', prio:'优先级调度' };
+/* 每种调度算法「怎么调」—— 光有甘特图和周转时间不够，得先说清它在挑谁 */
+const SCH_DESC = {
+  fcfs:'按<b>到达顺序</b>排队，谁先来谁先上 CPU。最简单也最公平，但<b>一个长作业会把后面所有短作业全挡住</b>（护航效应），所以平均等待时间往往很难看。',
+  sjf: '从<b>已经到达</b>的进程里挑<b>运行时间最短</b>的那个。可以严格证明它的<b>平均等待时间最短</b>；代价是长作业可能一直排不上（<b>饥饿</b>）。',
+  hrrn:'每次算一遍 <b>响应比 =（等待时间 + 要求服务时间）÷ 要求服务时间</b>，选最大的那个。等待越久响应比越大、需要时间越短响应比也越大 —— 是 FCFS 和 SJF 的折中，<b>不会饥饿</b>。',
+  rr:  '所有就绪进程排成一个队列，每个轮流用一个<b>时间片</b>，用完就自动排到队尾。响应快，适合分时系统。时间片太小切换开销大，太大会退化成 FCFS。',
+  prio:'按<b>优先级</b>挑最高（本例编号越小优先级越高）。优先级可以是静态设定的，也可以动态调整；低优先级进程可能饥饿，用「老化」可以缓解。'
+};
+/* 页面置换：每种算法在挑谁换出去 */
+const PG_DESC = {
+  opt: '淘汰<b>未来最久都不会被访问</b>的那一页。它是理论最优（缺页最少），但需要预知未来，<b>现实中无法实现</b> —— 只用来当标尺衡量其它算法。',
+  fifo:'淘汰<b>最早进入内存</b>的那一页（先进先出）。实现最简单（一个队列就够），但会出现 <b>Belady 异常</b>：增加页框数，缺页次数反而变多。',
+  lru: '淘汰<b>过去最久没有被访问</b>的那一页。思路是「用最近的过去预测最近的未来」，性能接近 OPT，但需要硬件支持（栈或计数器）来记录访问时间，开销较大。'
+};
+/* 磁盘调度：每种算法怎么决定下一个服务谁 */
+const DK_DESC = {
+  fcfs:'按<b>请求到达的顺序</b>依次服务。最公平，但磁头来回大跨度移动，平均寻道时间最长。',
+  sstf:'每次挑<b>离当前磁头位置最近</b>的那条请求。平均寻道时间最短，但远处磁道的请求可能永远排不上（<b>饥饿</b>）。',
+  scan:'像电梯一样<b>朝一个方向一直扫到磁盘尽头</b>，再折返往回扫。不会饥饿；不过中间磁道经过两次、两端只经过一次，所以中间磁道更占便宜。',
+  cscan:'朝一个方向扫到尽头后，<b>直接跳回起点</b>重新开始扫（回程不做服务）。比 SCAN 更公平，代价是回程的空跑 —— 所以移臂总量通常比 SCAN 大。',
+  look:'SCAN 的改进版：<b>扫到最远的那条请求就折返</b>，不用走到物理尽头。本题没有走到磁盘两端，所以移臂量更小。',
+  clook:'C-SCAN 的改进版：扫到最远请求就<b>跳回最小的那条请求</b>，同样省掉了走到尽头的空跑。'
+};
+const ALGO_COLOR = ['#0f766e','#2563eb','#d97706','#7c3aed','#dc2626','#0891b2','#15803d','#be185d'];
+function renderSched(algo){
+  const procs = parseProcs($('schData').value);
+  if(!procs.length){ $('schStage').innerHTML = '<div class="tip m"><span class="ti">提示</span><span>请输入进程数据，格式：到达时间,服务时间，多组用分号隔开。</span></div>'; $('schStat').innerHTML=''; return; }
+  const q = parseInt($('schQ').value,10) || 2;
+  const list = (algo === 'all') ? ['fcfs','sjf','hrrn','rr'] : [algo];
+  const colorMap = {};
+  procs.forEach((p,i)=> colorMap[p.id] = ALGO_COLOR[i % ALGO_COLOR.length]);
+
+  let html = '', stats = '';
+  list.forEach(a=>{
+    const r = runSched(procs, a, q);
+    const T = Math.max.apply(null, r.segs.map(s=>s.to));
+    const total = T || 1;
+    html += `<div style="margin-bottom:20px">
+      <div style="font-size:13px;font-weight:750;margin-bottom:6px">${ALGO_NAME[a]}${a==='rr'?'　<span style="font-weight:500;font-size:11.5px;color:#8b95a3">时间片 = '+q+'</span>':''}</div>
+      <div style="font-size:12px;color:#5c6773;line-height:1.75;margin-bottom:10px;padding:9px 13px;
+        background:#f7f9fc;border-radius:8px;border-left:3px solid var(--primary)"><b>怎么调度：</b>${SCH_DESC[a]}</div>
+      <div class="gantt">
+        <div class="grow"><div class="glabel">CPU</div>
+          <div class="gtrack">
+            ${r.segs.map(s=>`<div class="gbar" style="left:${s.from/total*100}%;width:${(s.to-s.from)/total*100}%;background:${colorMap[s.id]}">${s.id}</div>`).join('')}
+          </div>
+        </div>
+        <div class="gaxis"><div></div><div class="gticks">
+          ${Array.from({length:Math.min(total,20)+1},(_,i)=>`<span style="left:${i/total*100}%">${i}</span>`).join('')}
+        </div></div>
+      </div>
+    </div>`;
+
+    const rows = r.procs.map(p=>{
+      const tat = p.end - p.arr;
+      const wtat = tat / p.svc;
+      return { p, tat, wtat };
+    }).sort((a,b)=>a.p.id.localeCompare(b.p.id));
+    const avgTat = rows.reduce((s,x)=>s+x.tat,0)/rows.length;
+    const avgW = rows.reduce((s,x)=>s+x.wtat,0)/rows.length;
+
+    stats += `<div style="margin-bottom:16px">
+      <div style="font-size:12.5px;font-weight:750;margin-bottom:6px">${ALGO_NAME[a]}</div>
+      <table class="tb">
+        <tr><th>进程</th><th>到达</th><th>服务</th><th>开始</th><th>完成</th><th>周转时间</th><th>带权周转</th></tr>
+        ${rows.map(x=>`<tr><td><b>${x.p.id}</b></td><td class="mono">${x.p.arr}</td><td class="mono">${x.p.svc}</td>
+          <td class="mono">${x.p.start}</td><td class="mono">${x.p.end}</td>
+          <td class="mono"><b>${x.tat}</b></td><td class="mono"><b>${x.wtat.toFixed(2)}</b></td></tr>`).join('')}
+        <tr style="background:#f7f9fc"><td colspan="5"><b>平均值</b></td>
+          <td class="mono"><b style="color:var(--primary)">${avgTat.toFixed(2)}</b></td>
+          <td class="mono"><b style="color:var(--primary)">${avgW.toFixed(2)}</b></td></tr>
+      </table>
+    </div>`;
+  });
+
+  $('schStage').innerHTML = html;
+  $('schStat').innerHTML = stats +
+    `<div class="tip s"><span class="ti">看结果</span><span>对比各算法的<b>平均周转时间</b>：SJF 通常最小（这是可以证明的），FCFS 对短作业不公平，RR 的平均周转时间一般较长但<b>响应时间最好</b>。做题时别只看平均周转，要看清题目问的是哪个指标。</span></div>`;
+}
+$('schAlgo').onchange = ()=>renderSched($('schAlgo').value);
+$('schData').oninput = ()=>renderSched($('schAlgo').value);
+$('schQ').oninput = ()=>renderSched($('schAlgo').value);
+$('schAll').onclick = ()=>renderSched('all');
+qsa('[data-sch]').forEach(b=>b.onclick=()=>{ $('schData').value = b.dataset.sch; renderSched($('schAlgo').value); });
+renderSched('fcfs');
+
+/* ============================================================
+   动画 04 · PV 操作模拟器（生产者-消费者）
+   ============================================================ */
+let PC = null;
+function pcInit(){
+  const n = Math.max(1, Math.min(6, parseInt($('pcBuf').value,10) || 3));
+  PC = { n, buf:new Array(n).fill(null), empty:n, full:0, mutex:1, prodWait:0, consWait:0, log:[], pid:1 };
+  $('pcNote').innerHTML = '';
+  pcRender();
+}
+function pcRender(){
+  const cells = PC.buf.map((v,i)=>
+    `<div class="cellx ${v!==null?'on':'free'}" style="width:48px;height:40px;font-size:11px">${v!==null?'P'+v:'空'}</div>`).join('');
+  $('pcStage').innerHTML =
+    `<div style="font-size:12px;font-weight:700;color:#4b5665;margin-bottom:8px">缓冲区（容量 ${PC.n}）</div>
+     <div class="cells">${cells}</div>
+     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:#5c6779">
+       <span>产品编号 P1、P2… 表示先后放入的产品</span>
+     </div>`;
+
+  const sem = (name, val, init, desc)=>{
+    const ok = val >= 0;
+    return `<div class="card" style="box-shadow:none;padding:12px 14px">
+      <div style="font-family:Consolas,monospace;font-size:13px;font-weight:800;color:${ok?'var(--primary)':'var(--red)'}">${name} = ${val}</div>
+      <div style="font-size:11.5px;color:#8b95a3;margin-top:4px">初值 ${init}　${desc}</div>
+    </div>`;
+  };
+  $('pcSems').innerHTML =
+    `<div class="grid g3">
+      ${sem('empty', PC.empty, PC.n, '空槽位数')}
+      ${sem('full', PC.full, 0, '已放产品数')}
+      ${sem('mutex', PC.mutex, 1, '互斥访问缓冲区')}
+    </div>` +
+    (PC.prodWait || PC.consWait ? `<div class="tip m" style="margin-top:10px"><span class="ti">等待</span><span>
+      生产者队列 ${PC.prodWait} 个　消费者队列 ${PC.consWait} 个　（负值的绝对值就是队列长度）</span></div>` : '');
+
+  if(PC.log.length){
+    $('pcNote').innerHTML = `<div class="res" style="max-height:200px;overflow-y:auto">
+      ${PC.log.slice(-9).map(l=>`<div class="r" style="margin:2px 0"><span style="font-size:12.5px">${l}</span></div>`).join('')}
+    </div>`;
+  } else {
+    $('pcNote').innerHTML = '<div class="tip i"><span class="ti">怎么看</span><span>点「生产者投递一次」，看它依次走 P(empty) → P(mutex) → 放入 → V(mutex) → V(full)；点「消费者取走一次」看反向过程。把缓冲区填满再点投递，就能看到生产者被 P(empty) 阻塞 —— 注意此时 <b>empty 变成负数，其绝对值就是等待队列长度</b>。</span></div>';
+  }
+}
+function pcProduce(){
+  const L = [];
+  if(PC.empty <= 0){
+    PC.prodWait++;
+    PC.log.push(`<b style="color:#dc2626">生产者：P(empty) 失败，empty=${PC.empty-1} → 阻塞，进入等待队列</b>`);
+    PC.empty--;
+    pcRender(); return;
+  }
+  L.push(`生产者：P(empty) → empty = ${--PC.empty}`);
+  if(PC.mutex <= 0){
+    L.push(`生产者：P(mutex) 失败 → 阻塞（缓冲区正被占用）`);
+    PC.prodWait++; PC.mutex--;
+    PC.log.push(...L); pcRender(); return;
+  }
+  L.push(`生产者：P(mutex) → mutex = ${--PC.mutex}`);
+  const i = PC.buf.indexOf(null);
+  PC.buf[i] = PC.pid++;
+  L.push(`生产者：把产品 P${PC.pid-1} 放入第 ${i+1} 个槽位`);
+  L.push(`生产者：V(mutex) → mutex = ${++PC.mutex}`);
+  PC.full++;
+  L.push(`生产者：V(full) → full = ${PC.full}`);
+  PC.log.push(...L);
+  pcRender();
+}
+function pcConsume(){
+  const L = [];
+  if(PC.full <= 0){
+    PC.consWait++;
+    PC.full--;
+    PC.log.push(`<b style="color:#dc2626">消费者：P(full) 失败，full=${PC.full} → 阻塞，进入等待队列</b>`);
+    pcRender(); return;
+  }
+  L.push(`消费者：P(full) → full = ${--PC.full}`);
+  if(PC.mutex <= 0){
+    L.push(`消费者：P(mutex) 失败 → 阻塞`);
+    PC.consWait++; PC.mutex--;
+    PC.log.push(...L); pcRender(); return;
+  }
+  L.push(`消费者：P(mutex) → mutex = ${--PC.mutex}`);
+  const i = PC.buf.findIndex(v=>v!==null);
+  const item = PC.buf[i];
+  PC.buf[i] = null;
+  L.push(`消费者：取走第 ${i+1} 个槽位的产品 P${item}`);
+  L.push(`消费者：V(mutex) → mutex = ${++PC.mutex}`);
+  PC.empty++;
+  L.push(`消费者：V(empty) → empty = ${PC.empty}`);
+  PC.log.push(...L);
+  pcRender();
+}
+$('pcReset').onclick = pcInit;
+$('pcBuf').oninput = pcInit;
+$('pcProd').onclick = pcProduce;
+$('pcCons').onclick = pcConsume;
+$('pcAuto').onclick = ()=>{
+  clearInterval(pcTimer); let k = 0;
+  pcTimer = setInterval(()=>{
+    if(k % 3 === 2) pcConsume(); else pcProduce();
+    if(++k >= 9){ clearInterval(pcTimer); pcTimer = null; }
+  }, 620);
+};
+let pcTimer = null;
+pcInit();
+
+/* ============================================================
+   动画 05 · 两个 P 操作写反了会死锁
+   ============================================================ */
+const ORD = [
+  { t:'初始状态', d:'缓冲区已满（empty = 0，full = n），mutex = 1。现在来一个生产者，一个消费者。',
+    boxes:[['生产者','P(empty) 阻塞','bad'],['消费者','P(full) 成功，想拿锁','ok'],['mutex','1 → 被生产者持有','bad']] },
+  { t:'生产者先执行 P(empty)', d:'empty = 0，减 1 后变成 −1 < 0，生产者<b>阻塞</b>，进入 empty 的等待队列。<b>注意：它还没进临界区，也不持有锁。</b>',
+    boxes:[['生产者','阻塞在 P(empty)','bad'],['消费者','继续执行','ok'],['mutex','1（空闲）','ok']] },
+  { t:'消费者继续', d:'消费者执行 P(full) 成功（full = n > 0），接着 P(mutex) 也成功（mutex = 1 → 0），顺利进入临界区取走产品。',
+    boxes:[['生产者','仍然阻塞','bad'],['消费者','进入临界区，取走一个产品','ok'],['mutex','1 → 0（消费者持有）','ok']] },
+  { t:'消费者退出，唤醒生产者', d:'消费者 V(empty) → empty 从 −1 变成 0，因为 ≤ 0，<b>唤醒</b>了等待队列里的生产者。生产者被移到就绪队列。',
+    boxes:[['生产者','被唤醒，等待调度','ok'],['消费者','退出临界区','ok'],['mutex','0 → 1（已释放）','ok']] },
+  { t:'结论', d:'<b>顺序正确，系统顺利推进。</b>生产者阻塞时不持有锁，所以消费者能正常进出临界区、腾出空间、再唤醒它。这就是「先 P 资源信号量，后 P 互斥信号量」的原因。',
+    boxes:[['生产者','继续执行','ok'],['消费者','继续执行','ok'],['mutex','1','ok']] }
+];
+
+/* 写反的情形 */
+const ORD_BAD = [
+  { t:'初始状态', d:'同样的场景：缓冲区已满，empty = 0，mutex = 1。生产者、消费者各一个。',
+    boxes:[['生产者','准备进入',''],['消费者','准备进入',''],['mutex','1','ok']] },
+  { t:'生产者先执行 P(mutex)', d:'mutex = 1 → 0，<b>生产者拿到了锁</b>。这时代的它已经进入了临界区的前半段。',
+    boxes:[['生产者','持有互斥锁','bad'],['消费者','被挡在 P(mutex) 外','bad'],['mutex','1 → 0（生产者持有）','bad']] },
+  { t:'生产者接着执行 P(empty)', d:'empty = 0，减 1 变成 −1 < 0，生产者<b>阻塞</b>。<b>但它手里还攥着 mutex 不放手！</b>',
+    boxes:[['生产者','阻塞，且持有锁','bad'],['消费者','阻塞在 P(mutex)','bad'],['mutex','0（被死锁进程占着）','bad']] },
+  { t:'消费者永远拿不到锁', d:'消费者要进临界区必须先 P(mutex)，但 mutex = 0 被生产者占着；生产者要往下走必须先等 empty > 0，而 empty 只有消费者取走产品才会增加。<br><br><b>两边互相等待，谁也动不了 —— 死锁。</b>',
+    boxes:[['生产者','死锁','bad'],['消费者','死锁','bad'],['mutex','0（永久）','bad']] },
+  { t:'结论', d:'<b>P 操作的顺序不能反。</b>规则：<span class="key">先申请资源信号量，再申请互斥信号量</span>；释放时顺序相反（先 V mutex，再 V 资源信号量）。<br><br>道理很简单：互斥锁应该<b>在确认有资源可用之后再拿</b>，否则就是「拿着钥匙却进不了门，还堵着别人」。</b>',
+    boxes:[['生产者','死锁','bad'],['消费者','死锁','bad'],['mutex','0（永久）','bad']] }
+];
+
+let ordIdx = -1, ordMode = 'good', ordTimer2 = null;
+function renderOrd(){
+  const data = ordMode === 'good' ? ORD : ORD_BAD;
+  const cur = ordIdx >= 0 ? data[ordIdx] : null;
+  const boxes = cur ? cur.boxes : [['生产者','待运行',''],['消费者','待运行',''],['mutex','1','ok']];
+  const col = c => c === 'ok' ? ['#e8f6ec','#15803d','#8fd6a6'] : (c === 'bad' ? ['#fdeceb','#dc2626','#f3b8b6'] : ['#f4f7fb','#8b95a3','#dfe6ef']);
+
+  $('ordStage').innerHTML =
+    `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="btn ${ordMode==='good'?'':'gh'} sm" data-ord="good">顺序正确：P(empty) → P(mutex)</button>
+      <button class="btn ${ordMode==='bad'?'':'gh'} sm" data-ord="bad">顺序写反：P(mutex) → P(empty)</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px">
+      ${boxes.map(b=>{ const [bg,fg,bd] = col(b[2]);
+        return `<div style="padding:12px;border-radius:10px;background:${bg};border:1px solid ${bd};text-align:center;transition:.3s">
+          <div style="font-size:12px;font-weight:750;color:${fg}">${b[0]}</div>
+          <div style="font-size:11.5px;color:${fg};opacity:.85;margin-top:4px;line-height:1.5">${b[1]}</div></div>`;
+      }).join('')}
+    </div>
+    <div class="steps">
+      ${data.map((s,i)=>{
+        const cls = i < ordIdx ? 'dn' : (i === ordIdx ? 'act' : '');
+        return `<div class="step ${cls}"><div class="n">${i+1}</div><div style="flex:1">
+          <div class="t">${s.t}</div><div class="d">${s.d}</div></div></div>`;
+      }).join('')}
+    </div>`;
+  qsa('#ordStage [data-ord]').forEach(b=>b.onclick=()=>{
+    clearInterval(ordTimer2); ordTimer2=null; ordMode = b.dataset.ord; ordIdx = -1; renderOrd();
+  });
+}
+$('ordPlay').onclick = ()=>{
+  clearInterval(ordTimer2); ordIdx = -1; renderOrd();
+  ordTimer2 = setInterval(()=>{
+    const n = (ordMode === 'good' ? ORD : ORD_BAD).length;
+    if(ordIdx < n-1){ ordIdx++; renderOrd(); } else { clearInterval(ordTimer2); ordTimer2=null; }
+  }, 1600);
+};
+$('ordReset').onclick = ()=>{ clearInterval(ordTimer2); ordTimer2=null; ordIdx=-1; renderOrd(); };
+renderOrd();
+
+/* ============================================================
+   动画 06 · 银行家算法
+   ============================================================ */
+const BK_MAX = [[7,5,3],[3,2,2],[9,0,2],[2,2,2],[4,3,3]];
+const BK_ALLOC = [[0,1,0],[2,0,0],[3,0,2],[2,1,1],[0,0,2]];
+function bkData(){
+  const avail = ($('bkAvail').value||'3,3,2').split(',').map(x=>parseInt(x.trim(),10)||0);
+  return {
+    avail: avail.slice(0,3),
+    need: BK_MAX.map((m,i)=> m.map((v,j)=> v - BK_ALLOC[i][j]))
+  };
+}
+function renderBK(){
+  const d = bkData();
+  const rows = d.need.map((nd,i)=>({ i, nd, alloc:BK_ALLOC[i], max:BK_MAX[i] }));
+  $('bkStage').innerHTML =
+    `<table class="tb">
+      <tr><th>进程</th><th>Max (A B C)</th><th>Allocation</th><th>Need = Max − Alloc</th></tr>
+      ${rows.map(r=>`<tr>
+        <td><b>P${r.i}</b></td>
+        <td class="mono">${r.max.join(' ')}</td>
+        <td class="mono">${r.alloc.join(' ')}</td>
+        <td class="mono"><b style="color:var(--accent)">${r.nd.join(' ')}</b></td>
+      </tr>`).join('')}
+      <tr style="background:#f7f9fc"><td colspan="3"><b>Available（当前可用）</b></td>
+        <td class="mono"><b style="color:var(--primary)">${d.avail.join(' ')}</b></td></tr>
+    </table>`;
+
+  // 安全性算法
+  let avail = d.avail.slice();
+  const done = new Array(5).fill(false);
+  const seq = [];
+  const trace = [];
+  let guard = 0;
+  while(seq.length < 5 && guard++ < 50){
+    let found = -1;
+    for(let i=0;i<5;i++){
+      if(done[i]) continue;
+      if(d.need[i].every((v,j)=> v <= avail[j])){ found = i; break; }
+    }
+    if(found < 0) break;
+    const before = avail.slice();
+    avail = avail.map((v,j)=> v + BK_ALLOC[found][j]);
+    done[found] = true;
+    seq.push(found);
+    trace.push({ p:found, need:d.need[found], before, after:avail.slice(), alloc:BK_ALLOC[found] });
+  }
+  const safe = seq.length === 5;
+
+  $('bkOut').innerHTML =
+    `<div class="res" style="margin-bottom:12px">
+      ${trace.map((t,i)=>`<div class="r" style="margin:5px 0">
+        <span style="font-size:12.5px">第 ${i+1} 步：Need[P${t.p}] = (${t.need.join(' ')}) ≤ Available (${t.before.join(' ')})　
+        <b style="color:#15803d">✓ 可满足</b>　→　Available = (${t.before.join(' ')}) + (${t.alloc.join(' ')}) = <b style="color:var(--primary)">(${t.after.join(' ')})</b></span>
+      </div>`).join('')}
+      ${!safe ? '<div class="r" style="color:#dc2626"><b>已经没有进程的 Need 能被满足了 —— 算法在此中止。</b></div>' : ''}
+    </div>` +
+    (safe
+      ? `<div class="tip s"><span class="ti">安全</span><span>系统处于<b>安全状态</b>，存在安全序列：<b style="font-size:14px">P${seq.join(' → P')}</b><br>
+          安全序列可能不唯一，只要<b>存在一条</b>就说明系统安全。此时可以按任意请求分配资源（只要分配后仍安全）。</span></div>`
+      : `<div class="tip e"><span class="ti">不安全</span><span>系统<b>处于不安全状态</b>。注意：不安全 ≠ 一定会死锁，但<b>不安全状态下不能保证不死锁</b>，所以银行家算法在不安全时会拒绝分配。</span></div>`) +
+    `<div class="tip i" style="margin-top:6px"><span class="ti">怎么考</span><span>
+      题目通常问「P1 请求 (1,0,2)，能否分配」。做法是三步：<br>
+      ① 检查 <span class="mono">Request ≤ Need</span>（不能超出它声明的最大需求）<br>
+      ② 检查 <span class="mono">Request ≤ Available</span>（系统得真拿得出来）<br>
+      ③ <b>试分配</b>：改 Available / Allocation / Need，再跑一遍上面的安全性算法，安全才真的分配。
+    </span></div>`;
+}
+$('bkAvail').oninput = renderBK;
+$('bkRun').onclick = renderBK;
+$('bkReset').onclick = ()=>{ $('bkAvail').value = '3,3,2'; renderBK(); };
+renderBK();
+
+/* ============================================================
+   动画 07 · 资源分配图
+   ============================================================ */
+function renderRAG(){
+  const multi = $('ragMode').value === '2';
+  const inst = multi ? 1 : 0;   // R1 空闲实例索引（multi 时有 2 个实例）
+  // 简化场景：P1 申请 R1（R1 有 1 个被 P2 占用 + multi 时 1 个空闲）
+  //           P2 申请 R2（R2 被 P1 占用）
+  const p1Need = multi ? 'Need[P1] 申请 R1 → R1 还有 1 个空闲实例，<b>可以满足</b>' : 'Need[P1] 申请 R1 → R1 唯一实例被 P2 占着，<b>必须等</b>';
+  const step1 = multi
+    ? '找「申请能被满足」的进程：<b>P1</b> 申请 R1，R1 有 2 个实例，1 个在 P2 手里、1 个空闲 → P1 的需求能满足。'
+    : '找「申请能被满足」的进程：<b>P1</b> 申请 R1，但 R1 只有 1 个实例且已被 P2 持有 → 不可满足。<b>P2</b> 申请 R2，R2 被 P1 持有 → 也不可满足。';
+  const step2 = multi
+    ? '假设 P1 拿到资源并跑完，它释放 R1、R2 → R2 空闲出来 → P2 的申请也能满足了 → P2 也跑完。'
+    : '两个进程都不可化简，图中剩下的边无法消去。';
+  const step3 = multi
+    ? '<b style="color:#15803d">全部进程都能消去 → 系统无死锁。</b>虽然图里有环路 P1→R1→P2→R2→P1，但多实例资源让它活了下来。'
+    : '<b style="color:#dc2626">无法消去全部边 → 系统处于死锁状态。</b>环路 P1→R1→P2→R2→P1 就是死锁环。';
+
+  $('ragStage').innerHTML =
+    `<svg viewBox="0 0 620 300" style="width:100%;max-width:560px;height:auto;display:block;margin:0 auto">
+      <defs><marker id="ragah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L7,3 L0,6 z" fill="#64748b"/></marker></defs>
+
+      <!-- P1 -->
+      <circle cx="140" cy="80" r="40" fill="#e4f5f2" stroke="#0f766e" stroke-width="2.4"/>
+      <text x="140" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="#0f766e">P1</text>
+      <text x="140" y="96" text-anchor="middle" font-size="10.5" fill="#4a9d92">进程</text>
+      <!-- P2 -->
+      <circle cx="140" cy="230" r="40" fill="#e4f5f2" stroke="#0f766e" stroke-width="2.4"/>
+      <text x="140" y="228" text-anchor="middle" font-size="16" font-weight="800" fill="#0f766e">P2</text>
+      <text x="140" y="246" text-anchor="middle" font-size="10.5" fill="#4a9d92">进程</text>
+
+      <!-- R1 -->
+      <rect x="410" y="42" width="150" height="76" rx="12" fill="#fff4e3" stroke="#d97706" stroke-width="2.4"/>
+      <text x="485" y="66" text-anchor="middle" font-size="15" font-weight="800" fill="#9a5b06">R1</text>
+      <circle cx="${multi?455:485}" cy="94" r="9" fill="#d97706"/>
+      ${multi?'<circle cx="515" cy="94" r="9" fill="#fff" stroke="#d97706" stroke-width="2.4"/>':''}
+      <text x="485" y="138" text-anchor="middle" font-size="10.5" fill="#c08a3a">${multi?'2 个实例（1 占用 + 1 空闲）':'1 个实例'}</text>
+
+      <!-- R2 -->
+      <rect x="410" y="192" width="150" height="76" rx="12" fill="#fff4e3" stroke="#d97706" stroke-width="2.4"/>
+      <text x="485" y="216" text-anchor="middle" font-size="15" font-weight="800" fill="#9a5b06">R2</text>
+      <circle cx="485" cy="244" r="9" fill="#d97706"/>
+      <text x="485" y="288" text-anchor="middle" font-size="10.5" fill="#c08a3a">1 个实例</text>
+
+      <!-- 申请边 P1 -> R1 -->
+      <path d="M178,62 L406,62" stroke="#2563eb" stroke-width="2.2" marker-end="url(#ragah)"/>
+      <text x="290" y="54" text-anchor="middle" font-size="11" fill="#2563eb">申请（P1 → R1）</text>
+      <!-- 申请边 P2 -> R2 -->
+      <path d="M178,248 L406,248" stroke="#2563eb" stroke-width="2.2" marker-end="url(#ragah)"/>
+      <text x="290" y="268" text-anchor="middle" font-size="11" fill="#2563eb">申请（P2 → R2）</text>
+      <!-- 分配边 R1 -> P2 -->
+      <path d="M430,118 C 400,170 300,200 182,222" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#ragah)"/>
+      <!-- 分配边 R2 -> P1 -->
+      <path d="M470,192 C 380,140 300,80 182,72" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#ragah)"/>
+      <text x="46" y="160" font-size="11" fill="#dc2626" transform="rotate(-90 46,160)">分配边（虚线）</text>
+    </svg>
+    <div class="legend">
+      <span><i style="background:#2563eb"></i>申请边 P → R</span>
+      <span><i style="background:#dc2626"></i>分配边 R → P</span>
+      <span><i style="background:#d97706"></i>实心圆点 = 已被占用的实例</span>
+      <span><i style="background:#fff;border:1px solid #d97706"></i>空心圆点 = 空闲实例</span>
+    </div>
+    <div class="steps" style="margin-top:16px">
+      <div class="step act"><div class="n">1</div><div><div class="t">找出可以直接满足的进程</div><div class="d">${step1}</div></div></div>
+      <div class="step act"><div class="n">2</div><div><div class="t">化简</div><div class="d">${step2}</div></div></div>
+      <div class="step act"><div class="n">3</div><div><div class="t">判断</div><div class="d">${step3}</div></div></div>
+    </div>`;
+
+  $('ragOut').innerHTML = multi
+    ? `<div class="tip s"><span class="ti">关键结论</span><span><b>每类资源有多个实例时，图中有环 ≠ 死锁。</b>必须做化简才能判断。这题的环 P1→R1→P2→R2→P1 看起来吓人，但因为 R1 还有空闲实例，P1 能先跑完，环就解开了。</span></div>`
+    : `<div class="tip e"><span class="ti">关键结论</span><span><b>每类资源只有 1 个实例时，图中有环 ⟺ 死锁</b>。这是一个充要条件，可以直接用来判断，不需要化简。把上面的实例数切到「R1 有 2 个」看看区别。</span></div>`;
+}
+$('ragMode').onchange = renderRAG;
+$('ragRun').onclick = renderRAG;
+renderRAG();
+
+/* ============================================================
+   动画 08 · 分页地址转换
+   ============================================================ */
+const PAGE_TABLE_MAP = {0:5, 1:2, 2:8, 3:1, 4:9, 5:3, 6:7, 7:4, 8:6, 9:0};
+let VM_STEP = -1, VM_TIMER = null;
+const VM_STEPS = [
+  ['① 拆开逻辑地址', '页面大小是 2 的整数次幂，所以逻辑地址可以<b>直接从中间切开</b>：低位是页内偏移，高位是页号。'],
+  ['② 拿页号去查页表', '页表存在<b>主存</b>里，是个数组。用页号当索引，取出对应的那一条页表项。'],
+  ['③ 读出物理页框号', '页表项里存的是这个页在物理内存中的<b>页框号</b>（也叫物理页号）。'],
+  ['④ 拼出物理地址', '页框号放回高位、<b>原来的偏移原封不动放回低位</b>，就得到物理地址了。']
+];
+function vmData(){
+  const size = parseInt($('vmPage').value,10);
+  let addr = parseInt($('vmAddr').value,10);
+  if(isNaN(addr) || addr < 0) addr = 0;
+  const pno = Math.floor(addr / size);
+  const off = addr % size;
+  const bits = Math.log2(size);
+  const frame = PAGE_TABLE_MAP[pno % 10];
+  const phys = frame * size + off;
+  return { size, addr, pno, off, bits, frame, phys };
+}
+function vmRender(){
+  const d = vmData();
+  const bin = (v,n)=> v.toString(2).padStart(n,'0');
+  const showTable = VM_STEP >= 1;
+  const showPhys = VM_STEP >= 3;
+  const totalBits = d.bits + 4;
+  const addrBin = bin(d.addr % (1 << totalBits), totalBits);
+  const pnoBin = addrBin.slice(0, 4);
+  const offBin = addrBin.slice(4);
+  let html = '';
+
+  if(VM_STEP < 0){
+    html = `<div class="tip i" style="margin:0"><span class="ti">怎么用</span><span>
+      点「逐步演示」自动播放，或用「下一步」自己掌握节奏。盯着看三件事：逻辑地址怎么被切开、
+      页号怎么换成页框号、以及<b>偏移为什么全程不变</b>。</span></div>`;
+  } else {
+    html +=
+      `<div style="font-size:11.5px;color:#8b8699;margin-bottom:10px;line-height:1.7">
+        <b>步骤 ①</b>　把逻辑地址 <b>${d.addr}</b> 拆成两段 —— 页面大小 ${d.size} B = 2<sup>${d.bits}</sup>，所以低 <b>${d.bits}</b> 位是偏移：
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="display:flex;font-family:Consolas,monospace;font-size:14px;font-weight:800">
+          <div style="padding:9px 15px;background:var(--accent-l);color:#9a5b06;border:1px solid #f6d9ab;border-radius:8px 0 0 8px;text-align:center">
+            ${pnoBin}<div style="font-size:9.5px;font-weight:600;margin-top:2px">页号 P</div></div>
+          <div style="padding:9px 15px;background:var(--primary-l);color:var(--primary);border:1px solid #a7d4ce;border-left:0;border-radius:0 8px 8px 0;text-align:center">
+            ${offBin}<div style="font-size:9.5px;font-weight:600;margin-top:2px">页内偏移 W</div></div>
+        </div>
+        <div style="font-size:12.5px;line-height:1.85;color:#5c6773">
+          页号 P = ${d.addr} ÷ ${d.size} = <b>${d.pno}</b><br>
+          偏移 W = ${d.addr} mod ${d.size} = <b>${d.off}</b>
+        </div>
+      </div>`;
+  }
+
+  if(showTable){
+    html +=
+      `<div style="font-size:11.5px;color:#8b8699;margin:18px 0 10px;line-height:1.7">
+        <b>步骤 ${showPhys?'②③':'②'}</b>　拿页号 <b>${d.pno}</b> 去查页表：
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        ${Object.keys(PAGE_TABLE_MAP).map(k=>{
+          const on = +k === (d.pno % 10);
+          return `<div style="min-width:64px;padding:9px 10px;border-radius:9px;text-align:center;
+            font-family:Consolas,monospace;transition:.3s;
+            background:${on?'var(--primary)':'#f8f7fc'};border:1px solid ${on?'var(--primary)':'var(--line)'};
+            color:${on?'#fff':'#a49db8'};font-weight:700">
+            <div style="font-size:10px;opacity:.85">页号 ${k}</div>
+            <div style="font-size:13.5px">${PAGE_TABLE_MAP[k]}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${showPhys
+        ? `<div class="tip s" style="margin-top:10px"><span class="ti">步骤 ③</span><span>
+             找到页号 ${d.pno} 那一项，读出<b>页框号 = ${d.frame}</b> —— 这就完成了「虚页号 → 物理页框号」的映射。</span></div>`
+        : `<div class="tip i" style="margin-top:10px"><span class="ti">说明</span><span>
+             表格里每个格子就是一条<b>页表项</b>，高亮的那条就是我们要找的。</span></div>`}`;
+  }
+
+  if(showPhys){
+    html +=
+      `<div style="font-size:11.5px;color:#8b8699;margin:18px 0 10px;line-height:1.7">
+        <b>步骤 ④</b>　页框号放高位、偏移原样放低位：
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="display:flex;font-family:Consolas,monospace;font-size:14px;font-weight:800">
+          <div style="padding:9px 15px;background:var(--accent-l);color:#9a5b06;border:1px solid #f6d9ab;border-radius:8px 0 0 8px;text-align:center">
+            ${d.frame}<div style="font-size:9.5px;font-weight:600;margin-top:2px">页框号 F</div></div>
+          <div style="padding:9px 15px;background:var(--primary-l);color:var(--primary);border:1px solid #a7d4ce;border-left:0;border-radius:0 8px 8px 0;text-align:center">
+            ${offBin}<div style="font-size:9.5px;font-weight:600;margin-top:2px">偏移 W（没变）</div></div>
+        </div>
+        <div style="font-size:13px;color:#5c6773">
+          物理地址 = ${d.frame} × ${d.size} + ${d.off} = <b style="color:var(--primary);font-size:16px">${d.phys}</b>
+        </div>
+      </div>`;
+  }
+
+  $('vmStage').innerHTML = html;
+
+  $('vmOut').innerHTML =
+    `<div class="steps">
+      ${VM_STEPS.map((s,i)=>{
+        const cls = i < VM_STEP ? 'dn' : (i === VM_STEP ? 'act' : '');
+        return `<div class="step ${cls}"><div class="n">${i+1}</div><div style="flex:1">
+          <div class="t">${s[0]}</div><div class="d">${s[1]}</div></div></div>`;
+      }).join('')}
+    </div>` +
+    (VM_STEP >= 3
+      ? `<div class="tip i" style="margin-top:10px"><span class="ti">关键</span><span>
+          <b>页内偏移全程不变</b> —— 这是分页存储最重要的性质。地址转换只换掉了高位（页号 → 页框号），低位的偏移原封不动。
+          正因为如此，页的大小必须是 2 的整数次幂，才能用「移位 + 掩码」高效拆地址。<br><br>
+          另外注意：无 TLB 时这一步要<b>访存 2 次</b>（查页表 1 次 + 取数据 1 次）；TLB 命中时只要 <b>1 次</b>。
+        </span></div>`
+      : '');
+}
+function vmStop(){ if(VM_TIMER){ clearInterval(VM_TIMER); VM_TIMER = null; } }
+$('vmPlay').onclick = ()=>{
+  vmStop(); VM_STEP = -1; vmRender();
+  VM_TIMER = setInterval(()=>{
+    if(VM_STEP < 3){ VM_STEP++; vmRender(); } else { vmStop(); }
+  }, 1500);
+};
+$('vmNext').onclick = ()=>{ vmStop(); if(VM_STEP < 3){ VM_STEP++; vmRender(); } };
+$('vmReset').onclick = ()=>{ vmStop(); VM_STEP = -1; vmRender(); };
+$('vmAddr').oninput = ()=>{ vmStop(); VM_STEP = -1; vmRender(); };
+$('vmPage').onchange = ()=>{ vmStop(); VM_STEP = -1; vmRender(); };
+qsa('[data-vm]').forEach(b=>b.onclick=()=>{
+  vmStop(); $('vmAddr').value = b.dataset.vm; VM_STEP = -1; vmRender();
+});
+vmRender();
+
+/* ============================================================
+   动画 09 · 页面置换算法对比
+   ============================================================ */
+function runPage(refs, frames, algo){
+  let mem = [], fifoQ = [], faults = 0;
+  const steps = [];
+  refs.forEach((p, i)=>{
+    const hit = mem.indexOf(p) >= 0;
+    let evicted = null, slot = -1;
+    if(!hit){
+      faults++;
+      if(mem.length < frames){
+        mem.push(p); slot = mem.length - 1; fifoQ.push(p);
+      } else {
+        let idx = 0;
+        if(algo === 'fifo'){
+          const victim = fifoQ.shift();
+          idx = mem.indexOf(victim);
+          fifoQ.push(p);
+        } else if(algo === 'opt'){
+          let far = -2;
+          mem.forEach((m,mi)=>{
+            let nx = refs.slice(i+1).indexOf(m);
+            if(nx === -1) nx = Infinity;
+            if(nx > far){ far = nx; idx = mi; }
+          });
+        } else {
+          let oldest = Infinity;
+          mem.forEach((m,mi)=>{
+            const last = refs.slice(0,i).lastIndexOf(m);
+            if(last < oldest){ oldest = last; idx = mi; }
+          });
+        }
+        evicted = mem[idx];
+        mem[idx] = p;
+        slot = idx;
+      }
+    }
+    steps.push({ p, hit, mem: mem.slice(), evicted, slot, no:faults });
+  });
+  return { steps, faults };
+}
+const PNAME = { opt:'OPT 最佳置换', fifo:'FIFO 先进先出', lru:'LRU 最近最久未使用' };
+const PCOLOR = { opt:'#15803d', fifo:'#d97706', lru:'#2563eb' };
+function renderPage(){
+  const refs = ($('pgRef').value||'').split(/[,，\s]+/).map(x=>parseInt(x,10)).filter(x=>!isNaN(x));
+  const frames = Math.max(1, Math.min(5, parseInt($('pgFrames').value,10) || 3));
+  if(!refs.length){ $('pgStage').innerHTML = '<div class="tip m"><span class="ti">提示</span><span>请输入页面访问串，用逗号分隔。</span></div>'; $('pgStat').innerHTML=''; return; }
+  if(refs.length > 24){ refs.length = 24; }
+
+  const sel = $('pgAlgo').value;
+  const algos = sel === 'all' ? ['opt','fifo','lru'] : [sel];
+  let html = '', stat = '';
+
+  algos.forEach(a=>{
+    const r = runPage(refs, frames, a);
+    const rate = (r.faults / refs.length * 100).toFixed(1);
+
+    html += `<div style="margin-bottom:22px;overflow-x:auto">
+      <div style="font-size:13px;font-weight:750;margin-bottom:6px;color:${PCOLOR[a]}">${PNAME[a]}
+        <span style="font-weight:500;font-size:11.5px;color:#8b95a3">页框数 = ${frames}</span></div>
+      <div style="font-size:12px;color:#5c6773;line-height:1.75;margin-bottom:10px;padding:9px 13px;
+        background:#f7f9fc;border-radius:8px;border-left:3px solid ${PCOLOR[a]}"><b>怎么挑淘汰页：</b>${PG_DESC[a]}</div>
+      <table style="border-collapse:collapse;font-family:Consolas,monospace;font-size:11.5px;min-width:100%">
+        <tr>
+          <td style="padding:4px 8px;color:#8b95a3;font-weight:700;white-space:nowrap">访问</td>
+          ${refs.map(p=>`<td style="padding:4px 0;text-align:center;min-width:26px;background:#f4f7fb;border:1px solid #e3e8ef;font-weight:800">${p}</td>`).join('')}
+        </tr>
+        ${Array.from({length:frames},(_,fi)=>`<tr>
+          <td style="padding:4px 8px;color:#8b95a3;white-space:nowrap">框 ${fi+1}</td>
+          ${r.steps.map(s=>{
+            const v = s.mem[fi];
+            const isNew = !s.hit && s.slot === fi;
+            return `<td style="padding:5px 0;text-align:center;border:1px solid #e3e8ef;font-weight:700;
+              background:${isNew?'#e8f6ec':'#fff'};color:${v===undefined?'#d8dfe9':(isNew?'#15803d':'#3c4654')}">${v===undefined?'—':v}</td>`;
+          }).join('')}
+        </tr>`).join('')}
+        <tr>
+          <td style="padding:4px 8px;color:#8b95a3;white-space:nowrap">缺页</td>
+          ${r.steps.map(s=>`<td style="padding:5px 0;text-align:center;border:1px solid #e3e8ef;font-weight:800;
+            background:${s.hit?'#f7f9fc':'#fdeceb'};color:${s.hit?'#c3cbd7':'#dc2626'}">${s.hit?'':'✗'}</td>`).join('')}
+        </tr>
+      </table>
+    </div>`;
+
+    stat += `<div class="r" style="margin:5px 0"><span class="lbl" style="color:${PCOLOR[a]};font-weight:750">${PNAME[a]}</span>
+      <span style="font-size:13px">缺页 <b style="color:${PCOLOR[a]};font-size:15px">${r.faults}</b> 次　·　命中 ${refs.length - r.faults} 次　·　缺页率 ${rate}%</span></div>`;
+  });
+
+  $('pgStage').innerHTML = html;
+  $('pgStat').innerHTML = `<div class="res">${stat}</div>
+    <div class="tip i" style="margin-top:10px"><span class="ti">读懂表格</span><span>
+      绿色格子 = 本次缺页新调入的页；红色 ✗ = 这一列发生了缺页。把三种算法的缺页数对比一下：<b>OPT 一定最少</b>（它是理论最优），LRU 通常接近 OPT，FIFO 一般最差。
+    </span></div>
+    <div class="tip m" style="margin-top:6px"><span class="ti">Belady 异常</span><span>
+      把数据换成「FIFO 异常例」并把页框数从 3 改成 4 —— 你会看到 <b>FIFO 的缺页次数反而增加了</b>。这叫 Belady 异常，<b>只有 FIFO 会犯这个毛病</b>，OPT 和 LRU 不会（它们属于堆栈类算法）。
+    </span></div>`;
+}
+$('pgRef').oninput = renderPage;
+$('pgFrames').oninput = renderPage;
+$('pgAlgo').onchange = renderPage;
+qsa('[data-pg]').forEach(b=>b.onclick=()=>{ $('pgRef').value = b.dataset.pg; renderPage(); });
+renderPage();
+
+/* ============================================================
+   动画 10 · 动态分区分配
+   ============================================================ */
+function renderFF(){
+  const raw = ($('ffFree').value||'').split(/[,，\s]+/).map(x=>parseInt(x,10)).filter(x=>!isNaN(x) && x>0);
+  const req = Math.max(1, parseInt($('ffReq').value,10) || 1);
+  const algo = $('ffAlgo').value;
+  if(!raw.length){ $('ffStage').innerHTML=''; $('ffOut').innerHTML = '<div class="tip m"><span class="ti">提示</span><span>请输入空闲分区大小，用逗号分隔。</span></div>'; return; }
+
+  const parts = raw.map((s,i)=>({ id:i, size:s, from:0, to:0 }));
+  let acc = 0; parts.forEach(p=>{ p.from = acc; acc += p.size; p.to = acc; });
+  const total = acc;
+
+  // 选块
+  let pick = -1;
+  const cands = parts.map((p,i)=>({i, size:p.size})).filter(x=>x.size >= req);
+  let reason = '';
+  if(!cands.length){
+    pick = -1; reason = '没有任何空闲分区能满足这个请求 → <b>分配失败</b>（可能需要紧凑或等待回收）。';
+  } else if(algo === 'ff'){
+    pick = cands[0].i;
+    reason = '从<b>低地址</b>开始找，第一个满足的分区就是它（分区 ' + (cands[0].i+1) + '，' + cands[0].size + ' KB）。';
+  } else if(algo === 'bf'){
+    const best = cands.slice().sort((a,b)=>a.size-b.size)[0];
+    pick = best.i;
+    reason = '在所有够用的分区里选<b>最小</b>的那个（分区 ' + (best.i+1) + '，' + best.size + ' KB），只剩 ' + (best.size-req) + ' KB 碎片。';
+  } else if(algo === 'wf'){
+    const worst = cands.slice().sort((a,b)=>b.size-a.size)[0];
+    pick = worst.i;
+    reason = '在所有够用的分区里选<b>最大</b>的那个（分区 ' + (worst.i+1) + '，' + worst.size + ' KB），尽量不留下小碎片。';
+  } else {
+    pick = cands[cands.length-1].i;
+    reason = '从<b>上次分配结束的位置</b>继续往后找（分区 ' + (cands[cands.length-1].i+1) + '），找到就分配，找不到再从头绕一圈。';
+  }
+
+  const ALGO_TXT = { ff:'首次适应 FF', bf:'最佳适应 BF', wf:'最坏适应 WF', nf:'邻近适应 NF' };
+  const ALGO_NOTE = {
+    ff:'从低地址开始找第一个够用的。实现简单、<b>综合性能通常最好</b>，但低地址区容易被反复切割，留下很多小碎片。',
+    bf:'找最小的够用分区。名字叫「最佳」，实际上<b>最容易产生大量极小碎片</b>（外部碎片最多），通常是最差的方案。',
+    wf:'找最大的分区。避免留下小碎片，但<b>大分区很快被切光</b>，后面来大请求就分配不了了。',
+    nf:'从上次结束处继续找，形成「循环」扫描。好处是各分区被均匀使用，但<b>会把高地址的大块也切碎</b>，反而比首次适应更差。'
+  };
+
+  $('ffStage').innerHTML =
+    `<div style="font-size:12px;font-weight:700;color:#4b5665;margin-bottom:8px">空闲分区表（按地址顺序，共 ${total} KB）</div>
+     <div style="display:flex;gap:4px;flex-wrap:wrap">
+      ${parts.map((p,i)=>{
+        const sel = i === pick;
+        const fail = !sel && p.size >= req && pick >= 0;
+        return `<div style="flex:0 0 auto;min-width:74px;padding:10px 12px;border-radius:9px;text-align:center;transition:.3s;
+          background:${sel?'var(--primary)':(p.size>=req?'#e8f6ec':'#f4f7fb')};
+          color:${sel?'#fff':(p.size>=req?'#15803d':'#8b95a3')};
+          border:1px solid ${sel?'var(--primary)':(p.size>=req?'#8fd6a6':'#e3e8ef')}">
+          <div style="font-size:10.5px;opacity:.85">分区 ${i+1}</div>
+          <div style="font-size:14px;font-weight:800">${p.size} KB</div>
+          <div style="font-size:10px;opacity:.8;margin-top:2px">${p.from}~${p.to}</div>
+        </div>`;
+      }).join('')}
+     </div>`;
+
+  $('ffOut').innerHTML =
+    `<div class="res">
+      <div class="r"><span class="lbl">算法</span><span class="val">${ALGO_TXT[algo]}</span></div>
+      <div class="r" style="margin-top:5px"><span class="lbl">请求大小</span><span style="font-size:13px">${req} KB</span></div>
+      <div class="r" style="margin-top:5px"><span class="lbl">结果</span><span style="font-size:13px">${reason}</span></div>
+      ${pick >= 0 ? `<div class="r" style="margin-top:5px"><span class="lbl">分配后</span><span style="font-size:13px">
+        分区 ${pick+1} 剩余 <b>${parts[pick].size - req}</b> KB${parts[pick].size-req === 0 ? '（正好用光，该分区消失）' : '（成为新的小碎片）'}</span></div>` : ''}
+    </div>
+    <div class="tip i" style="margin-top:10px"><span class="ti">算法特点</span><span>${ALGO_NOTE[algo]}</span></div>
+    <div class="tip m" style="margin-top:6px"><span class="ti">碎片问题</span><span>
+      动态分区产生的是<b>外部碎片</b>（分区之间零零散散的小空闲区）。解决办法是<b>紧凑（拼接）</b>：把进程挪到一起，把空闲区合并成大块。
+      但紧凑需要<b>动态重定位</b>支持（进程运行时能改物理地址），而且开销很大。
+    </span></div>`;
+}
+$('ffFree').oninput = renderFF;
+$('ffReq').oninput = renderFF;
+$('ffAlgo').onchange = renderFF;
+renderFF();
+
+/* ============================================================
+   动画 11 · 混合索引寻址
+   ============================================================ */
+function renderIX(){
+  const blk = Math.max(0, parseInt($('ixBlk').value,10) || 0);
+  const size = Math.max(64, parseInt($('ixSize').value,10) || 4096);
+  const ptr = Math.max(1, parseInt($('ixPtr').value,10) || 4);
+  const per = Math.floor(size / ptr);   // 每个索引块能放的地址项数
+
+  const D = 10;
+  const L1 = per, L2 = per*per, L3 = per*per*per;
+  const r1 = D;              // [0, 10)
+  const r2 = D + L1;         // [10, 10+1024)
+  const r3 = r2 + L2;
+  const r4 = r3 + L3;
+
+  let level, visits, path, rangeTxt;
+  if(blk < r1){ level = '直接地址项'; visits = 1; path = `索引结点第 ${blk+1} 个直接地址项`; }
+  else if(blk < r2){ level = '一级间接'; visits = 2; path = `直接项已用 10 个，第 ${blk-10+1} 个落在一级间接块里`; }
+  else if(blk < r3){ level = '二级间接'; visits = 3; path = `落在二级间接里，第 ${blk-r2+1} 个`; }
+  else if(blk < r4){ level = '三级间接'; visits = 4; path = `落在三级间接里，第 ${blk-r3+1} 个`; }
+  else { level = '超出范围'; visits = 0; path = '超出该索引结点能寻址的最大文件范围'; }
+
+  const maxBytes = r4 * size;
+  const fmt = b => b >= 1099511627776 ? (b/1099511627776).toFixed(2)+' TB'
+    : b >= 1073741824 ? (b/1073741824).toFixed(2)+' GB'
+    : b >= 1048576 ? (b/1048576).toFixed(2)+' MB'
+    : b >= 1024 ? (b/1024).toFixed(2)+' KB' : b+' B';
+
+  const seg = (name, cnt, color, bg)=>{
+    const active = (name==='直接' && blk < r1) || (name==='一级间接' && blk>=r1 && blk<r2)
+      || (name==='二级间接' && blk>=r2 && blk<r3) || (name==='三级间接' && blk>=r3 && blk<r4);
+    return `<div style="padding:11px 12px;border-radius:9px;text-align:center;transition:.3s;
+      background:${active?color:bg};color:${active?'#fff':color};
+      border:1px solid ${color};flex:1;min-width:96px">
+      <div style="font-size:11.5px;font-weight:800">${name}</div>
+      <div style="font-size:12px;margin-top:3px">${cnt.toLocaleString('en-US')} 块</div>
+      <div style="font-size:10px;opacity:.85;margin-top:2px">${active?'← 当前在此':''}</div>
+    </div>`;
+  };
+
+  $('ixStage').innerHTML =
+    `<div style="font-size:12px;font-weight:700;color:#4b5665;margin-bottom:8px">
+      索引结点结构（块大小 ${size} B ÷ 地址项 ${ptr} B = 每块可放 <b>${per}</b> 个地址项）</div>
+     <div style="display:flex;gap:8px;flex-wrap:wrap">
+       ${seg('直接', D, '#15803d', '#e8f6ec')}
+       ${seg('一级间接', L1, '#0891b2', '#e2f7fb')}
+       ${seg('二级间接', L2, '#d97706', '#fff4e3')}
+       ${seg('三级间接', L3, '#7c3aed', '#f2ecfe')}
+     </div>
+     <div style="margin-top:14px;font-size:11.5px;color:#6b7280;font-family:Consolas,monospace">
+       逻辑块号范围：直接 [0, ${r1})　一级 [${r1}, ${r2})　二级 [${r2}, ${r3.toLocaleString('en-US')})　三级 [${r3.toLocaleString('en-US')}, ${r4.toLocaleString('en-US')})
+     </div>`;
+
+  $('ixOut').innerHTML =
+    `<div class="res">
+      <div class="r"><span class="lbl">逻辑块号</span><span class="val">${blk}</span>
+        <span style="font-size:12px;color:#8b95a3">落在 <b>${level}</b></span></div>
+      <div class="r" style="margin-top:6px"><span class="lbl">定位路径</span><span style="font-size:13px">${path}</span></div>
+      <div class="r" style="margin-top:6px"><span class="lbl">访盘次数</span><span style="font-size:13px">
+        ${visits ? `<b style="color:var(--primary);font-size:15px">${visits}</b> 次　=　${visits-1} 次读索引块 + 1 次读数据块` : '—'}</span></div>
+    </div>
+    <div class="tip s" style="margin-top:10px"><span class="ti">最大文件</span><span>
+      这个索引结点能寻址的最大文件大小为 <b>${fmt(maxBytes)}</b>
+      （= (${D} + ${per} + ${per}² + ${per}³) × ${size} B）。<br>
+      考试常给一组具体数字（如 4 KB 块、4 B 地址项、10 个直接项），让你算最大文件大小或某个块号要访盘几次。<b>公式记牢：每块地址项数 = 块大小 ÷ 地址项大小。</b>
+    </span></div>
+    <div class="tip i" style="margin-top:6px"><span class="ti">为什么这样设计</span><span>
+      小文件（大多数）只用直接项，一次访盘就够；大文件才动用多级间接。<b>用最少的访盘次数照顾大多数文件</b>，这就是混合索引的设计意图。
+    </span></div>`;
+}
+$('ixBlk').oninput = renderIX;
+$('ixSize').oninput = renderIX;
+$('ixPtr').oninput = renderIX;
+renderIX();
+
+/* ============================================================
+   动画 12 · 位示图
+   ============================================================ */
+function renderBM(){
+  const w = Math.max(4, Math.min(64, parseInt($('bmW').value,10) || 32));
+  const base = parseInt($('bmBase').value,10);
+  let b = Math.max(0, parseInt($('bmBlk').value,10) || 0);
+
+  let wordNo, bitNo, formula;
+  if(base === 1){
+    wordNo = Math.floor((b - 1) / w);
+    bitNo = ((b - 1) % w);
+    formula = `字号 = (盘块号 − 1) ÷ ${w} + 1 = (${b} − 1) ÷ ${w} + 1 = <b>${wordNo + 1}</b>（第 ${wordNo+1} 个字）<br>
+               位号 = (盘块号 − 1) mod ${w} + 1 = (${b} − 1) mod ${w} + 1 = <b>${bitNo + 1}</b>（这个字的第 ${bitNo+1} 位）`;
+  } else {
+    wordNo = Math.floor(b / w);
+    bitNo = b % w;
+    formula = `字号 = 盘块号 ÷ ${w} = ${b} ÷ ${w} = <b>${wordNo}</b>（第 ${wordNo} 个字，从 0 计）<br>
+               位号 = 盘块号 mod ${w} = ${b} mod ${w} = <b>${bitNo}</b>（从 0 计）`;
+  }
+
+  // 可视化：显示目标字所在的行
+  const rowStart = wordNo;
+  let cells = '';
+  for(let wi = Math.max(0, rowStart-1); wi <= rowStart+1; wi++){
+    let line = '';
+    for(let bi = 0; bi < Math.min(w, 32); bi++){
+      const isTarget = (wi === wordNo && bi === bitNo);
+      line += `<div class="cellx ${isTarget?'on':''}" style="width:22px;height:26px;font-size:10px">${isTarget?'1':'0'}</div>`;
+    }
+    cells += `<div style="display:flex;gap:3px;align-items:center;margin-bottom:5px">
+      <span style="font-size:10.5px;color:#8b95a3;width:52px;flex-shrink:0">字 ${wi+1}</span>
+      <div class="cells" style="gap:3px">${line}</div></div>`;
+  }
+
+  $('bmStage').innerHTML =
+    `<div style="font-size:12px;font-weight:700;color:#4b5665;margin-bottom:9px">位示图（节选，每个格子 = 一个盘块，1 表示占用）</div>
+     ${cells}
+     <div class="legend"><span><i style="background:var(--primary)"></i>当前盘块号 ${b} 对应的位</span></div>`;
+
+  $('bmOut').innerHTML =
+    `<div class="res">
+      <div class="r"><span class="lbl">盘块号</span><span class="val">${b}</span>
+        <span style="font-size:12px;color:#8b95a3">字长 ${w} 位，编号从 ${base} 开始</span></div>
+      <div class="r" style="margin-top:6px"><span class="lbl">换算</span><span style="font-size:13px;line-height:2">${formula}</span></div>
+    </div>
+    <div class="tip e" style="margin-top:10px"><span class="ti">最容易错的地方</span><span>
+      <b>编号起点不同，公式差 1</b>。做题一定先看清题干说的是「盘块号从 1 开始」还是「从 0 开始」，
+      以及位示图里 <b>1 表示占用还是空闲</b>（多数教材约定 1 = 占用，但也有例外）。这三处约定任何一个看错，整道题就废了。<br><br>
+      反过来，如果给的是字号和位号求盘块号：<span class="mono">盘块号 = (字号 − 1) × 字长 + 位号</span>（从 1 开始编号时）。
+    </span></div>`;
+}
+$('bmW').oninput = renderBM;
+$('bmBase').onchange = renderBM;
+$('bmBlk').oninput = renderBM;
+renderBM();
+
+/* ============================================================
+   动画 13 · 磁盘调度
+   ============================================================ */
+function runDisk(seq, head, maxT, algo){
+  const req = seq.slice().sort((a,b)=>a-b);
+  let order = [];
+  if(algo === 'fcfs') order = seq.slice();
+  else if(algo === 'sstf'){
+    const rem = seq.slice(); let pos = head;
+    while(rem.length){
+      let bi = 0, bd = Infinity;
+      rem.forEach((r,i)=>{ const d = Math.abs(r - pos); if(d < bd){ bd = d; bi = i; } });
+      const p = rem.splice(bi,1)[0];
+      order.push(p); pos = p;
+    }
+  } else if(algo === 'scan'){
+    order = req.filter(r=>r >= head).concat([maxT-1], req.filter(r=>r < head).slice().reverse());
+  } else if(algo === 'cscan'){
+    order = req.filter(r=>r >= head).concat([maxT-1, 0], req.filter(r=>r < head));
+  } else if(algo === 'look'){
+    order = req.filter(r=>r >= head).concat(req.filter(r=>r < head).slice().reverse());
+  } else {
+    order = req.filter(r=>r >= head).concat(req.filter(r=>r < head));
+  }
+  let cur = head, dist = 0;
+  const path = [{ t:head, d:0 }];
+  order.forEach(p=>{ dist += Math.abs(p - cur); path.push({ t:p, d:dist }); cur = p; });
+  return { order, dist, path };
+}
+const DK_NAME = { fcfs:'FCFS 先来先服务', sstf:'SSTF 最短寻道优先', scan:'SCAN 电梯（先向大号）', cscan:'C-SCAN 循环扫描', look:'LOOK', clook:'C-LOOK' };
+function renderDK(){
+  const seq = ($('dkSeq').value||'').split(/[,，\s]+/).map(x=>parseInt(x,10)).filter(x=>!isNaN(x));
+  const head = parseInt($('dkHead').value,10) || 0;
+  const maxT = Math.max(10, parseInt($('dkMax').value,10) || 200);
+  if(!seq.length){ $('dkStage').innerHTML=''; $('dkStat').innerHTML = '<div class="tip m"><span class="ti">提示</span><span>请输入磁道请求序列。</span></div>'; return; }
+
+  const sel = $('dkAlgo').value;
+  const algos = sel === 'all' ? ['fcfs','sstf','scan','cscan','look'] : [sel];
+  let html = '', stat = '';
+  const results = [];
+
+  algos.forEach(a=>{
+    const r = runDisk(seq, head, maxT, a);
+    results.push({ a, r });
+    // 轨迹图：纵向排列
+    html += `<div style="margin-bottom:18px">
+      <div style="font-size:13px;font-weight:750;margin-bottom:6px">${DK_NAME[a]}
+        <span style="font-weight:500;font-size:11.5px;color:#8b95a3">移臂总量 = <b>${r.dist}</b> 个磁道</span></div>
+      <div style="font-size:12px;color:#5c6773;line-height:1.75;margin-bottom:9px;padding:9px 13px;
+        background:#f7f9fc;border-radius:8px;border-left:3px solid var(--primary)"><b>怎么选下一个：</b>${DK_DESC[a]}</div>
+      <div style="font-size:11.5px;font-family:Consolas,monospace;color:#5c6779;line-height:1.9;word-break:break-all">
+        ${head} ${r.order.map(p=>`→ ${p}`).join(' ')}
+      </div>
+      <div style="position:relative;height:34px;background:#f4f7fb;border-radius:7px;margin-top:6px;overflow:hidden">
+        <svg viewBox="0 0 ${maxT} 34" preserveAspectRatio="none" style="width:100%;height:100%;display:block">
+          <polyline points="${r.path.map(p=>`${p.t},${34 - 6 - (p.d/Math.max(1,r.dist))*22}`).join(' ')}"
+            fill="none" stroke="var(--primary)" stroke-width="1.6" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <div style="position:absolute;left:0;top:1px;font-size:9px;color:#b6c0cc;padding-left:3px">0</div>
+        <div style="position:absolute;right:0;top:1px;font-size:9px;color:#b6c0cc;padding-right:3px">${maxT}</div>
+      </div>
+    </div>`;
+  });
+
+  const sorted = results.slice().sort((x,y)=>x.r.dist - y.r.dist);
+  const best = sorted[0];
+  stat = `<div class="res">
+    ${results.map(x=>`<div class="r" style="margin:5px 0">
+      <span class="lbl">${DK_NAME[x.a]}</span>
+      <span style="font-size:13px">移臂总量 <b style="color:${x===best?'#15803d':'#3c4654'};font-size:15px">${x.r.dist}</b>
+      ${x===best?'　<b style="color:#15803d">← 本例最优</b>':''}</span></div>`).join('')}
+  </div>`;
+
+  $('dkStage').innerHTML = html;
+  $('dkStat').innerHTML = stat +
+    `<div class="tip i" style="margin-top:10px"><span class="ti">看门道</span><span>
+      <b>FCFS</b> 完全按请求顺序，看着公平但移臂量通常最大；<b>SSTF</b> 每次找最近的，平均寻道最短，但<b>可能导致远处的请求永远得不到服务（饥饿）</b>；
+      <b>SCAN</b> 像电梯一样来回扫，不会饥饿，但中间磁道比两端更占便宜；<b>C-SCAN</b> 扫到头直接回起点，把回程的无效移动也算了进去（所以移臂量往往比 SCAN 大，但更公平）。
+    </span></div>
+    <div class="tip m" style="margin-top:6px"><span class="ti">别搞混</span><span>
+      <b>SCAN / C-SCAN 要扫到磁盘物理末端</b>（0 或最大磁道号），<b>LOOK / C-LOOK 扫到最远的那条请求就返回</b>。
+      题目如果给了「磁道总数」这个参数，基本就是在考 SCAN 系列要不要走到头。
+    </span></div>`;
+}
+$('dkSeq').oninput = renderDK;
+$('dkHead').oninput = renderDK;
+$('dkMax').oninput = renderDK;
+$('dkAlgo').onchange = renderDK;
+qsa('[data-dk]').forEach(b=>b.onclick=()=>{ $('dkSeq').value = b.dataset.dk; renderDK(); });
+renderDK();
+
+/* ============================================================
+   动画 14 · 单缓冲 vs 双缓冲
+   ============================================================ */
+function renderBF(){
+  const T = Math.max(1, parseInt($('bfT').value,10) || 100);
+  const C = Math.max(1, parseInt($('bfC').value,10) || 50);
+  const M = Math.max(0, parseInt($('bfM').value,10) || 20);
+  const n = Math.max(1, parseInt($('bfN').value,10) || 10);
+
+  const singlePer = Math.max(C, T) + M;
+  const singleTotal = n * singlePer;
+  const doublePer = Math.max(C + M, T);
+  const doubleTotal = n * doublePer;
+  const speedup = (singleTotal / doubleTotal).toFixed(2);
+  const maxT = Math.max(singleTotal, doubleTotal);
+
+  const bar = (label, per, total, color)=>{
+    return `<div style="margin-bottom:12px">
+      <div style="font-size:12.5px;font-weight:750;margin-bottom:5px">${label}
+        <span style="font-weight:500;font-size:11.5px;color:#8b95a3">每块 ${per} μs · ${n} 块共 <b>${total}</b> μs</span></div>
+      <div style="height:22px;background:#f4f7fb;border-radius:6px;overflow:hidden">
+        <div style="height:100%;width:${total/maxT*100}%;background:${color};border-radius:6px;transition:.4s"></div>
+      </div>
+    </div>`;
+  };
+
+  $('bfStage').innerHTML =
+    bar('单缓冲', singlePer, singleTotal, 'linear-gradient(90deg,#f5b97a,#d97706)') +
+    bar('双缓冲', doublePer, doubleTotal, 'linear-gradient(90deg,#5eead4,#0f766e)') +
+    `<div style="font-size:11.5px;color:#8b95a3;margin-top:4px">横条长度按总时间等比绘制</div>`;
+
+  $('bfOut').innerHTML =
+    `<div class="res">
+      <div class="r"><span class="lbl">单缓冲</span><span style="font-size:13px">
+        每块耗时 = max(C, T) + M = max(${C}, ${T}) + ${M} = <b>${singlePer}</b> μs<br>
+        <span style="color:#8b95a3">总计 ${n} × ${singlePer} = <b>${singleTotal}</b> μs</span></span></div>
+      <div class="r" style="margin-top:6px"><span class="lbl">双缓冲</span><span style="font-size:13px">
+        每块耗时 = max(C + M, T) = max(${C}+${M}, ${T}) = max(${C+M}, ${T}) = <b>${doublePer}</b> μs<br>
+        <span style="color:#8b95a3">总计 ${n} × ${doublePer} = <b>${doubleTotal}</b> μs</span></span></div>
+      <div class="r" style="margin-top:6px"><span class="lbl">提速</span><span class="val">${speedup} ×</span></div>
+    </div>
+    <div class="tip e" style="margin-top:10px"><span class="ti">公式怎么记</span><span>
+      <b>单缓冲：max(C, T) + M</b> —— 那个 M 加在 <b>max 外面</b>。<br>
+      <b>双缓冲：max(C + M, T)</b> —— M 和 C 一起放进 max <b>里面</b>。<br><br>
+      为什么？单缓冲只有一个缓冲区：设备往缓冲区写（T）和 CPU 处理（C）互相排斥，取较大者；但处理完还要把数据<b>搬到用户区（M）</b>，
+      这一步设备也闲着 —— 所以 M 是纯串行开销，加在外面。<br>
+      双缓冲有两个缓冲区：设备写 A 的同时 CPU 可以处理 B，而且处理完 B 后还能继续装下一块 —— 所以 M 和设备传输能重叠，放进里面。<br><br>
+      <b>这就是最容易记反的地方</b>，做题时先在纸上写下这两个式子再代数字。
+    </span></div>`;
+}
+$('bfT').oninput = renderBF;
+$('bfC').oninput = renderBF;
+$('bfM').oninput = renderBF;
+$('bfN').oninput = renderBF;
+renderBF();
+</script>
+</body>
+</html>

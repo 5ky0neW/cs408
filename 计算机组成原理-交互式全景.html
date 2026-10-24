@@ -1,0 +1,3350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>408 计算机组成原理 · 交互式原理全景</title>
+<style>
+:root{
+  --bg:#f4f6fa; --panel:#fff; --text:#171a21; --muted:#6b7280; --line:#e3e8ef;
+  --primary:#2563eb; --primary-l:#eaf0ff;
+  --accent:#d97706; --accent-l:#fff4e3;
+  --green:#0f9d6e; --green-l:#e5f7f0;
+  --red:#dc2626; --red-l:#fdeceb;
+  --purple:#7c3aed; --purple-l:#f2ecfe;
+  --cyan:#0891b2; --cyan-l:#e2f7fb;
+  --radius:12px;
+  --shadow:0 1px 2px rgba(16,24,40,.035),0 8px 22px -14px rgba(16,24,40,.15);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);font-size:15px;line-height:1.8;
+  font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#cdd5e0;border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#b4bfcd}
+
+/* ---------- 进度条 ---------- */
+.progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;
+  background:linear-gradient(90deg,var(--primary),var(--cyan));transition:width .1s linear}
+
+/* ---------- 布局 ---------- */
+.app{display:flex;align-items:flex-start}
+.sidebar{position:fixed;top:0;left:0;width:246px;height:100vh;background:var(--panel);
+  border-right:1px solid var(--line);padding:20px 14px;overflow-y:auto;z-index:50}
+.brand{padding:4px 10px 16px;border-bottom:1px dashed var(--line);margin-bottom:14px}
+.brand-t{font-size:15px;font-weight:800;letter-spacing:.2px}
+.brand-s{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav-i{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;
+  text-decoration:none;color:#455061;font-size:13px;transition:.18s;border-left:2px solid transparent}
+.nav-i b{font-size:11px;font-weight:700;color:#9aa4b2;font-variant-numeric:tabular-nums;min-width:16px}
+.nav-i:hover{background:#f2f5f9;color:var(--text)}
+.nav-i.on{background:var(--primary-l);color:var(--primary);font-weight:650;border-left-color:var(--primary)}
+.nav-i.on b{color:var(--primary)}
+.nav-sep{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#b6c0cc;padding:12px 10px 5px}
+.speed{margin-top:20px;padding:13px 10px 2px;border-top:1px dashed var(--line)}
+.speed-t{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#bcb6cc;margin-bottom:8px}
+.speed-b{display:flex;gap:5px}
+.speed-b button{flex:1;font-family:inherit;font-size:12px;font-weight:650;padding:6px 0;border-radius:7px;
+  border:1px solid var(--line);background:#fff;color:#6b6580;cursor:pointer;transition:.16s}
+.speed-b button:hover{border-color:var(--primary);color:var(--primary)}
+.speed-b button.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.speed-note{font-size:10.5px;color:#bcb6cc;margin-top:7px;line-height:1.6}
+.nav-tag{font-size:10px;padding:1px 5px;border-radius:4px;margin-left:auto;font-weight:600}
+.t3{background:var(--red-l);color:var(--red)}
+.t2{background:var(--accent-l);color:var(--accent)}
+.t1{background:#eef2f7;color:#7b8798}
+
+.content{margin-left:246px;flex:1;min-width:0;max-width:1080px;padding:0 34px 90px}
+/* ---------- 小屏：顶部条 + 抽屉式章节导航 ---------- */
+.mtop{display:none}
+.navbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  width:38px;height:38px;flex-shrink:0;padding:0;border-radius:10px;cursor:pointer;
+  border:1px solid var(--line);background:#fff}
+.navbtn i{display:block;width:16px;height:2px;border-radius:2px;background:#5c5773;transition:.2s}
+.navbtn.on i:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.navbtn.on i:nth-child(2){opacity:0}
+.navbtn.on i:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.mtop-t{font-size:13.5px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scrim{position:fixed;inset:0;z-index:70;background:rgba(18,23,33,.45);
+  opacity:0;pointer-events:none;transition:opacity .22s}
+
+@media(max-width:960px){
+  .mtop{display:flex;align-items:center;gap:11px;position:fixed;top:0;left:0;right:0;z-index:90;
+    height:56px;padding:0 14px;background:rgba(255,255,255,.94);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);box-shadow:0 8px 20px -16px rgba(16,24,40,.6)}
+  .sidebar{top:56px;height:calc(100vh - 56px);transform:translateX(-100%);
+    transition:transform .22s ease;z-index:80;box-shadow:none}
+  .sidebar.open{transform:none;box-shadow:0 20px 60px -18px rgba(16,24,40,.5)}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .content{margin-left:0;padding:58px 16px 60px}
+  .hero{padding-top:20px}
+}
+
+/* ---------- Hero ---------- */
+.hero{padding:58px 0 34px;border-bottom:1px solid var(--line);margin-bottom:44px}
+.hero-k{font-size:11.5px;letter-spacing:2.6px;color:var(--primary);font-weight:700;text-transform:uppercase}
+.hero h1{font-size:32px;margin:14px 0 12px;font-weight:800;letter-spacing:-.4px;line-height:1.32}
+.hero p{color:var(--muted);margin:0 0 28px;max-width:600px;font-size:14px;line-height:1.9}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-width:640px}
+@media(max-width:820px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 16px;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:21px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums;line-height:1.35}
+.stat span{display:block;font-size:11px;color:var(--muted);line-height:1.45}
+
+/* ---------- 章节分值权重 ---------- */
+.rank{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 22px;margin:28px 0 0;box-shadow:var(--shadow)}
+.rank-h{margin-bottom:16px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
+.rank-t{font-size:13.5px;font-weight:750;color:#2b3542}
+.rank-s{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.7}
+.rank-r{display:grid;grid-template-columns:134px minmax(0,1fr) 66px 54px;gap:12px;align-items:center;
+  margin-bottom:9px;font-size:12px}
+@media(max-width:620px){.rank-r{grid-template-columns:110px minmax(0,1fr) 58px 48px;gap:8px}}
+.rank-n{color:#3c4654;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-bar{height:10px;background:#eef2f7;border-radius:5px;overflow:hidden}
+.rank-bar i{display:block;height:100%;border-radius:5px;width:0;
+  transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.rank-v{text-align:right;color:#4b5665;font-variant-numeric:tabular-nums;font-weight:700}
+.rank-b{font-size:10px;font-weight:800;padding:2px 0;border-radius:5px;text-align:center;letter-spacing:.4px}
+.tier1{background:var(--red-l);color:var(--red)}
+.tier2{background:var(--primary-l);color:var(--primary)}
+.tier3{background:#eef2f7;color:#7b8798}
+.rank-sum{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+.rank-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-bottom:14px}
+.rank-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.rank-sum-r{display:grid;grid-template-columns:106px minmax(0,1fr) 42px;gap:12px;align-items:center;
+  margin-bottom:9px;font-size:12px}
+.rank-sum-bar{height:11px;background:#eef2f7;border-radius:6px;overflow:hidden}
+.rank-sum-bar i{display:block;height:100%;border-radius:6px;width:0;transition:width .9s ease .3s}
+.rank-sum-v{text-align:right;color:#4b5665;font-weight:700;font-variant-numeric:tabular-nums}
+.rank-note{margin-top:14px;font-size:12.2px;color:#4b5665;line-height:1.8;
+  background:#f7f9fc;border:1px solid var(--line);border-left:3px solid var(--primary);
+  border-radius:9px;padding:12px 15px}
+
+/* ---------- 四门课地图 ---------- */
+.subj{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:24px 0 0}
+@media(max-width:980px){.subj{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sj{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.2s}
+.sj.cur{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l),var(--shadow)}
+.sj.cur::before{content:"当前";position:absolute;top:0;right:0;background:var(--primary);color:#fff;
+  font-size:9.5px;font-weight:800;letter-spacing:.6px;padding:3px 9px;border-radius:0 0 0 9px}
+.sj-n{font-size:11px;font-weight:800;color:#b6c0cc;letter-spacing:1px}
+.sj-t{font-size:14.5px;font-weight:800;margin:3px 0 7px}
+.sj-s{font-size:11.5px;color:var(--muted);line-height:1.7}
+.sj-bar{height:6px;border-radius:3px;background:#eef2f7;margin-top:10px;overflow:hidden}
+.sj-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#9db9f5,var(--primary))}
+.sj.mut .sj-bar i{background:#c9d3e0}
+.sj.mut .sj-t{color:#8b95a3}
+/* ---------- 四门课地图的跳转（2026-09-29 补） ---------- */
+.hero-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.home-link{margin-left:auto;font-size:12px;font-weight:700;color:var(--muted);text-decoration:none;
+  border:1px solid var(--line);border-radius:20px;padding:4px 14px;transition:.18s;background:#fff;white-space:nowrap}
+.home-link:hover{color:var(--primary);border-color:var(--primary);box-shadow:0 4px 12px -8px rgba(16,24,40,.4)}
+a.sj{text-decoration:none;color:inherit;cursor:pointer}
+a.sj:hover{border-color:var(--primary);transform:translateY(-2px);
+  box-shadow:0 10px 22px -12px rgba(16,24,40,.34),var(--shadow)}
+a.sj:hover .sj-t{color:var(--primary)}
+a.sj::after{content:"进入 →";position:absolute;right:12px;bottom:8px;font-size:10.5px;font-weight:800;
+  color:var(--primary);opacity:0;transform:translateX(-4px);transition:.2s}
+a.sj:hover::after{opacity:1;transform:translateX(0)}
+.sj.cur::after{content:"本页";position:absolute;right:12px;bottom:8px;font-size:10.5px;
+  font-weight:800;color:#b6c0cc;letter-spacing:.4px}
+
+/* ---------- 跨科目连接 ---------- */
+.xlink{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
+  padding:16px 18px;box-shadow:var(--shadow);border-left:4px solid var(--purple)}
+.xlink h4{margin:0 0 10px;font-size:13.5px;font-weight:750;display:flex;align-items:center;gap:8px}
+.xlink h4 .tagx{font-size:10px;font-weight:800;padding:2px 8px;border-radius:5px;background:var(--purple-l);color:var(--purple)}
+.xitem{display:grid;grid-template-columns:134px 1fr;gap:10px;padding:8px 0;border-top:1px dashed #eef2f7;font-size:12.8px}
+.xitem:first-of-type{border-top:0}
+.xitem .xa{font-weight:700;color:#5b21b6}
+.xitem .xb{color:#3c4654}
+
+/* ---------- Section ---------- */
+.sec{padding:56px 0 20px;scroll-margin-top:20px}
+.sec-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:16px;
+  border-bottom:2px solid var(--line);margin-bottom:28px}
+.sec-num{font-size:11px;font-weight:800;letter-spacing:1.6px;color:#fff;background:var(--primary);
+  padding:4px 9px;border-radius:6px}
+.sec-head h2{font-size:23px;margin:0;font-weight:800;letter-spacing:-.2px}
+.weight{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;margin-left:auto}
+.w3{background:var(--red-l);color:var(--red)}
+.w2{background:var(--accent-l);color:var(--accent)}
+.w1{background:#eef2f7;color:#7b8798}
+
+.sub{font-size:16px;font-weight:750;margin:40px 0 16px;display:flex;align-items:center;gap:9px}
+.sub::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--primary)}
+.sub.g::before{background:var(--green)} .sub.a::before{background:var(--accent)}
+.sub.p::before{background:var(--purple)}
+
+/* ---------- 卡片 ---------- */
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:820px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;box-shadow:var(--shadow);min-width:0}
+.card h4{margin:0 0 11px;padding-bottom:9px;border-bottom:1px solid #f0f3f7;
+  font-size:13.5px;font-weight:750;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.card h4 .pt{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--primary-l);color:var(--primary)}
+.card p{margin:0 0 7px;font-size:13.5px;color:#3c4654}
+.card ul{margin:6px 0 0;padding-left:17px;font-size:13.5px;color:#3c4654}
+.card li{margin:4px 0}
+.card li::marker{color:var(--primary)}
+
+.fm{background:#f7f9fc;border:1px solid var(--line);border-left:3px solid var(--primary);
+  border-radius:8px;padding:9px 13px;margin:9px 0;font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px;line-height:1.9;color:#1e293b;overflow-x:auto;white-space:pre-wrap}
+.fm.g{border-left-color:var(--green)} .fm.a{border-left-color:var(--accent)}
+.key{background:linear-gradient(transparent 62%,#ffe9a8 62%);font-weight:650;padding:0 1px}
+.tip{display:flex;gap:9px;font-size:12.8px;padding:10px 13px;border-radius:9px;margin:10px 0;line-height:1.7}
+.tip .ti{font-weight:800;flex-shrink:0}
+.tip.e{background:var(--red-l);color:#8d2020}
+.tip.m{background:var(--accent-l);color:#8a5209}
+.tip.i{background:var(--cyan-l);color:#0b5d70}
+.tip.s{background:var(--green-l);color:#0a6b4a}
+
+table.tb{width:100%;border-collapse:collapse;font-size:12.8px;margin:11px 0;
+  border:1px solid var(--line);border-radius:9px;overflow:hidden}
+table.tb th{background:#f4f7fb;text-align:left;padding:8px 11px;font-weight:700;font-size:12.2px;
+  color:#38424f;border-bottom:1px solid var(--line);white-space:nowrap}
+table.tb td{padding:8px 11px;border-bottom:1px solid #f0f3f7;color:#3c4654;vertical-align:top}
+table.tb tr:last-child td{border-bottom:0}
+table.tb tr:hover td{background:#fafbfd}
+/* 窄屏：宽表自己横向滚动，不把整页撑出横向滚动条 */
+@media(max-width:700px){
+  table.tb{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* 少数动画的图形/表格本身比卡片宽，给一条横向滚动，别让内容被裁掉 */
+  .demo-b{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+.mono{font-family:"Cascadia Mono",Consolas,monospace;font-size:12.5px}
+
+/* ---------- 演示区 ---------- */
+.demo{background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);padding:0;margin:18px 0 30px;overflow:hidden;box-shadow:var(--shadow)}
+.demo-h{display:flex;align-items:center;gap:9px;padding:12px 20px;background:#f7f9fc;
+  border-bottom:1px solid var(--line);font-size:13px;font-weight:750;color:#2b3542}
+.demo-h .dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 0 3px rgba(15,157,110,.16);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.demo-h .tag{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--primary);
+  background:var(--primary-l);padding:2px 8px;border-radius:5px}
+.demo-b{padding:22px 20px}
+@media(max-width:820px){.demo-b{padding:15px}}
+
+.ctl{display:flex;gap:10px 10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.ctl label{font-size:12.5px;color:#4b5665;font-weight:600}
+.ctl>input,.ctl>select{margin-right:7px}
+input[type=number],input[type=text],select{font-family:inherit;font-size:13px;padding:6px 10px;
+  border:1px solid #cdd5e0;border-radius:8px;background:#fff;color:var(--text);outline:none;transition:.15s;width:110px}
+input[type=text]{width:150px}
+select{width:auto;cursor:pointer}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
+.btn{font-family:inherit;font-size:12.5px;font-weight:650;padding:7px 15px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--primary);background:var(--primary);color:#fff;transition:.16s}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.gh{background:#fff;color:var(--primary)}
+.btn.gy{background:#fff;color:#4b5665;border-color:#cdd5e0}
+.btn.sm{padding:5px 11px;font-size:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+
+.res{font-family:"Cascadia Mono",Consolas,monospace;font-size:13px;line-height:1.95;
+  background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:12px 15px;overflow-x:auto}
+.res .r{display:flex;gap:11px;flex-wrap:wrap;align-items:center;margin:4px 0}
+.res .lbl{display:inline-block;min-width:74px;color:var(--muted);font-size:12px}
+.res .val{font-weight:700;color:var(--primary);letter-spacing:.6px}
+
+/* 位显示 */
+.bits{display:flex;gap:0;flex-wrap:wrap;font-family:"Cascadia Mono",Consolas,monospace;font-size:15px;font-weight:700}
+.bit{width:23px;height:30px;display:flex;align-items:center;justify-content:center;
+  border:1px solid #d8dfe9;margin:-1px 0 0 -1px;background:#fff;color:#334155;
+  transition:background .3s,color .3s,transform .3s}
+.bit.first{border-radius:7px 0 0 7px;margin-left:0}
+.bit.last{border-radius:0 7px 7px 0}
+.bit.sign{background:var(--red-l);color:var(--red);border-color:#f5c2c0}
+.bit.exp{background:var(--accent-l);color:#9a5b06;border-color:#f6d9ab}
+.bit.man{background:var(--primary-l);color:var(--primary);border-color:#c3d5fb}
+.bit.on{background:var(--purple);color:#fff;border-color:var(--purple);transform:translateY(-2px)}
+.bit.lbl{background:transparent;border:0;width:auto;padding:0 6px;color:#9aa4b2;font-size:11px}
+.bits-cap{display:flex;gap:0;font-size:10.5px;color:var(--muted);margin-top:5px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:9px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
+/* 映射示意 */
+.mapwrap{display:grid;grid-template-columns:1fr 46px 1fr;gap:0;align-items:start;margin-top:8px}
+@media(max-width:820px){.mapwrap{grid-template-columns:1fr}}
+.mem-col,.cache-col{display:flex;flex-direction:column;gap:4px}
+.rowbox{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;
+  padding:6px 9px;font-size:12px;background:#fff;transition:.35s;font-family:"Cascadia Mono",Consolas,monospace}
+.rowbox .idx{font-size:10.5px;color:#9aa4b2;min-width:44px}
+.rowbox.hit{background:var(--green-l);border-color:#8fdcc4;color:#0a6b4a;font-weight:700;
+  box-shadow:0 0 0 3px rgba(15,157,110,.14)}
+.rowbox.sel{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
+.rowbox.sel .idx{color:#cfe0ff}
+.rowbox span.tagv{font-size:10px;padding:1px 6px;border-radius:4px;background:#eef2f7;color:#64748b;margin-left:auto}
+.arrowcol{display:flex;align-items:center;justify-content:center;color:#c3cbd7;font-size:17px;padding-top:8px}
+
+/* 流水线时空图 */
+.pipegrid{display:grid;gap:3px;font-family:"Cascadia Mono",Consolas,monospace;font-size:11px;margin-top:4px}
+.pcell{height:26px;border-radius:5px;background:#f1f4f9;color:#aab3c0;display:flex;align-items:center;
+  justify-content:center;transition:.3s;font-weight:700}
+.pcell.on{color:#fff;transform:scale(1.07);box-shadow:0 3px 9px -3px rgba(16,24,40,.4)}
+.pcell.IF{background:var(--primary);color:#fff}
+.pcell.ID{background:var(--cyan);color:#fff}
+.pcell.EX{background:var(--green);color:#fff}
+.pcell.MEM{background:var(--accent);color:#fff}
+.pcell.WB{background:var(--purple);color:#fff}
+.pcell.stall{background:var(--red)!important;color:#fff!important}
+.pcell.fw{background:#f59e0b!important;color:#fff!important}
+.plabel{font-size:11px;font-weight:700;display:flex;align-items:center;color:#4b5665}
+.pstage{display:flex;height:22px;border-radius:5px;overflow:hidden;font-size:11px;font-weight:700;color:#fff}
+.pstage div{flex:1;display:flex;align-items:center;justify-content:center}
+
+/* 步骤条 */
+.steps{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.step{display:flex;gap:11px;align-items:flex-start;padding:10px 13px;border:1px solid var(--line);
+  border-radius:10px;background:#fff;transition:.3s;opacity:.5}
+.step.act{opacity:1;border-color:var(--primary);background:var(--primary-l);
+  box-shadow:0 0 0 3px rgba(37,99,235,.09)}
+.step.dn{opacity:1;background:#fafbfd;border-color:#d8e2f2}
+.step .n{width:21px;height:21px;border-radius:50%;background:#e6ebf2;color:#7b8798;font-size:11px;
+  font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step.act .n{background:var(--primary);color:#fff}
+.step.dn .n{background:var(--green);color:#fff}
+.step .t{font-size:13px;font-weight:700;margin-bottom:2px}
+.step .d{font-size:12px;color:#5c6779;font-family:"Cascadia Mono",Consolas,monospace;line-height:1.7}
+
+/* 事件条 */
+.evbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.ev{font-size:11.5px;padding:5px 11px;border-radius:20px;background:#eef2f7;color:#6b7280;transition:.3s}
+.ev.on{background:var(--green);color:#fff;font-weight:700}
+
+footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--muted);text-align:center;line-height:2}
+.totop{position:fixed;right:24px;bottom:24px;width:40px;height:40px;border-radius:50%;
+  background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#64748b;font-size:15px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:60}
+.totop.on{opacity:1;pointer-events:auto}
+.totop:hover{color:var(--primary);border-color:var(--primary)}
+/* ##CSS## */
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-t">408 计算机组成原理</div>
+    <div class="brand-s">交互式原理全景 · 考点 / 原理 / 动画</div>
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-sep">408 全局</div>
+    <a href="#g0" class="nav-i"><b>00</b><span>四门课全景定位</span><em class="nav-tag t3">先看</em></a>
+    <div class="nav-sep">计算机组成原理</div>
+    <a href="#ch1" class="nav-i"><b>01</b><span>计算机系统概述</span><em class="nav-tag t1">低</em></a>
+    <a href="#ch2" class="nav-i"><b>02</b><span>数据的表示和运算</span><em class="nav-tag t3">高频</em></a>
+    <a href="#ch3" class="nav-i"><b>03</b><span>存储系统</span><em class="nav-tag t3">核心</em></a>
+    <a href="#ch4" class="nav-i"><b>04</b><span>指令系统</span><em class="nav-tag t2">中</em></a>
+    <a href="#ch5" class="nav-i"><b>05</b><span>中央处理器</span><em class="nav-tag t3">核心</em></a>
+    <a href="#ch6" class="nav-i"><b>06</b><span>总线</span><em class="nav-tag t1">低</em></a>
+    <a href="#ch7" class="nav-i"><b>07</b><span>输入/输出系统</span><em class="nav-tag t2">中</em></a>
+  </nav>
+  <div class="speed">
+    <div class="speed-t">动画速度</div>
+    <div class="speed-b">
+      <button data-sp="2.6">慢</button>
+      <button data-sp="1.7" class="on">中</button>
+      <button data-sp="1">快</button>
+    </div>
+    <div class="speed-note">切换后对<b>下一次播放</b>生效</div>
+  </div>
+</aside>
+
+<div class="scrim" id="scrim"></div>
+
+<main class="content">
+
+<div class="mtop">
+  <button class="navbtn" id="navbtn" type="button" aria-label="章节导航" aria-expanded="false" aria-controls="nav"><i></i><i></i><i></i></button>
+  <span class="mtop-t" data-subj="计算机组成原理">计算机组成原理</span>
+</div>
+
+<header class="hero">
+  <div class="hero-top">
+    <div class="hero-k">Computer Organization · 408</div>
+    <a class="home-link" href="408-全景总览.html">← 回 408 全景总览</a>
+  </div>
+  <h1>计算机组成原理<br>交互式原理全景</h1>
+  <p>408 四门课里，计组与操作系统合计 <b>80 分</b>，超过总分的一半，而这两门共享「存储管理」与「I/O」两条主线。这一页把计组放回四门课的整体框架里讲，每个关键考点都标出跨科目的接口。</p>
+  <div class="stats">
+    <div class="stat"><b>45</b><span>本科分值（满分 150）</span></div>
+    <div class="stat"><b>7</b><span>章节全覆盖</span></div>
+    <div class="stat"><b>18</b><span>交互动画</span></div>
+    <div class="stat"><b>100%</b><span>可离线打开</span></div>
+  </div>
+
+  <div class="subj">
+    <a class="sj mut" href="数据结构-交互式全景.html">
+      <div class="sj-n">01</div>
+      <div class="sj-t">数据结构</div>
+      <div class="sj-s">线性表 / 树 / 图 / 查找排序<br>计组的队列、栈、位图都源于此</div>
+      <div class="sj-bar"><i style="width:100%"></i></div>
+    </a>
+    <div class="sj cur">
+      <div class="sj-n">02</div>
+      <div class="sj-t">计算机组成原理</div>
+      <div class="sj-s">数据表示 / 存储 / 指令 / CPU<br>本页</div>
+      <div class="sj-bar"><i style="width:100%"></i></div>
+    </div>
+    <a class="sj mut" href="操作系统-交互式全景.html">
+      <div class="sj-n">03</div>
+      <div class="sj-t">操作系统</div>
+      <div class="sj-s">进程 / 内存 / 文件 / I-O 管理<br>与计组交叉最深</div>
+      <div class="sj-bar"><i style="width:78%"></i></div>
+    </a>
+    <a class="sj mut" href="计算机网络-交互式全景.html">
+      <div class="sj-n">04</div>
+      <div class="sj-t">计算机网络</div>
+      <div class="sj-s">体系结构 / TCP-IP / 应用层<br>计组是它最底层的硬件支撑</div>
+      <div class="sj-bar"><i style="width:56%"></i></div>
+    </a>
+  </div>
+
+  <div class="rank">
+    <div class="rank-h">
+      <div class="rank-t">各章分值权重与复习优先级</div>
+      <div class="rank-s">按历年统考真题中的<b>大致分值降序</b>排列 —— 排在前面的章节，复习投入应当明显更多。分值区间为估计值，用于确定复习顺序，<b>非官方数据</b>。</div>
+    </div>
+
+    <div class="rank-r"><div class="rank-n">03 存储系统</div><div class="rank-bar"><i data-w="100" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-v">11-14</div><div class="rank-b tier1">核心</div></div>
+    <div class="rank-r"><div class="rank-n">05 中央处理器</div><div class="rank-bar"><i data-w="100" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-v">11-14</div><div class="rank-b tier1">核心</div></div>
+    <div class="rank-r"><div class="rank-n">02 数据的表示和运算</div><div class="rank-bar"><i data-w="68" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-v">7-10</div><div class="rank-b tier1">核心</div></div>
+    <div class="rank-r"><div class="rank-n">04 指令系统</div><div class="rank-bar"><i data-w="40" style="background:linear-gradient(90deg,#93c5fd,#2563eb)"></i></div><div class="rank-v">4-6</div><div class="rank-b tier2">主力</div></div>
+    <div class="rank-r"><div class="rank-n">07 输入/输出系统</div><div class="rank-bar"><i data-w="36" style="background:linear-gradient(90deg,#93c5fd,#2563eb)"></i></div><div class="rank-v">3-6</div><div class="rank-b tier2">主力</div></div>
+    <div class="rank-r"><div class="rank-n">01 计算机系统概述</div><div class="rank-bar"><i data-w="22" style="background:linear-gradient(90deg,#dde3ec,#b6c0cc)"></i></div><div class="rank-v">2-4</div><div class="rank-b tier3">补充</div></div>
+    <div class="rank-r"><div class="rank-n">06 总线</div><div class="rank-bar"><i data-w="20" style="background:linear-gradient(90deg,#dde3ec,#b6c0cc)"></i></div><div class="rank-v">2-3</div><div class="rank-b tier3">补充</div></div>
+
+    <div class="rank-sum">
+      <div class="rank-legend">
+        <span><i style="background:#dc2626"></i>核心章（≥7 分）—— 必出大题，要反复练</span>
+        <span><i style="background:#2563eb"></i>主力章（4-6 分）—— 吃透考点，稳定拿分</span>
+        <span><i style="background:#b6c0cc"></i>补充章（&lt;4 分）—— 单选为主，快速过</span>
+      </div>
+      <div class="rank-sum-r"><div>核心 3 章</div><div class="rank-sum-bar"><i data-w="70" style="background:linear-gradient(90deg,#fca5a5,#dc2626)"></i></div><div class="rank-sum-v">70%</div></div>
+      <div class="rank-sum-r"><div>主力 2 章</div><div class="rank-sum-bar"><i data-w="20" style="background:linear-gradient(90deg,#93c5fd,#2563eb)"></i></div><div class="rank-sum-v">20%</div></div>
+      <div class="rank-sum-r"><div>补充 2 章</div><div class="rank-sum-bar"><i data-w="10" style="background:linear-gradient(90deg,#dde3ec,#b6c0cc)"></i></div><div class="rank-sum-v">10%</div></div>
+      <div class="rank-note">
+        <b>怎么用这张表：</b>核心 3 章占了本科约 <b>70%</b> 的分值，这三章要做到「看到题型就知道该套哪套算法」；主力 2 章稳定出题，考点吃透就能拿分；
+        补充 2 章基本只出单选，花半天过一遍概念即可，别在这里耗时间。<br>
+        <b>与其它科目的联动：</b>第 3 章（存储系统）与 OS 的「内存管理」、第 7 章（I/O）与 OS 的「I/O 管理」是两对孪生章节，
+        <b>建议同步学</b>，它们合起来是 80 分里的重头。
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== 408 全局定位 ==================== -->
+<section class="sec" id="g0">
+  <div class="sec-head">
+    <span class="sec-num">SECTION 00</span>
+    <h2>四门课全景定位</h2>
+    <span class="weight w3">先看这一节</span>
+  </div>
+
+  <div class="tip i"><span class="ti">为什么先看这个</span><span>408 的四门课不是四条平行线。命题人偏爱出的题，往往<b>落在两门课的交界处</b>——「虚拟地址怎么变成物理地址」既考计组的地址转换硬件也考 OS 的页表；「DMA 怎么搬数据」计组讲硬件发起、OS 讲软件层次。把交界处想明白，四门课才是通的。</span></div>
+
+  <div class="sub">计组在 408 里的位置</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>分值分布（共 150 分）</h4>
+      <table class="tb">
+        <tr><th>科目</th><th>分值</th><th>占比</th></tr>
+        <tr><td>数据结构</td><td class="mono">45</td><td>30%</td></tr>
+        <tr><td><b>计算机组成原理</b></td><td class="mono"><b>45</b></td><td>30%</td></tr>
+        <tr><td>操作系统</td><td class="mono">35</td><td>约 23%</td></tr>
+        <tr><td>计算机网络</td><td class="mono">25</td><td>约 17%</td></tr>
+      </table>
+      <div class="fm">计组 + 操作系统 = 80 分，占 53%
+两门课共享「存储管理」与「I/O」两条主线
+<b>建议并行学</b>，不要学完一门再碰另一门</div>
+    </div>
+    <div class="card">
+      <h4>计组内部结构（45 分怎么分布）</h4>
+      <table class="tb">
+        <tr><th>章节</th><th>权重</th><th>典型题</th></tr>
+        <tr><td>存储系统</td><td>高</td><td>Cache 映射、地址划分、平均访问时间</td></tr>
+        <tr><td>中央处理器</td><td>高</td><td>数据通路、流水线、控制器与微程序</td></tr>
+        <tr><td>数据的表示和运算</td><td>高</td><td>IEEE 754、补码运算、溢出判断</td></tr>
+        <tr><td>指令系统</td><td>中</td><td>扩展操作码、寻址方式</td></tr>
+        <tr><td>输入/输出系统</td><td>中</td><td>中断流程、DMA 传送方式</td></tr>
+        <tr><td>系统概述 / 总线</td><td>低</td><td>概念辨析（单选为主）</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="sub p">跨科目接口图：计组与另外三门的连接点</div>
+  <div class="grid g2">
+    <div class="xlink">
+      <h4><span class="tagx">计组 × 操作系统</span>交叉最深，80 分里大半在这里</h4>
+      <div class="xitem"><div class="xa">虚拟存储</div><div class="xb">计组讲地址转换硬件与 TLB，OS 讲页表由谁维护、缺页怎么处理</div></div>
+      <div class="xitem"><div class="xa">中断机制</div><div class="xb">计组讲中断响应与隐指令（关中断/保存断点/取入口），OS 讲中断处理程序里做什么</div></div>
+      <div class="xitem"><div class="xa">I/O 方式</div><div class="xb">程序查询 / 中断 / DMA / 通道 —— 计组讲硬件原理，OS 讲软件层次与设备管理</div></div>
+      <div class="xitem"><div class="xa">进程上下文</div><div class="xb">进程切换要保存的 PC、PSW、通用寄存器，正是本页第 5 章讲的那些 CPU 内部寄存器</div></div>
+      <div class="xitem"><div class="xa">存储层次</div><div class="xb">寄存器—Cache—主存—辅存：计组管上两层（硬件自动），OS 管下两层（软件调度）</div></div>
+      <div class="xitem"><div class="xa">磁盘与 RAID</div><div class="xb">计组讲磁盘结构、存取时间与 RAID 等级，OS 讲磁盘调度算法</div></div>
+    </div>
+    <div class="xlink" style="border-left-color:var(--accent)">
+      <h4><span class="tagx" style="background:var(--accent-l);color:#8a5209">计组 × 数据结构</span>算法与结构的直接来源</h4>
+      <div class="xitem"><div class="xa">指令流水线</div><div class="xb">时空图的分析方法与任务调度模型同构；流水线的「吞吐率/加速比」也是效率分析的通用工具</div></div>
+      <div class="xitem"><div class="xa">Cache 替换</div><div class="xb">LRU 要用栈或链表实现，LFU 要用计数表 —— 都在数据结构里学过</div></div>
+      <div class="xitem"><div class="xa">存储器扩展</div><div class="xb">片选译码本质是地址空间的分段映射</div></div>
+      <div class="xitem"><div class="xa">海明码 / CRC</div><div class="xb">模 2 除法与生成多项式，是位运算的直接应用</div></div>
+    </div>
+    <div class="xlink" style="border-left-color:var(--cyan)">
+      <h4><span class="tagx" style="background:var(--cyan-l);color:#0b5d70">计组 × 计算机网络</span>它是计网最底层的硬件支撑</h4>
+      <div class="xitem"><div class="xa">网卡与 DMA</div><div class="xb">网卡收包靠 DMA 把数据搬进内存，再发中断通知 CPU —— 计网的高性能收包就建立在这套机制上</div></div>
+      <div class="xitem"><div class="xa">数据校验</div><div class="xb">CRC 循环冗余校验，计组讲它怎么算，计网讲它怎么用在帧校验里</div></div>
+      <div class="xitem"><div class="xa">字节序</div><div class="xb">大小端问题在计组第 2 章出现，在计网的协议字段里会再次遇到</div></div>
+    </div>
+    <div class="xlink" style="border-left-color:#0f9d6e">
+      <h4><span class="tagx" style="background:#e5f7f0;color:#0a6b4a">复习路线建议</span></h4>
+      <div class="xitem"><div class="xa">先修</div><div class="xb">第 1 章系统概述快速过（2-4 分），重点记性能指标与单位换算</div></div>
+      <div class="xitem"><div class="xa">攻坚顺序</div><div class="xb">第 3 章存储系统 → 第 5 章 CPU → 第 2 章数据表示，这三章占了大半分值</div></div>
+      <div class="xitem"><div class="xa">并行推进</div><div class="xb">第 3 章与 OS 的「内存管理」同步学；第 7 章与 OS 的「I/O 管理」同步学</div></div>
+      <div class="xitem"><div class="xa">大题分布</div><div class="xb">常见形态：Cache 地址划分 + 命中率 + 平均访问时间；或数据通路的微操作序列</div></div>
+    </div>
+  </div>
+
+  <div class="sub">学这一页之前，你需要先知道</div>
+  <div class="grid g3">
+    <div class="card">
+      <h4>二进制与补码</h4>
+      <p>整个计组建立在二进制之上。第 2 章会把补码、IEEE 754 讲透，但如果对这些还生疏，先过一遍再往下走。</p>
+    </div>
+    <div class="card">
+      <h4>冯·诺依曼结构</h4>
+      <p>「存储程序」这个前提贯穿全书：指令和数据同存主存，CPU 按地址自动取指执行。第 1 章会展开。</p>
+    </div>
+    <div class="card">
+      <h4>它和 OS 的分工</h4>
+      <p>计组回答「硬件<b>怎么做到</b>」，OS 回答「软件<b>怎么管</b>」。同一个机制从两个角度看，是这两门课的常态。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 1 章 ==================== -->
+<section class="sec" id="ch1">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 01</span>
+    <h2>计算机系统概述</h2>
+    <span class="weight w1">低频 · 2-4 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>纯记忆型章节，几乎没有大题。集中考 2-3 道单选：冯诺依曼结构特征、性能指标计算（CPI / MIPS / CPU 时间）、存储容量与带宽的单位换算。花半天过一遍就够，别在这章耗时间。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 冯·诺依曼结构 <span class="pt">必考</span></h4>
+      <ul>
+        <li>五大部件：<span class="key">运算器、控制器、存储器、输入设备、输出设备</span></li>
+        <li>核心思想：<span class="key">存储程序</span>——程序和数据一样，先存入主存，再按地址顺序自动取出执行</li>
+        <li>指令和数据<span class="key">都以二进制形式存放</span>，形式上无差别，靠执行阶段区分</li>
+        <li>指令 = 操作码 + 地址码</li>
+        <li>以运算器为中心 → 现代计算机改为<span class="key">以存储器为中心</span>，且 CPU 与主存间加了 Cache</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>2. CPU = 运算器 + 控制器 <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th>部件</th><th>组成</th><th>职责</th></tr>
+        <tr><td>运算器</td><td><b>ALU</b> + ACC / MQ / X + PSW</td><td>数据加工：算术运算、逻辑运算</td></tr>
+        <tr><td>控制器</td><td><b>PC</b> + <b>IR</b> + <b>CU</b></td><td>指挥：取指令 → 分析指令 → 执行指令</td></tr>
+      </table>
+      <ul>
+        <li>ACC 累加器（存操作数/结果）、MQ 乘商寄存器（乘除专用）、X 通用操作数寄存器——<span class="key">前三个必须具备</span></li>
+        <li>PSW 标志寄存器：存放运算结果特征（ZF 零 / CF 进位 / OF 溢出 / SF 符号），条件转移要用它</li>
+        <li><b>PC</b>：存<b>下一条</b>指令的地址，可自动 +1；与主存的 MAR 之间有一条直接通路</li>
+        <li><b>IR</b>：存<b>当前</b>指令，内容来自 MDR；操作码送 CU 分析，地址码送 MAR</li>
+        <li>辨析（高频）：<span class="key">PC、IR 属于控制器；ACC、MQ、X、PSW 属于运算器</span>；MAR、MDR 现代机器也集成在 CPU 内，<span class="key">对用户透明</span></li>
+      </ul>
+      <div class="tip m"><span class="ti">口径</span><span>第一章只要求 <b>PC / IR / CU</b> 三件；第 5 章会把 CU 展开为「指令译码器 + 时序系统 + 微操作信号发生器」。两种说法都对——问「谁属于控制器」答 PC、IR、CU，问「控制器内部结构」再展开。</span></div>
+    </div>
+    <div class="card">
+      <h4>3. 层次结构</h4>
+      <ul>
+        <li>硬件层 → 系统软件层 → 应用软件层</li>
+        <li>系统软件：OS、编译程序、数据库管理系统（DBMS）</li>
+        <li>数据库管理系统属于<span class="key">系统软件</span>，不是应用软件（爱考）</li>
+        <li>各层之间的界面由<span class="key">指令系统（ISA）</span>连接：硬件与软件的分界面</li>
+        <li>ISA 是软硬件接口，属于<span class="key">软件可见</span>的部分</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>4. 性能指标 <span class="pt">计算</span></h4>
+      <div class="fm">CPU 时间 = 指令条数 × CPI × 时钟周期
+         = 指令条数 × CPI ÷ 主频</div>
+      <div class="fm">MIPS = 主频 ÷ (CPI × 10⁶)
+     = 指令条数 ÷ (执行时间 × 10⁶)</div>
+      <ul>
+        <li>CPI = 程序总时钟周期数 ÷ 指令条数</li>
+        <li>主频 f = 1 / 时钟周期 T</li>
+        <li>CPU 时间 = 用户 CPU 时间 + 系统 CPU 时间</li>
+        <li><span class="key">MIPS 不能跨指令系统比较</span>（不同 ISA 一条指令干的活不同）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>5. 易混单位换算 <span class="pt">坑点</span></h4>
+      <table class="tb">
+        <tr><th>量</th><th>进制</th><th>示例</th></tr>
+        <tr><td>存储容量</td><td class="mono">2¹⁰</td><td class="mono">1 KB = 1024 B</td></tr>
+        <tr><td>速率 / 带宽</td><td class="mono">10³</td><td class="mono">1 KB/s = 1000 B/s</td></tr>
+        <tr><td>频率</td><td class="mono">10³</td><td class="mono">1 GHz = 10⁹ Hz</td></tr>
+      </table>
+      <div class="tip e"><span class="ti">易错</span><span>容量用 2 的幂，传输速率用 10 的幂，二者混考是常见失分点。</span></div>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 01 · 冯·诺依曼结构：一条指令的完整旅程<span class="tag">点击部件看职责</span></div>
+    <div class="demo-b">
+      <svg id="vnSvg" viewBox="0 0 880 388" style="width:100%;max-width:700px;height:auto;display:block;margin:0 auto">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+            <path d="M0,0 L7,3 L0,6 z" fill="#94a3b8"/>
+          </marker>
+        </defs>
+
+        <!-- ===== CPU 大框，把控制器与运算器包在一起 ===== -->
+        <rect x="70" y="22" width="740" height="122" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.6" stroke-dasharray="7 5"/>
+        <text x="90" y="44" font-size="11.5" font-weight="800" fill="#a9b3c0" letter-spacing="1.4">CPU 中央处理器</text>
+
+        <!-- 控制器 -->
+        <g class="vnbox" data-k="cu" style="cursor:pointer">
+          <rect x="180" y="56" width="220" height="70" rx="12" fill="#e5f7f0" stroke="#0f9d6e" stroke-width="2"/>
+          <text x="290" y="86" text-anchor="middle" font-size="15" font-weight="800" fill="#0a6b4a">控制器</text>
+          <text x="290" y="108" text-anchor="middle" font-size="11" fill="#3f9d7c">取指 · 译码 · 发控制信号</text>
+        </g>
+        <!-- 控制信号箭头 -->
+        <line x1="404" y1="91" x2="474" y2="91" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#ah)"/>
+        <!-- 运算器 -->
+        <g class="vnbox" data-k="alu" style="cursor:pointer">
+          <rect x="480" y="56" width="220" height="70" rx="12" fill="#fff4e3" stroke="#d97706" stroke-width="2"/>
+          <text x="590" y="86" text-anchor="middle" font-size="15" font-weight="800" fill="#9a5b06">运算器</text>
+          <text x="590" y="108" text-anchor="middle" font-size="11" fill="#c08a3a">ALU · 算术与逻辑运算</text>
+        </g>
+
+        <!-- ===== 系统总线 ===== -->
+        <line x1="70" y1="222" x2="810" y2="222" stroke="#cbd5e1" stroke-width="3"/>
+        <text x="578" y="212" text-anchor="middle" font-size="11" fill="#a9b3c0">系统总线（数据 / 地址 / 控制）</text>
+
+        <!-- 部件与总线的连线（五条竖线互不重合） -->
+        <line x1="290" y1="126" x2="290" y2="222" stroke="#0f9d6e" stroke-width="1.6" stroke-dasharray="5 4"/>
+        <line x1="590" y1="126" x2="590" y2="222" stroke="#d97706" stroke-width="1.6" stroke-dasharray="5 4"/>
+        <line x1="160" y1="222" x2="160" y2="292" stroke="#0891b2" stroke-width="1.6" stroke-dasharray="5 4"/>
+        <line x1="440" y1="222" x2="440" y2="292" stroke="#2563eb" stroke-width="1.6" stroke-dasharray="5 4"/>
+        <line x1="720" y1="222" x2="720" y2="292" stroke="#7c3aed" stroke-width="1.6" stroke-dasharray="5 4"/>
+
+        <!-- 数据流动点：每个球都带跟随标签，方向 = 先送地址（去）再取回内容（回） -->
+        <g opacity=".95">
+          <circle r="6.5" fill="#2563eb"/>
+          <text x="10" y="-8" font-size="10.5" font-weight="800" fill="#2563eb">指令</text>
+          <animateMotion dur="6s" repeatCount="indefinite"
+            path="M290,126 L290,222 L440,222 L440,296 L440,222 L290,222 L290,126"/>
+        </g>
+        <g opacity=".9">
+          <circle r="6" fill="#d97706"/>
+          <text x="10" y="-8" font-size="10.5" font-weight="800" fill="#d97706">数据</text>
+          <animateMotion dur="6s" begin="3s" repeatCount="indefinite"
+            path="M590,126 L590,222 L440,222 L440,296 L440,222 L590,222 L590,126"/>
+        </g>
+
+        <!-- ===== 下排：输入 / 存储 / 输出，与上方对齐 ===== -->
+        <g class="vnbox" data-k="in" style="cursor:pointer">
+          <rect x="70" y="292" width="180" height="76" rx="12" fill="#e2f7fb" stroke="#0891b2" stroke-width="2"/>
+          <text x="160" y="324" text-anchor="middle" font-size="14" font-weight="800" fill="#0b5d70">输入设备</text>
+          <text x="160" y="346" text-anchor="middle" font-size="10.5" fill="#4aa6bb">键盘 · 鼠标 · 扫描仪</text>
+        </g>
+        <g class="vnbox" data-k="mem" style="cursor:pointer">
+          <rect x="330" y="292" width="220" height="76" rx="12" fill="#eaf0ff" stroke="#2563eb" stroke-width="2"/>
+          <text x="440" y="324" text-anchor="middle" font-size="15" font-weight="800" fill="#1e40af">存储器</text>
+          <text x="440" y="346" text-anchor="middle" font-size="10.5" fill="#5b7fc7">存放指令 + 数据（按地址存取）</text>
+        </g>
+        <g class="vnbox" data-k="out" style="cursor:pointer">
+          <rect x="630" y="292" width="180" height="76" rx="12" fill="#f2ecfe" stroke="#7c3aed" stroke-width="2"/>
+          <text x="720" y="324" text-anchor="middle" font-size="14" font-weight="800" fill="#5b21b6">输出设备</text>
+          <text x="720" y="346" text-anchor="middle" font-size="10.5" fill="#8b6bd0">显示器 · 打印机</text>
+        </g>
+      </svg>
+
+      <div class="res" id="vnRes" style="margin-top:14px">
+        <div class="r"><span class="lbl">点一下</span><span class="val">上面图里的任意部件</span></div>
+        <div class="r" style="color:#5c6779"><span class="lbl">说明</span>五个部件各司其职。点一下看它具体负责什么。</div>
+      </div>
+
+      <!-- 图例：把两个球的含义标出来 -->
+      <div style="display:grid;gap:9px;margin-top:16px;padding:13px 15px;background:#f7f9fc;border:1px solid var(--line);border-radius:10px">
+        <div style="font-size:12.3px;display:flex;align-items:flex-start;gap:9px">
+          <span style="width:12px;height:12px;border-radius:50%;background:#2563eb;flex-shrink:0;margin-top:5px"></span>
+          <span><b style="color:#2563eb">蓝球 · 指令流</b>　控制器把<b>地址</b>送上总线到存储器 → 存储器按这个地址把<b>指令</b>送回来。
+            <span style="color:#8b95a3">（这一步叫「取指」）</span></span>
+        </div>
+        <div style="font-size:12.3px;display:flex;align-items:flex-start;gap:9px">
+          <span style="width:12px;height:12px;border-radius:50%;background:#d97706;flex-shrink:0;margin-top:5px"></span>
+          <span><b style="color:#d97706">橙球 · 数据流</b>　运算器把<b>地址</b>送上总线到存储器 → 存储器把<b>操作数</b>送回来；算完之后，结果再沿原路写回去。
+            <span style="color:#8b95a3">（这一步叫「取数」与「写回」）</span></span>
+        </div>
+        <div style="font-size:12.3px;display:flex;align-items:flex-start;gap:9px">
+          <span style="width:22px;height:0;border-top:2px dashed #cbd5e1;flex-shrink:0;margin-top:9px"></span>
+          <span><b style="color:#8b95a3">灰色虚线</b>　每个部件都挂在这同一条<b>系统总线</b>上 —— 同一时刻只允许一个部件往上送数据。</span>
+        </div>
+      </div>
+
+      <div class="tip s" style="margin-top:12px"><span class="ti">关键</span><span>
+        盯住两个球看：它们<b>走的是同一条总线、访问的是同一个存储器</b>。
+        这不是画得偷懒，而是冯·诺依曼结构最核心的一点 ——
+        <b>指令和数据在硬件层面没有任何区别</b>，都是二进制、都存在主存里、都靠地址来定位。
+        CPU 之所以分得清谁是「指令」谁是「数据」，只是因为它在不同的时机、按不同的用途去取罢了。
+      </span></div>
+
+      <div style="font-size:13px;font-weight:750;margin:20px 0 10px;display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+        <span style="width:4px;height:16px;border-radius:2px;background:var(--accent)"></span>
+        一条指令的完整旅程
+        <span style="font-size:11.5px;font-weight:500;color:#8b95a3">跟着走一遍，整个架构就通了</span>
+        <button class="btn gh sm" id="vnPlay" style="margin-left:auto">播放</button>
+        <button class="btn gy sm" id="vnReset">重置</button>
+      </div>
+      <div class="steps" id="vnSteps"></div>
+    </div>
+  </div>
+
+  <div class="sub a">自测速答</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>Q1 · 判断</h4>
+      <p>CPU 可以直接访问硬盘上保存的指令。</p>
+      <div class="tip s"><span class="ti">答</span><span>错。CPU 只能直接访问<span class="key">主存和寄存器</span>，外存必须通过 I/O 先调入主存。</span></div>
+    </div>
+    <div class="card">
+      <h4>Q2 · 计算</h4>
+      <p>主频 2 GHz，程序共 10⁸ 条指令，平均 CPI = 2.5，求 CPU 时间与 MIPS。</p>
+      <div class="tip s"><span class="ti">答</span><span>CPU 时间 = 10⁸ × 2.5 ÷ 2×10⁹ = <span class="key">0.125 s</span>；MIPS = 2000 ÷ 2.5 = <span class="key">800</span>。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 2 章 ==================== -->
+<section class="sec" id="ch2">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 02</span>
+    <h2>数据的表示和运算</h2>
+    <span class="weight w3">高频 · 8-11 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>「必考 + 易错」双标签。单选里补码、移码、溢出判断、海明码各占 1 题；大题常和第三章合考（如给出浮点格式求表示范围、手算浮点加减步骤）。核心心法：<span class="key">把每个二进制位当成有地址的格子</span>，所有公式都从「位数」推出来，别死背。</span></div>
+
+  <div class="tip i"><span class="ti">跨科目</span><span>本章的<b>海明码与 CRC</b> 在计网的帧校验里会再遇到；<b>大小端</b>问题在协议字段解析时也会用到。而位运算本身是数据结构里<b>位图、哈希</b>的基础。至于补码与浮点 —— 它们是后面所有章节的算术基础，这章不牢，存储和 CPU 都没法算。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 四种机器数 <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th>编码</th><th>正数</th><th>负数</th></tr>
+        <tr><td>原码</td><td>符号 0 + 数值</td><td>符号 1 + 数值</td></tr>
+        <tr><td>反码</td><td>同原码</td><td>数值位取反</td></tr>
+        <tr><td>补码</td><td>同原码</td><td>反码 + 1</td></tr>
+        <tr><td>移码</td><td colspan="2">补码的符号位取反</td></tr>
+      </table>
+      <div class="fm">n 位补码范围：−2⁽ⁿ⁻¹⁾ ～ 2⁽ⁿ⁻¹⁾−1
+3 位补码：  100 ~ 011  (−4 ~ +3)</div>
+      <ul>
+        <li>原码、反码的 0 <span class="key">有两种表示</span>（±0）；补码、移码的 0 唯一</li>
+        <li>移码只用于<span class="key">浮点数的阶码</span>，好处是能直接按无符号数比较大小</li>
+        <li>负数补码 → 原码：<span class="key">符号位不动，其余取反加 1</span>（和原码转补码同一套操作，可逆）</li>
+        <li>补码比原码多表示一个负数：−2⁽ⁿ⁻¹⁾</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>2. 八/十六进制速记</h4>
+      <ul>
+        <li>1 位十六进制 = <span class="key">4 位</span>二进制；1 位八进制 = <span class="key">3 位</span>二进制</li>
+        <li>十六进制转二进制直接查表，不用过十进制</li>
+        <li>十进制小数转二进制：<span class="key">乘 2 取整，正向排</span></li>
+        <li>0.375 = 0.011B（0.375×2=0.75→0，0.75×2=1.5→1，0.5×2=1→1）</li>
+      </ul>
+      <div class="fm">A₍₁₆₎ = 1010    F₍₁₆₎ = 1111
+7₍₈₎ = 111       5₍₈₎ = 101</div>
+    </div>
+    <div class="card">
+      <h4>3. 移位运算</h4>
+      <ul>
+        <li>算术左移 = ×2，右移 = ÷2（符号位不参与移动）</li>
+        <li>逻辑移位：<span class="key">无符号数</span>，空位一律补 0</li>
+        <li>循环移位：带进位 CF 或不带进位</li>
+        <li>左移可能<span class="key">溢出</span>（符号位变化即溢出）；右移是舍去低位，可能损失精度</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>4. 加减运算与溢出 <span class="pt">必考</span></h4>
+      <div class="fm">对补码：A − B = A + (−B)₍补₎
+−B 的补码 = B 连同符号位一起取反加 1</div>
+      <ul>
+        <li>单符号位判溢出：<span class="key">最高位进位 ⊕ 次高位进位 = 1 则溢出</span></li>
+        <li>双符号位（变形补码）：结果为 <span class="mono">01</span> 正溢，<span class="mono">10</span> 负溢，<span class="mono">00 / 11</span> 正常</li>
+        <li>双符号位判溢时<span class="key">高符号位才是真正的符号</span></li>
+        <li>只有<span class="key">同号相加</span>或异号相减才可能溢出；异号相加绝不溢出</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>5. IEEE 754 浮点 <span class="pt">重难点</span></h4>
+      <div class="fm">单精度 (32 位)：1 阶符 + 8 阶码 + 23 尾数
+  偏置值 127，真值 = (−1)ˢ × 1.M × 2^(E−127)
+双精度 (64 位)：1 + 11（偏置 1023）+ 52</div>
+      <ul>
+        <li>规格化尾数<span class="key">隐含最高位 1</span>，所以尾数实际精度是 24 位（23 存 + 1 隐藏）</li>
+        <li>阶码全 0：非规格化数（尾数不隐含 1）；阶码全 1：∞（尾数 0）或 NaN（尾数非 0）</li>
+        <li>单精度规格化数阶码 E 范围 1～254，对应真指数 −126～+127</li>
+        <li>规格化数最小绝对值 2⁻¹²⁶，最大 2¹²⁸×(1−2⁻²⁴)</li>
+        <li>IEEE 754 <span class="key">尾数用原码表示</span>，阶码用移码（偏置形式）表示</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>6. 浮点加减五步 <span class="pt">必背</span></h4>
+      <div class="fm">① 对阶：小阶向大阶看齐（尾数右移，阶差几位移几位）
+② 尾数求和（用补码或原码加减）
+③ 规格化：左规 / 右规
+④ 舍入：就近舍入(默认) / 朝零 / 朝 +∞ / 朝 −∞
+⑤ 溢出判断：看阶码是否溢出（尾数溢出可用右规修正）</div>
+      <div class="tip e"><span class="ti">易错</span><span><span class="key">对阶一定用小阶向大阶看齐</span>。反了会丢掉高位有效数字。判溢出只看<span class="key">阶码</span>，尾数溢出不算真溢出。</span></div>
+    </div>
+    <div class="card">
+      <h4>7. 校验码</h4>
+      <ul>
+        <li>奇偶校验：<span class="key">只能检 1 位错，不能纠错</span>，且检不出偶数个错误</li>
+        <li>海明码：<span class="key">2ᵏ ≥ n + k + 1</span>，能检 2 位错、纠 1 位错</li>
+        <li>海明码校验位放在 <span class="mono">2⁰,2¹,2²…</span> 位置（1,2,4,8…），参与「位号二进制含该位」的所有分组的异或</li>
+        <li>CRC 循环冗余校验：模 2 除法求余数，余数作为校验码</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>8. 大小端与对齐</h4>
+      <ul>
+        <li>大端（Big-Endian）：<span class="key">低地址放高字节</span>；小端相反（x86 是小端）</li>
+        <li>边界对齐：int（4B）起始地址必须是 4 的倍数，不足则填充</li>
+        <li>对齐会<span class="key">浪费空间但提高访存效率</span>；不对齐需多次访存拼接</li>
+        <li>C 语言中 int 一般 4B、short 2B、char 1B、long 依平台（64 位 Linux 为 8B）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 02 · 四种机器数联动：真值 ⇄ 原码 / 反码 / 补码 / 移码<span class="tag">输入真值即变</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>真值（−128 ~ 127）</label>
+        <input type="number" id="codeIn" value="-45" min="-128" max="127">
+        <button class="btn gh sm" data-code="-45">−45</button>
+        <button class="btn gh sm" data-code="-1">−1</button>
+        <button class="btn gh sm" data-code="127">+127</button>
+        <button class="btn gh sm" data-code="-128">−128</button>
+      </div>
+      <div id="codeOut"></div>
+      <div class="legend">
+        <span><i style="background:#fdeceb;border:1px solid #f5c2c0"></i>符号位</span>
+        <span><i style="background:#eaf0ff;border:1px solid #c3d5fb"></i>数值位</span>
+        <span><i class="bit on" style="width:10px;height:10px"></i>当前为 1</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 03 · 补码加法器：进位与溢出的真相<span class="tag">可改操作数</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>A =</label><input type="number" id="ovA" value="105" min="-128" max="127">
+        <label>B =</label><input type="number" id="ovB" value="70" min="-128" max="127">
+        <button class="btn gh sm" id="ovSwap">交换</button>
+        <span style="font-size:12px;color:#8b95a3">试试 105 + 70，再看 −105 + 70</span>
+      </div>
+      <div id="ovOut"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 04 · IEEE 754 单精度拆解器<span class="tag">重点 · 动手输入</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>十进制浮点数</label><input type="number" id="f32In" value="12.375" step="any" style="width:150px">
+        <button class="btn gh sm" data-f32="12.375">12.375</button>
+        <button class="btn gh sm" data-f32="-0.15625">−0.15625</button>
+        <button class="btn gh sm" data-f32="0.1">0.1</button>
+        <button class="btn gh sm" data-f32="3.14159">π</button>
+        <button class="btn gh sm" data-f32="100000000">10⁸</button>
+      </div>
+      <div id="f32Out"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 05 · 浮点加减五步：逐步播放对阶过程<span class="tag">点「下一步」</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>X =</label><input type="number" id="faX" value="0.5" step="any" style="width:110px">
+        <label>Y =</label><input type="number" id="faY" value="-0.4375" step="any" style="width:110px">
+        <button class="btn" id="faStart">重新开始</button>
+        <button class="btn gh" id="faNext">下一步 ▸</button>
+      </div>
+      <div class="steps" id="faSteps"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 06 · 海明码生成器：校验位如何插入与计算<span class="tag">输入数据位</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>数据位（二进制串）</label><input type="text" id="hamIn" value="1011" maxlength="16">
+        <button class="btn gh sm" data-ham="1011">1011</button>
+        <button class="btn gh sm" data-ham="10110110">10110110</button>
+      </div>
+      <div id="hamOut"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 3 章 ==================== -->
+<section class="sec" id="ch3">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 03</span>
+    <h2>存储系统</h2>
+    <span class="weight w3">核心 · 12-14 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>408 计组<b>分值最高、也最容易拉开差距</b>的一章。三种 Cache 映射的地址划分几乎年年考，大题常以「给出主存/Cache 参数 → 求地址格式 → 分析命中情况 → 算平均访问时间」的链条出现。核心心法：<span class="key">一切从「块内地址位数」开始往下推</span>，别记公式结论，记推导顺序。</span></div>
+
+  <div class="tip i"><span class="ti">跨科目</span><span>本章的「虚拟存储」与 OS 的「内存管理」讲的是<b>同一套机制的两面</b>：这里讲<b>硬件怎么做到</b>（页表基址寄存器、TLB、地址转换、缺页中断的产生），OS 讲<b>软件怎么管</b>（页表由谁维护、缺页怎么处理、页面置换选谁换出）。<span class="key">强烈建议两门课对照着学</span> —— 计组和 OS 合计 80 分，很大一块就在这里。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 存储层次与两个「局部性」</h4>
+      <div class="fm">CPU → 寄存器 → Cache → 主存 → 辅存
+   快、小、贵  ←———————→  慢、大、便宜</div>
+      <ul>
+        <li><b>Cache—主存</b>层：解决<span class="key">速度</span>不匹配，由<b>硬件</b>实现，对<b>所有程序员透明</b></li>
+        <li><b>主存—辅存</b>层：解决<span class="key">容量</span>不足，由<b>硬件 + 操作系统</b>共同实现，对<b>应用程序员透明</b></li>
+        <li>局部性原理：<span class="key">时间局部性</span>（刚访问的还会再访问）+ <span class="key">空间局部性</span>（邻近的会被访问）</li>
+        <li>Cache 命中率 H，平均访问时间 <b class="mono">Ta = H·Tc + (1−H)·Tm</b></li>
+        <li><span class="key">口径</span>：上式是「Cache 与主存<b>同时访问</b>」（命中用 Tc，不命中用 Tm）；若题干说「<b>先查 Cache，未命中再访主存</b>」（串行），则 <b class="mono">Ta = Tc + (1−H)·Tm</b>。两种口径答案不同，看清题干怎么描述</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>2. SRAM vs DRAM <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th>对比</th><th>SRAM</th><th>DRAM</th></tr>
+        <tr><td>存储元</td><td>触发器</td><td>电容</td></tr>
+        <tr><td>速度</td><td>快</td><td>慢</td></tr>
+        <tr><td>集成度</td><td>低</td><td>高</td></tr>
+        <tr><td>刷新</td><td>不需要</td><td>需要</td></tr>
+        <tr><td>破坏性读出</td><td>否</td><td>是（需重写）</td></tr>
+        <tr><td>用途</td><td>Cache</td><td>主存</td></tr>
+      </table>
+      <div class="fm">DRAM 刷新方式
+集中刷新：集中一段死时间刷新，存在访问死区
+分散刷新：每个存取周期后跟一个刷新周期，无死区但周期翻倍
+异步刷新：刷新周期 ÷ 行数 = 每隔多久刷一行（最常用）</div>
+    </div>
+    <div class="card">
+      <h4>3. 存储器扩展</h4>
+      <ul>
+        <li><b>位扩展</b>：增加字长。芯片地址线、片选全部并联，数据线分别接不同位</li>
+        <li><b>字扩展</b>：增加字数。数据线并联，用<b>片选信号</b>区分不同芯片</li>
+        <li><b>字位同时扩展</b>：先位扩展成组，再字扩展成整体</li>
+        <li>地址译码有两种：<span class="key">线选法</span>（简单、地址不连续、不能扩展）与<span class="key">译码片选法</span>（用译码器，地址连续）</li>
+        <li>所需芯片数 = 总容量 ÷ 单片容量</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>4. Cache 三种映射 <span class="pt">重中之重</span></h4>
+      <div class="fm">块内地址位数 = log₂(块大小)
+
+直接映射：Cache行号 = 主存块号 mod Cache总行数
+  地址 = [ 标记 | 行号 | 块内地址 ]
+
+全相联映射：可放任意行
+  地址 = [ 标记 | 块内地址 ]
+
+组相联映射（n 路）：
+  Cache组号 = 主存块号 mod Cache组数
+  地址 = [ 标记 | 组号 | 块内地址 ]</div>
+      <ul>
+        <li>直接映射：硬件最简单、冲突最多；全相联：冲突最少、比较器最贵</li>
+        <li>组相联是折中，路数 = 每组行数</li>
+        <li><span class="key">标记位数 = 主存地址位数 − 行号/组号位数 − 块内地址位数</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>5. 替换算法与写策略</h4>
+      <ul>
+        <li>替换算法：<b>随机 RAND</b>、<b>先进先出 FIFO</b>、<b>近期最少使用 LRU</b>、<b>最不经常使用 LFU</b></li>
+        <li>直接映射<span class="key">不需要替换算法</span>（位置唯一）</li>
+        <li>LRU 用计数器实现，命中时被访问行计数器清零、其余加一；比 FIFO 更符合局部性，命中率通常更高</li>
+      </ul>
+      <table class="tb">
+        <tr><th>写策略</th><th>特点</th></tr>
+        <tr><td>写直达 write-through</td><td>同时写 Cache 与主存，一致性好、开销大</td></tr>
+        <tr><td>写回 write-back</td><td>只写 Cache，需<b>脏位</b>，替换时若脏才写回</td></tr>
+        <tr><td>写分配</td><td>写缺失时先调入该块再写</td></tr>
+        <tr><td>非写分配</td><td>写缺失时直接写主存，不调入</td></tr>
+      </table>
+      <div class="tip m"><span class="ti">搭配</span><span>常见组合：<span class="key">写直达 + 非写分配</span>、<span class="key">写回 + 写分配</span>。</span></div>
+    </div>
+    <div class="card">
+      <h4>6. 虚拟存储</h4>
+      <ul>
+        <li>页式：虚拟地址 = <b>虚页号 + 页内偏移</b>；页表项含物理页号、有效位、修改位、访问位</li>
+        <li>页大小固定 → 页内偏移位数固定，虚页号映射到物理页号</li>
+        <li><b>TLB（快表）</b>：存放常用页表项，SRAM，命中则不必访问主存中的页表</li>
+        <li>地址转换顺序：<span class="key">VA → TLB（命中直接得物理页号）→ 未命中查页表 → 得物理页号 → 拼偏移得 PA</span></li>
+        <li>缺页时触发<b>缺页异常</b>，由操作系统调入页面，若内存满则按置换算法换出</li>
+        <li>段式按逻辑划分、便于共享保护但会产生外部碎片；段页式结合两者</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>7. 磁盘与 RAID</h4>
+      <ul>
+        <li>磁盘容量 = 面数 × 磁道数/面 × 扇区数/道 × 扇区容量</li>
+        <li>存取时间 = <span class="key">寻道时间 + 旋转延迟 + 传输时间</span></li>
+        <li>平均旋转延迟 = 转一圈时间 ÷ 2，转一圈 = 60 ÷ 转速(r/min) 秒</li>
+        <li>RAID0 条带化（无冗余、快）、RAID1 镜像（可靠、利用率 50%）、RAID5 分布式奇偶校验（允许坏 1 盘）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>8. 计算例题模板</h4>
+      <div class="fm">已知：主存 4 GB，Cache 256 KB，块大小 64 B，2 路组相联
+
+Step1 块内地址 = log₂64 = 6 位
+Step2 主存地址总位数 = log₂4G = 32 位
+Step3 Cache 行数 = 256KB / 64B = 2¹²，组数 = 2¹² / 2 = 2¹¹
+Step4 组号 = 11 位
+Step5 标记 = 32 − 11 − 6 = 15 位
+
+⇒ 地址格式：[ 标记 15 | 组号 11 | 块内 6 ]</div>
+      <div class="tip e"><span class="ti">易错</span><span>先把所有容量换成 <b>2 的幂</b>再算，千万别用十进制硬除。另外「块」和「行」在 Cache 里等价，只有虚拟存储才叫「页」。</span></div>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 07 · 存储层次金字塔：越靠上越快越贵<span class="tag">点击每一层</span></div>
+    <div class="demo-b">
+      <svg id="hierSvg" viewBox="0 0 680 330" style="width:100%;max-width:560px;height:auto;display:block;margin:0 auto">
+        <g class="hl" data-k="0" style="cursor:pointer">
+          <polygon points="220,16 460,16 490,78 190,78" fill="#eaf0ff" stroke="#2563eb" stroke-width="2"/>
+          <text x="340" y="44" text-anchor="middle" font-size="14" font-weight="800" fill="#1e40af">CPU 寄存器</text>
+          <text x="340" y="63" text-anchor="middle" font-size="10.5" fill="#5b7fc7">几 KB · 亚纳秒 · 由编译器分配</text>
+        </g>
+        <g class="hl" data-k="1" style="cursor:pointer">
+          <polygon points="190,86 490,86 520,148 160,148" fill="#e5f7f0" stroke="#0f9d6e" stroke-width="2"/>
+          <text x="340" y="114" text-anchor="middle" font-size="14" font-weight="800" fill="#0a6b4a">Cache（高速缓存）</text>
+          <text x="340" y="133" text-anchor="middle" font-size="10.5" fill="#3f9d7c">几 MB · 几纳秒 · 纯硬件管理 · 全透明</text>
+        </g>
+        <g class="hl" data-k="2" style="cursor:pointer">
+          <polygon points="160,156 520,156 550,218 130,218" fill="#fff4e3" stroke="#d97706" stroke-width="2"/>
+          <text x="340" y="184" text-anchor="middle" font-size="14" font-weight="800" fill="#9a5b06">主存（内存 DRAM）</text>
+          <text x="340" y="203" text-anchor="middle" font-size="10.5" fill="#c08a3a">几 GB～几十 GB · 几十纳秒 · CPU 可直接访问</text>
+        </g>
+        <g class="hl" data-k="3" style="cursor:pointer">
+          <polygon points="130,226 550,226 580,288 100,288" fill="#f2ecfe" stroke="#7c3aed" stroke-width="2"/>
+          <text x="340" y="254" text-anchor="middle" font-size="14" font-weight="800" fill="#5b21b6">辅存（磁盘 / SSD）</text>
+          <text x="340" y="273" text-anchor="middle" font-size="10.5" fill="#8b6bd0">TB 级 · 微秒～毫秒 · 需 OS 管理 · 掉电不丢</text>
+        </g>
+      </svg>
+      <div class="res" id="hierRes" style="margin-top:14px">
+        <div class="r"><span class="lbl">点一下</span><span class="val">上方任意层</span></div>
+        <div class="r" style="color:#5c6779"><span class="lbl">提示</span>整个层次结构靠「局部性原理」才成立：程序在一段时间内只访问很小一部分地址。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 08 · Cache 三种映射：主存块到底放到哪一行<span class="tag">重点 · 改参数看变化</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>映射方式</label>
+        <select id="mapMode">
+          <option value="direct">直接映射</option>
+          <option value="set2">2 路组相联</option>
+          <option value="set4">4 路组相联</option>
+          <option value="full">全相联</option>
+        </select>
+        <label>Cache 总行数</label>
+        <select id="mapRows"><option>4</option><option selected>8</option><option>16</option></select>
+        <label>主存块号</label>
+        <input type="number" id="blkNo" value="13" min="0" max="31">
+      </div>
+      <div class="mapwrap">
+        <div>
+          <div style="font-size:11.5px;color:#6b7280;font-weight:650;margin-bottom:6px">主存块（节选）</div>
+          <div class="mem-col" id="memCol"></div>
+        </div>
+        <div class="arrowcol" style="padding-top:26px">
+          <div style="font-size:22px">→</div>
+        </div>
+        <div>
+          <div style="font-size:11.5px;color:#6b7280;font-weight:650;margin-bottom:6px">Cache 行</div>
+          <div class="cache-col" id="cacheCol"></div>
+        </div>
+      </div>
+      <div class="legend" style="margin-top:14px">
+        <span><i style="background:#2563eb"></i><b>蓝色</b> = 当前正在访问的主存块</span>
+        <span><i style="background:#e5f7f0;border:1px solid #8fdcc4"></i><b>绿色</b> = 这个块被放进哪一行（组相联时是整个组）</span>
+      </div>
+      <div class="res" id="mapRes" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 09 · 地址格式划分计算器<span class="tag">输入 2 的幂次</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>主存容量 2^</label><input type="number" id="pMem" value="32" style="width:64px"><span style="font-size:12px">B</span>
+        <label>Cache 容量 2^</label><input type="number" id="pCache" value="18" style="width:64px"><span style="font-size:12px">B</span>
+        <label>块大小 2^</label><input type="number" id="pBlk" value="6" style="width:64px"><span style="font-size:12px">B</span>
+        <label>路数</label>
+        <select id="pWay"><option>1</option><option selected>2</option><option>4</option><option>8</option></select>
+      </div>
+      <div id="pOut"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 10 · 虚拟地址 → 物理地址：TLB 与页表<span class="tag">逐步播放</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>虚拟地址（十六进制）</label><input type="text" id="vaIn" value="0x00003A7C" style="width:140px">
+        <button class="btn gh sm" data-va="0x00003A7C">0x00003A7C</button>
+        <button class="btn gh sm" data-va="0x00001004">0x00001004</button>
+        <button class="btn gh sm" data-va="0x00002108">0x00002108</button>
+        <button class="btn" id="vaStart">重新播放</button>
+      </div>
+      <div class="steps" id="vaSteps"></div>
+      <div class="evbar" id="vaEv"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 4 章 ==================== -->
+<section class="sec" id="ch4">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 04</span>
+    <h2>指令系统</h2>
+    <span class="weight w2">中频 · 4-7 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>理解性章节，单选为主。两个稳定考点：<b>扩展操作码编码容量的计算</b>和<b>各种寻址方式的有效地址与访存次数</b>。另外 CISC/RISC 对比、指令格式设计偶尔出大题。这章跟第 5 章的数据通路是连着的，学的时候一起想。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 指令格式</h4>
+      <div class="fm">指令 = 操作码 OP + 地址码 A1 A2 A3 …
+指令字长 = 操作码位数 + Σ 各地址码位数</div>
+      <ul>
+        <li>按地址码个数分：零 / 一 / 二 / 三 / 四地址指令</li>
+        <li><b>定长操作码</b>：译码简单，但编码空间浪费</li>
+        <li><b>扩展操作码</b>：短码不占用长码的编码空间，靠<span class="key">「短操作码不能是长操作码的前缀」</span>实现——即短码必须留出全 1 等标志位给长码用</li>
+        <li>指令字长固定时，<span class="key">增加地址码 → 寻址范围变小</span>，二者此消彼长</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>2. 九种寻址方式与访存次数 <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th>寻址方式</th><th>有效地址 EA</th><th>访存</th></tr>
+        <tr><td>立即寻址</td><td>无（数在指令里）</td><td class="mono">0</td></tr>
+        <tr><td>寄存器寻址</td><td>无（数在寄存器）</td><td class="mono">0</td></tr>
+        <tr><td>直接寻址</td><td class="mono">EA = A</td><td class="mono">1</td></tr>
+        <tr><td>寄存器间接</td><td class="mono">EA = (R)</td><td class="mono">1</td></tr>
+        <tr><td>间接寻址</td><td class="mono">EA = (A)</td><td class="mono">2</td></tr>
+        <tr><td>相对寻址</td><td class="mono">EA = PC + A</td><td class="mono">1</td></tr>
+        <tr><td>基址寻址</td><td class="mono">EA = (BR) + A</td><td class="mono">1</td></tr>
+        <tr><td>变址寻址</td><td class="mono">EA = (IX) + A</td><td class="mono">1</td></tr>
+        <tr><td>堆栈寻址</td><td class="mono">隐含 SP</td><td class="mono">1</td></tr>
+      </table>
+      <div class="tip m"><span class="ti">口径提示</span><span>「访存次数」的计数口径是<b>取操作数</b>所需次数，<b>不含取指令</b>。不同教材表述略有差异，做题时看清题干是否强调「取指之外」。</span></div>
+    </div>
+    <div class="card">
+      <h4>3. 基址 vs 变址 <span class="pt">高频陷阱</span></h4>
+      <table class="tb">
+        <tr><th></th><th>基址寻址</th><th>变址寻址</th></tr>
+        <tr><td>内容由谁改</td><td>操作系统 / 管理程序</td><td>用户程序</td></tr>
+        <tr><td>面向</td><td>系统，实现<b>程序浮动</b></td><td>用户，实现<b>数组遍历</b></td></tr>
+        <tr><td>形式地址 A</td><td>位数较长，作为偏移</td><td>位数较短，作为初值</td></tr>
+        <tr><td>寄存器内容</td><td>执行中不变</td><td>执行中可变</td></tr>
+      </table>
+      <div class="tip e"><span class="ti">易错</span><span>「程序浮动」选基址，「数组/循环」选变址——这是单选题的标准区分点。</span></div>
+    </div>
+    <div class="card">
+      <h4>4. CISC vs RISC</h4>
+      <table class="tb">
+        <tr><th></th><th>CISC</th><th>RISC</th></tr>
+        <tr><td>指令数量</td><td>多（几百条）</td><td>少（精简）</td></tr>
+        <tr><td>指令长度</td><td>变长</td><td>定长</td></tr>
+        <tr><td>寻址方式</td><td>多、复杂</td><td>少、简单</td></tr>
+        <tr><td>访存指令</td><td>多数指令可访存</td><td>只有 load/store</td></tr>
+        <tr><td>控制器</td><td>多为微程序</td><td>多为硬布线</td></tr>
+        <tr><td>寄存器数</td><td>少</td><td>多</td></tr>
+        <tr><td>流水线</td><td>难</td><td>易（利于指令流水）</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h4>5. 程序的机器级表示</h4>
+      <ul>
+        <li>x86 常用寄存器：EAX/EBX/ECX/EDX（通用）、ESP（栈指针）、EBP（帧指针）、EIP（指令指针）</li>
+        <li>call 指令自动<b>压入返回地址</b>（下一条指令地址）并跳转；ret 从栈顶弹出返回地址</li>
+        <li>栈从<b>高地址向低地址</b>增长，因此「压栈」是 SP 减</li>
+        <li>局部变量在栈帧内分配，参数传递次序依调用约定（C 语言常见从右向左入栈）</li>
+        <li>选择结构用条件转移实现；循环结构用条件转移 + 无条件转移回跳实现</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>6. 扩展操作码编码规则</h4>
+      <div class="fm">设操作码基础长度 k 位，每个地址码占 a 位
+
+三地址指令最多 2ᵏ 条
+若三地址用了 n₃ 条，剩 (2ᵏ − n₃) 个编码可扩展
+二地址可用 = (2ᵏ − n₃) × 2ᵃ
+若二地址用了 n₂ 条，剩到一地址的编码再 × 2ᵃ
+以此类推……</div>
+      <div class="tip s"><span class="ti">技巧</span><span>本质是<b>进制进位</b>：把每一级「没用完的编码」当高位，乘以 2ᵃ 变成下一级的可用空间。做题时画成树状就很清楚。</span></div>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 11 · 扩展操作码：编码空间是怎么「省」出来的<span class="tag">可见剩余空间</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>操作码基础位数</label><input type="number" id="eK" value="4" min="2" max="8" style="width:60px">
+        <label>每个地址码位数</label><input type="number" id="eA" value="4" min="2" max="8" style="width:60px">
+        <label>三地址指令条数</label><input type="number" id="e3" value="15" min="0" style="width:70px">
+        <label>二地址指令条数</label><input type="number" id="e2" value="12" min="0" style="width:70px">
+        <label>一地址指令条数</label><input type="number" id="e1" value="0" min="0" style="width:70px">
+      </div>
+      <div id="eOut"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 12 · 寻址方式实验室：有效地址怎么算出来<span class="tag">切换方式看路径</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>寻址方式</label>
+        <select id="amMode">
+          <option value="imm">立即寻址</option>
+          <option value="reg">寄存器寻址</option>
+          <option value="dir" selected>直接寻址</option>
+          <option value="ind">间接寻址</option>
+          <option value="rind">寄存器间接寻址</option>
+          <option value="rel">相对寻址</option>
+          <option value="base">基址寻址</option>
+          <option value="index">变址寻址</option>
+        </select>
+        <label>形式地址 A</label><input type="text" id="amA" value="1000" style="width:100px">
+        <label>寄存器内容</label><input type="text" id="amR" value="2000" style="width:100px">
+        <label>PC 当前值</label><input type="text" id="amPC" value="3000" style="width:100px">
+      </div>
+      <div id="amOut"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 5 章 ==================== -->
+<section class="sec" id="ch5">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 05</span>
+    <h2>中央处理器</h2>
+    <span class="weight w3">核心 · 12-14 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>与第三章并列的最高分值章。四大硬骨头：<b>指令周期的微操作序列</b>、<b>数据通路的控制信号</b>、<b>控制器与微程序</b>、<b>流水线性能与冒险</b>。这章最忌死背——建议把「指令周期动画」反复拖几遍，把每个微操作和寄存器对应上；控制器那段再用「微程序动画」把 CM、CMAR、μIR 三者的配合走一遍，题目自然就通了。</span></div>
+
+  <div class="tip i"><span class="ti">跨科目</span><span>本章讲的 <b>PC、PSW、通用寄存器</b>，正是 OS 里<b>进程上下文切换</b>要保存和恢复的那批寄存器 —— 计组告诉你它们是什么、放在哪，OS 告诉你为什么要存、什么时候存。本章的中断与异常机制，同时也是 OS 调度器的驱动源（时钟中断）和系统调用的入口。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. CPU 内部寄存器 <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th>寄存器</th><th>作用</th><th>用户可见</th></tr>
+        <tr><td class="mono">PC</td><td>下一条指令的地址，具自增功能</td><td>可见</td></tr>
+        <tr><td class="mono">IR</td><td>当前正在执行的指令</td><td><b>不可见</b></td></tr>
+        <tr><td class="mono">MAR</td><td>欲访问的主存地址</td><td><b>不可见</b></td></tr>
+        <tr><td class="mono">MDR</td><td>与主存交换的数据</td><td><b>不可见</b></td></tr>
+        <tr><td class="mono">PSW</td><td>标志位：ZF/CF/OF/SF</td><td>可见</td></tr>
+        <tr><td class="mono">ACC</td><td>累加器，暂存运算结果</td><td>可见</td></tr>
+      </table>
+      <div class="tip m"><span class="ti">细节</span><span>MAR 的位数 = 主存地址线根数；MDR 的位数 = 存储字长。两者都在 CPU 内部。</span></div>
+    </div>
+    <div class="card">
+      <h4>2. 指令周期四阶段 <span class="pt">必背</span></h4>
+      <div class="fm">取指周期 → 间址周期 → 执行周期 → 中断周期
+（间址周期只在间接寻址时才有）</div>
+      <div class="fm g">取指周期微操作（背下来）
+(PC) → MAR
+M(MAR) → MDR
+(MDR) → IR
+(PC) + 1 → PC</div>
+      <ul>
+        <li>取指周期结束时，IR 里已经是当前指令</li>
+        <li>「<b>(PC)+1 → PC</b>」在取指阶段就完成了，这点常考</li>
+        <li>中断周期由硬件自动完成：关中断、保存断点、送中断服务程序入口</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>3. 数据通路三种结构</h4>
+      <table class="tb">
+        <tr><th>结构</th><th>特点</th></tr>
+        <tr><td>单总线</td><td>所有部件挂一条总线，<b>一次只能传一个数据</b>，微操作需分多步</td></tr>
+        <tr><td>多总线</td><td>如双总线、三总线，一条总线传结果、另一条传操作数，可一步完成加法</td></tr>
+        <tr><td>专用通路</td><td>寄存器间点对点直连，速度最快，但结构复杂、成本高</td></tr>
+      </table>
+      <div class="tip m"><span class="ti">关键</span><span>单总线结构下一次<b>只能有一个部件把数据送上总线</b>，所以「(MDR) + R1 → R1」这种运算必须分两步：先把 MDR 送上总线暂存到 ALU 输入锁存器，再加 R1。这是大题里问「需要几个时钟周期」的根源。</span></div>
+    </div>
+    <div class="card">
+      <h4>4. 控制器（CU）：功能与结构 <span class="pt">必考</span></h4>
+      <ul>
+        <li>控制器是 CPU 的「<b>指挥中心</b>」：只负责<b>发命令</b>，不参与运算、不存放运算数据</li>
+        <li>核心动作：<b>取指令</b> → <b>分析指令</b>（译码）→ <b>执行指令</b>（按节拍发出微操作命令序列）</li>
+      </ul>
+      <div class="fm">「CPU 的五大功能」选择题高频，背五个词：
+指令控制 · 操作控制 · 时间控制 · 数据加工 · 中断处理
+其中「数据加工」由运算器执行，其余四条都由控制器主导</div>
+      <div class="fm">控制器的五大部件（背下来）：
+① PC 程序计数器 —— 给出指令地址
+② IR 指令寄存器 —— 存放当前指令
+③ ID 指令译码器 —— 把操作码翻译成控制信号
+④ 时序系统 —— 产生节拍电位与节拍脉冲
+⑤ 微操作信号发生器 —— 产生全部微操作命令（控制单元 CU 本体）</div>
+      <div class="tip m"><span class="ti">考点</span><span><b>PC、IR 属于控制器</b>——高频判断点。控制器管「指挥」，运算器管「干活」，两者合起来才是 CPU。</span></div>
+      <div class="tip i"><span class="ti">时间控制</span><span>时序系统按三级划分：<span class="key">指令周期 ⊇ 机器周期 ⊇ 时钟周期（节拍）</span>。一个机器周期完成一个基本操作（取指、读一次主存等），含若干节拍；<b>不同指令所需的机器周期数可以不同</b>——这是「各指令执行时间不同」的根源。</span></div>
+    </div>
+    <div class="card">
+      <h4>5. 硬布线控制器 <span class="pt">辨析常考</span></h4>
+      <ul>
+        <li>本质：微操作命令用<b>组合逻辑电路</b>直接「算」出来，又称组合逻辑控制器</li>
+        <li>三组输入信号决定全部输出：</li>
+      </ul>
+      <div class="fm">微操作命令 = f( ① 指令译码信号 , ② 时序信号 , ③ 状态标志 )
+                      ↑ 当前是什么指令　↑ 第几个节拍　↑ ZF / CF 等</div>
+      <ul>
+        <li>设计思路（了解）：列<b>微操作时间表</b> → 写出各微命令逻辑表达式 → 化简 → 画门电路</li>
+        <li>特点：<b>速度快</b>（无需读存储器）、电路繁琐不规整、<b>修改扩充极难</b> → RISC 多采用</li>
+      </ul>
+      <table class="tb">
+        <tr><th></th><th>硬布线</th><th>微程序</th></tr>
+        <tr><td>实现</td><td>组合逻辑电路</td><td>控制存储器存微程序</td></tr>
+        <tr><td>速度</td><td><b>快</b></td><td>慢（需先读 CM）</td></tr>
+        <tr><td>修改扩充</td><td>难，要改电路</td><td>易，改微程序即可</td></tr>
+        <tr><td>规整性</td><td>差</td><td>好</td></tr>
+        <tr><td>适用</td><td>RISC</td><td>CISC</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h4>6. 微程序控制器 · 原理与结构 <span class="pt">必考</span></h4>
+      <div class="fm">四层概念链（由大到小，背）：
+程序 → 机器指令 → 微程序 → 微指令 → 微命令
+· 微命令：最小控制信号，如 PCout、MARin
+· 微指令：若干微命令的组合，一条可并行发出多个命令
+· 微程序：完成一条机器指令的全部微指令序列</div>
+      <ul>
+        <li>核心思想：把「要发哪些命令」<b>代码化</b>写进微指令、存进控制存储器——用「查表」代替「硬连线」</li>
+        <li>一条机器指令对应<b>一段微程序</b>（一对多）；<span class="key">微指令条数远多于机器指令条数</span></li>
+        <li><span class="key">取指微程序为所有指令公用</span>：所以微程序个数 = 机器指令个数 + 1</li>
+        <li>控制存储器 CM 在 CPU 内、用 ROM 实现，存放<b>全部微程序</b></li>
+      </ul>
+      <div class="fm g">四大部件与工作流程（记成：取 → 存 → 发 → 找下一条）：
+CMAR 微地址寄存器：指向当前微指令在 CM 中的位置
+CM　控制存储器：按 CMAR 取出微指令 → 送入 μIR
+μIR 微指令寄存器：其中的微命令生效，控制部件完成微操作
+微地址形成部件：按 操作码 / 下地址字段 / 增量 算出下一条微地址</div>
+      <div class="tip m"><span class="ti">易考</span><span>「机器指令与微指令」的关系是选择题常客：<b>一条机器指令由一段微程序解释执行</b>，取指那条路所有指令都共用。</span></div>
+    </div>
+    <div class="card">
+      <h4>7. 微指令：格式 · 编码 · 下地址 <span class="pt">可出计算</span></h4>
+      <table class="tb">
+        <tr><th></th><th>水平型</th><th>垂直型</th></tr>
+        <tr><td>并行能力</td><td><b>强</b>（一条并发多个微命令）</td><td>弱（一条做一个微操作）</td></tr>
+        <tr><td>微指令字长</td><td>长</td><td>短（类似机器指令）</td></tr>
+        <tr><td>微程序条数</td><td>少（程序短）</td><td>多（程序长）</td></tr>
+      </table>
+      <div class="tip s" style="margin-top:8px"><span class="ti">补充</span><span>混合型 = 水平型 + 垂直型的折中，实际机器常用。真题多考<b>水平型与垂直型的两组反比关系</b>（并行能力 ↔ 字长 ↔ 条数）。</span></div>
+      <div class="fm">编码方式（三种，越往后越省位也越慢）：
+直接编码：1 位管 1 个微命令，最快、最长
+字段直接编码：互斥的微命令放同一字段、字段内译码
+字段间接编码：字段的含义还取决于另一字段（更省位、更慢）</div>
+      <div class="fm a">计算题核心公式：字段位数 = ⌈log₂(互斥微命令数 + 1)⌉
+「+1」是给「本段不操作」留的全 0 编码——漏掉必错</div>
+      <ul>
+        <li>下地址形成 3 种：① <b>操作码 → 入口</b>（取指末，操作码给出执行微程序首地址，这是各指令分岔的路口）② <b>增量法</b>：(CMAR)+1 顺序执行 ③ <b>断定法</b>：下地址字段直接给出目标地址</li>
+        <li>执行方式：<b>串行</b>——执行完本条全部微操作再取下一条；<b>并行</b>——执行本条的同时取下一条（需双端口 CM，硬件更复杂、速度更快）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>8. 指令流水线性能 <span class="pt">大题常客</span></h4>
+      <div class="fm">流水线周期 Δt = 最长一个阶段的耗时
+k 段流水线执行 n 条指令：
+  总时间 T = (k + n − 1) × Δt
+  吞吐率 TP = n / T，最大 = 1 / Δt
+  加速比 S = n·k·Δt / T = nk / (k + n − 1)
+  效率 E = S / k</div>
+      <ul>
+        <li>流水线<b>不能缩短单条指令的执行时间</b>，只能提高吞吐率</li>
+        <li>理想情况：<b>第 1 条指令耗时 k·Δt，此后每 Δt 完成一条</b></li>
+        <li>流水段数越多，单条指令反而越慢（多了寄存器延迟）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>9. 三种冒险与解决 <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th>冒险</th><th>成因</th><th>解决</th></tr>
+        <tr><td>结构冒险</td><td>硬件资源冲突（如同时取指和取数）</td><td>指令Cache与数据Cache分离、停顿</td></tr>
+        <tr><td>数据冒险</td><td>后继指令用到前指令还没写回的结果</td><td><b>转发/旁路</b>、停顿、编译调度</td></tr>
+        <tr><td>控制冒险</td><td>转移指令改变了下一条指令地址</td><td>分支预测、延迟槽、停顿</td></tr>
+      </table>
+      <ul>
+        <li>数据冒险三类：<span class="key">RAW（先写后读）</span>最常见、WAR、WAW（后两者只在乱序执行中出现）</li>
+        <li><b>转发（旁路）</b>：直接把 ALU 的输出送给下一条指令的 ALU 输入端，不必等写回寄存器</li>
+        <li>load-use 冒险<b>无法只靠转发解决</b>，必须插入一个气泡</li>
+        <li>分支预测：静态（总预测不跳转/总跳转）、动态（BTB + 历史记录）</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>10. 多处理器与并行</h4>
+      <ul>
+        <li>Flynn 分类：SISD、SIMD、MISD、MIMD（多核属于 MIMD）</li>
+        <li>超标量：一个时钟周期发射<b>多条</b>指令（多套执行部件）</li>
+        <li>超流水：把流水段进一步细分，一个周期<b>发射多次</b></li>
+        <li>超长指令字 VLIW：由编译器把多个操作打包成一条长指令</li>
+        <li>硬件多线程：细粒度、粗粒度、同时多线程 SMT</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 13 · 指令周期 × 单总线数据通路<span class="tag">重点 · 逐步播放</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>选择指令</label>
+        <select id="dpInstr">
+          <option value="add">ADD R1, (R0)　R1 ← R1 + M[R0]</option>
+          <option value="load">LOAD R1, [1000]　R1 ← M[1000]</option>
+          <option value="store">STORE R1, [1000]　M[1000] ← R1</option>
+        </select>
+        <button class="btn" id="dpPlay">自动播放</button>
+        <button class="btn gh" id="dpNext">下一步 ▸</button>
+        <button class="btn gy" id="dpReset">重置</button>
+      </div>
+      <div id="dpStage"></div>
+      <div class="legend" style="margin-top:10px">
+        <span><i style="background:#dc2626"></i><b>红色流动线</b> = 这一步的数据流向（源部件 → 总线 → 目标部件）</span>
+        <span><i style="background:#dc2626;border-radius:50%"></i>红色小球 = 正在传送的数据，标签就是它的值</span>
+        <span><i style="background:#f2ecfe;border:1px solid #7c3aed"></i>紫色 = 本步发出的部件</span>
+        <span><i style="background:#fdeceb;border:1px solid #dc2626"></i>红框 = 本步接收的部件</span>
+        <span><i style="background:#eaf0ff;border:1px solid #2563eb"></i>蓝色 = CPU 内部寄存器</span>
+        <span><i style="background:#fff4e3;border:1px solid #d97706"></i>橙色 = 存储器</span>
+      </div>
+      <div id="dpPhase"></div>
+      <div id="dpUop" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 14 · 微程序控制器：换指令看微程序岔路<span class="tag">重点 · 逐步播放</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>选择指令</label>
+        <select id="mcpInstr">
+          <option value="add" selected>ADD R1, (R0)　间接寻址加法</option>
+          <option value="load">LOAD R1, [2000]　取数</option>
+          <option value="store">STORE R1, [2000]　存数</option>
+        </select>
+        <button class="btn" id="mcpPlay">自动播放</button>
+        <button class="btn gh" id="mcpNext">下一步 ▸</button>
+        <button class="btn gy" id="mcpReset">重置</button>
+        <span style="font-size:12px;color:#8b95a3">所有指令先走同一段「取指微程序」，再按操作码各走各的岔路</span>
+      </div>
+      <div id="mcpStage"></div>
+      <div class="steps" id="mcpSteps" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 15 · 五级流水线时空图：冒险是怎么发生的<span class="tag">三种情形对比</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>情形</label>
+        <select id="plMode">
+          <option value="ideal">理想流水（无相关）</option>
+          <option value="raw">数据冒险 · 不做处理</option>
+          <option value="fwd" selected>数据冒险 · 用转发解决</option>
+        </select>
+        <label>指令条数</label>
+        <select id="plN"><option>4</option><option selected>5</option><option>6</option></select>
+        <button class="btn" id="plPlay">播放</button>
+        <button class="btn gy" id="plReset">重置</button>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#6b7280;margin-bottom:12px">
+        <span><i style="display:inline-block;width:10px;height:10px;background:#2563eb;border-radius:3px;margin-right:4px"></i>IF 取指</span>
+        <span><i style="display:inline-block;width:10px;height:10px;background:#0891b2;border-radius:3px;margin-right:4px"></i>ID 译码</span>
+        <span><i style="display:inline-block;width:10px;height:10px;background:#0f9d6e;border-radius:3px;margin-right:4px"></i>EX 执行</span>
+        <span><i style="display:inline-block;width:10px;height:10px;background:#d97706;border-radius:3px;margin-right:4px"></i>MEM 访存</span>
+        <span><i style="display:inline-block;width:10px;height:10px;background:#7c3aed;border-radius:3px;margin-right:4px"></i>WB 写回</span>
+        <span><i style="display:inline-block;width:10px;height:10px;background:#dc2626;border-radius:3px;margin-right:4px"></i>停顿</span>
+        <span><i style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:3px;margin-right:4px"></i>转发</span>
+      </div>
+      <div id="plChart"></div>
+      <div id="plStat"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 6 章 ==================== -->
+<section class="sec" id="ch6">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 06</span>
+    <h2>总线</h2>
+    <span class="weight w1">低频 · 2-4 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>篇幅小、考点集中。真正会算的只有<b>总线带宽</b>一条公式，其余是分类和三种仲裁方式的特征辨析。复习时把「链式 / 计数器 / 独立请求」三者的控制线数量和优先级特性记住就够了。</span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. 总线分类 <span class="pt">必考</span></h4>
+      <div class="fm">按位置分：片内总线 → 系统总线 → 通信总线
+系统总线 = 数据总线 + 地址总线 + 控制总线</div>
+      <ul>
+        <li><b>数据总线</b>：双向。位数决定一次能传多少位数据</li>
+        <li><b>地址总线</b>：单向（CPU 发出）。位数决定寻址空间 = 2ⁿ</li>
+        <li><b>控制总线</b>：有出有入，传输读/写、中断、时钟等信号</li>
+        <li>数据总线位数通常与<b>机器字长或存储字长</b>一致</li>
+      </ul>
+      <div class="tip m"><span class="ti">易混</span><span>「数据总线宽度 = 存储字长」是常见前提。若数据总线 32 位、按字节编址，则一次可传输 4 个地址单元。</span></div>
+    </div>
+    <div class="card">
+      <h4>2. 总线性能指标 <span class="pt">唯一要算的</span></h4>
+      <div class="fm">总线带宽 = 工作频率 × 位宽 ÷ 8   （单位 B/s）
+
+一个总线周期传 W 字节，用 T 秒：
+  数据传输率 = W / T</div>
+      <div class="fm g">例：总线频率 100 MHz，宽度 32 位
+带宽 = 100×10⁶ × 32 ÷ 8 = 400 MB/s</div>
+      <ul>
+        <li>总线宽度：能同时传输的数据位数（不是字节）</li>
+        <li>一个总线周期可能包含多个时钟周期</li>
+        <li>若「每个总线周期传一个字节，需要 2 个时钟」，则实际带宽要再除以 2</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>3. 三种集中式仲裁 <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th>方式</th><th>控制线</th><th>优先级</th></tr>
+        <tr><td>链式查询</td><td><b>最少</b>（3 根）</td><td>固定，离控制器越近越高</td></tr>
+        <tr><td>计数器定时查询</td><td>较多</td><td>可变（可循环、可编程）</td></tr>
+        <tr><td>独立请求</td><td><b>最多</b></td><td>灵活，响应最快</td></tr>
+      </table>
+      <ul>
+        <li>链式查询对<b>电路故障最敏感</b>（某一级坏掉，后面的设备全失效）</li>
+        <li>独立请求的响应速度<b>最快</b>，但需要的控制线数量随设备数线性增长</li>
+        <li>分布式仲裁：无中央仲裁器，各设备通过竞争判定</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>4. 总线定时（通信方式）</h4>
+      <table class="tb">
+        <tr><th>方式</th><th>特点</th></tr>
+        <tr><td>同步通信</td><td>统一时钟，速度快、控制简单；<b>必须按最慢设备设计</b>，适合速度接近的设备</td></tr>
+        <tr><td>异步通信</td><td>握手应答，灵活；速度受限于握手开销</td></tr>
+        <tr><td>半同步</td><td>同步 + 等待信号（WAIT）</td></tr>
+        <tr><td>分离事务</td><td>地址与数据分两个子周期，期间总线可给他人用</td></tr>
+      </table>
+      <div class="fm a">异步通信三种互锁
+不互锁：请求/回答信号都不等对方确认（最快、最不可靠）
+半互锁：请求方等回答，回答方不等请求撤销
+全互锁：双方都等对方确认（最可靠、最慢）</div>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 16 · 总线带宽计算器<span class="tag">改参数实时算</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>总线频率</label><input type="number" id="bwFreq" value="100" style="width:80px"><span style="font-size:12px">MHz</span>
+        <label>总线宽度</label><input type="number" id="bwW" value="32" style="width:70px"><span style="font-size:12px">位</span>
+        <label>每个总线周期占</label><input type="number" id="bwC" value="1" style="width:60px" min="1"><span style="font-size:12px">个时钟</span>
+      </div>
+      <div id="bwOut"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 17 · 三种集中式仲裁：谁先拿到总线<span class="tag">点击设备发请求</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <label>仲裁方式</label>
+        <select id="arbMode">
+          <option value="chain">链式查询</option>
+          <option value="counter">计数器定时查询</option>
+          <option value="indep" selected>独立请求</option>
+        </select>
+        <span style="font-size:12px;color:#8b95a3">点击下方任一设备发起总线请求</span>
+      </div>
+      <div id="arbStage"></div>
+      <div id="arbOut" style="margin-top:12px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 第 7 章 ==================== -->
+<section class="sec" id="ch7">
+  <div class="sec-head">
+    <span class="sec-num">CHAPTER 07</span>
+    <h2>输入/输出系统</h2>
+    <span class="weight w2">中频 · 4-6 分</span>
+  </div>
+
+  <div class="tip i"><span class="ti">本章定位</span><span>概念密度高但深度有限。最高频的两组对比是<b>程序查询 / 中断 / DMA 三种 I/O 方式</b>和<b>中断与 DMA 的差异</b>；最容易失分的是<b>中断隐指令到底做了什么</b>（顺序不能错）和<b>DMA 的三种传送方式</b>。理解主线只有一句：<span class="key">谁在搬数据、CPU 要不要参与</span>。</span></div>
+
+  <div class="tip i"><span class="ti">跨科目</span><span>本章的四种 I/O 控制方式，在 OS 的「I/O 管理」里会从<b>软件层次</b>再讲一遍：这里讲<b>硬件怎么发起、DMA 怎么抢总线、中断隐指令做了什么</b>，OS 讲<b>设备驱动程序怎么组织请求、中断处理程序进去干什么、磁盘调度怎么排顺序、缓冲怎么配合</b>。两章合起来才是一套完整的 I/O 体系。<b>另外磁盘调度算法在 OS 那边，别在这章找。</b></span></div>
+
+  <div class="sub">考点清单</div>
+  <div class="grid g2">
+    <div class="card">
+      <h4>1. I/O 接口与端口编址</h4>
+      <ul>
+        <li>接口中的三类寄存器：<b>数据寄存器</b>（缓冲）、<b>状态寄存器</b>、<b>控制寄存器</b></li>
+        <li>状态寄存器中的关键位：就绪/忙、错误、中断允许</li>
+        <li><b>统一编址</b>（存储器映射）：I/O 端口占用主存地址空间，用普通访存指令访问，无需专用指令，但占用地址空间</li>
+        <li><b>独立编址</b>（I/O 映射）：端口有独立地址空间，需专用 I/O 指令（如 IN/OUT），不占主存空间，但指令功能弱</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>2. 三种 I/O 方式 <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th></th><th>程序查询</th><th>程序中断</th><th>DMA</th></tr>
+        <tr><td>谁发起</td><td>CPU 轮询</td><td>设备主动</td><td>设备主动</td></tr>
+        <tr><td>数据搬运</td><td>CPU</td><td>CPU</td><td><b>DMA 控制器</b></td></tr>
+        <tr><td>CPU 与 I/O</td><td>串行</td><td>并行</td><td>并行</td></tr>
+        <tr><td>响应时机</td><td>—</td><td>指令执行完</td><td>存取周期结束</td></tr>
+        <tr><td>CPU 开销</td><td>极高</td><td>中（需保护现场）</td><td><b>极低</b></td></tr>
+        <tr><td>适用</td><td>简单慢速</td><td>键盘、打印机</td><td>磁盘、高速块设备</td></tr>
+      </table>
+      <div class="tip m"><span class="ti">关键差异</span><span>中断靠<b>程序</b>搬数据（要执行中断服务程序，有现场保护开销）；DMA 靠<b>硬件</b>搬数据（只需在开始和结束时各打断 CPU 一次）。所以 DMA 优先级<b>高于</b>中断。</span></div>
+    </div>
+    <div class="card">
+      <h4>3. 中断响应与中断隐指令 <span class="pt">必背顺序</span></h4>
+      <div class="fm g">中断隐指令（由硬件自动完成，不是程序指令）
+① 关中断        ← 防止响应过程被打断
+② 保存断点      ← 把 PC（下一条指令地址）压栈
+③ 取中断服务程序入口 ← 由中断向量提供</div>
+      <ul>
+        <li>响应条件：<span class="key">有中断请求 + 当前指令执行结束 + 允许中断（开中断）</span></li>
+        <li>中断判优由<b>硬件排队器</b>或<b>软件查询</b>完成，优先级高的先响应</li>
+        <li>进入服务程序后要<b>保存现场</b>（通用寄存器、PSW），返回前恢复现场、<b>开中断</b>、执行 iret</li>
+        <li><b>多重中断（中断嵌套）</b>的必要条件：在服务程序中提前<b>开中断</b></li>
+        <li>中断屏蔽字：1 表示屏蔽（不允许被打断），0 表示开放</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>4. DMA 传送方式 <span class="pt">必考</span></h4>
+      <table class="tb">
+        <tr><th>方式</th><th>特点</th></tr>
+        <tr><td>停止 CPU 访存</td><td>DMA 期间 CPU 完全不访存，结构简单但 CPU 浪费大</td></tr>
+        <tr><td>周期挪用<br>（周期窃取）</td><td>DMA 每次窃取<b>一个存取周期</b>，CPU 暂停一个周期；最常见</td></tr>
+        <tr><td>交替访问</td><td>CPU 与 DMA <b>轮流</b>各用一个周期，无需申请，效率高但速度受限</td></tr>
+      </table>
+      <ul>
+        <li>DMA 控制器内部：<b>地址寄存器</b>（AR）、<b>计数器</b>（WC）、状态/控制逻辑、数据缓冲</li>
+        <li>传送前 CPU 要预置：主存起始地址、传送字数、传送方向</li>
+        <li>DMA 请求的是<b>总线使用权</b>，中断请求的是 <b>CPU 处理权</b>——这是本质区别</li>
+        <li>DMA 传送结束后用<b>中断</b>方式通知 CPU 做后续处理</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>5. 通道与外部设备</h4>
+      <ul>
+        <li>通道是一种<b>专用处理器</b>，能执行通道程序，独立管理一批 I/O 设备</li>
+        <li>三种通道类型：字节多路、选择、数组多路</li>
+        <li>磁盘存取时间 = 寻道 + 旋转延迟 + 传输；平均旋转延迟 = 转一圈时间 ÷ 2</li>
+        <li>显示器分辨率 × 灰度位数 ÷ 8 = 一帧显存容量；刷新带宽 = 一帧容量 × 帧频</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>6. 中断全过程速记</h4>
+      <div class="fm">设备发中断请求
+   ↓ 硬件判优，选中优先级最高的
+CPU 在指令结束时响应
+   ↓ 中断隐指令（硬件）：关中断 → 保存断点 → 取入口
+执行中断服务程序（软件）
+   ↓ 保存现场 → 处理 → 恢复现场
+开中断 → 执行 iret 指令返回</div>
+    </div>
+  </div>
+
+  <div class="sub a">原理动画</div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 18 · 三种 I/O 方式时间线：CPU 到底有多忙<span class="tag">可播放对比</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <button class="btn" id="ioPlay">播放时间线</button>
+        <button class="btn gy" id="ioReset">重置</button>
+        <span style="font-size:12px;color:#8b95a3">观察每一行里 CPU 有多少时间是「有效计算」</span>
+      </div>
+      <div id="ioStage"></div>
+      <div id="ioOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-h"><span class="dot"></span>动画 19 · 中断响应与处理：一气呵成的十二步<span class="tag">逐步播放</span></div>
+    <div class="demo-b">
+      <div class="ctl">
+        <button class="btn" id="irPlay">重新播放</button>
+        <button class="btn gh" id="irNext">下一步 ▸</button>
+      </div>
+      <div class="steps" id="irSteps"></div>
+      <div id="irNote" style="margin-top:12px"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  408 计算机组成原理 · 交互式原理全景<br>
+  分值区间的权重排序基于历年统考真题的常见分布，用于确定复习优先级，非官方数据。
+</footer>
+</main>
+</div>
+
+<div class="totop" id="totop">↑</div>
+
+<script>
+/* ============================================================
+   通用工具
+   ============================================================ */
+/* ============================================================
+   动画速度总控 —— 所有动画的 setTimeout / setInterval 延迟统一乘倍率
+   只放大 300~2000ms 区间（动画用的范围），不影响其它短延迟逻辑
+   ============================================================ */
+let ANIM_SPEED = 1.7;                    // 1 = 原始速度，越大越慢
+(function(){
+  const _st = window.setTimeout.bind(window);
+  const _si = window.setInterval.bind(window);
+  const scale = ms => (typeof ms === 'number' && ms >= 300 && ms <= 2000)
+    ? Math.round(ms * ANIM_SPEED) : ms;
+  window.setTimeout = function(fn, ms){ return _st(fn, scale(ms)); };
+  window.setInterval = function(fn, ms){ return _si(fn, scale(ms)); };
+})();
+
+const $ = id => document.getElementById(id);
+const qsa = s => Array.prototype.slice.call(document.querySelectorAll(s));
+
+/* 速度切换 */
+/* 速度切换后要通知那些「用 SMIL 做流动动画」的模块重绘（SMIL 不受 setTimeout 总控影响） */
+const ON_SPEED_CHANGE = [];
+qsa('[data-sp]').forEach(b=>{
+  b.onclick = ()=>{
+    ANIM_SPEED = parseFloat(b.dataset.sp) || 1.7;
+    qsa('[data-sp]').forEach(x=>x.classList.toggle('on', x === b));
+    ON_SPEED_CHANGE.forEach(fn=>{ try{ fn(); }catch(e){} });
+  };
+});
+
+/* 补码工具：n 位 */
+function toBits(v, n){
+  let x = BigInt(v < 0 ? v + Math.pow(2,n) : v);
+  let s = '';
+  for(let i = n-1; i >= 0; i--) s += ((x >> BigInt(i)) & 1n).toString();
+  return s;
+}
+function bitRow(str, cls){
+  return '<div class="bits">' + str.split('').map((b,i)=>{
+    const c = [cls||'', i===0?'first':'', i===str.length-1?'last':'', b==='1'?'on':''].filter(Boolean).join(' ');
+    return '<i class="bit '+c+'">'+b+'</i>';
+  }).join('') + '</div>';
+}
+
+/* ---------- 进度条 / 导航高亮 / 回到顶部 ---------- */
+window.addEventListener('scroll', ()=>{
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  $('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  $('totop').classList.toggle('on', window.scrollY > 500);
+});
+$('totop').onclick = ()=>window.scrollTo({top:0,behavior:'smooth'});
+
+/* ---------- 小屏抽屉导航 ---------- */
+(function(){
+  const btn = $('navbtn'), side = document.querySelector('.sidebar'), scrim = $('scrim');
+  if(!btn || !side || !scrim) return;
+  function close(){
+    side.classList.remove('open'); scrim.classList.remove('on');
+    btn.classList.remove('on'); btn.setAttribute('aria-expanded','false');
+  }
+  function open(){
+    side.classList.add('open'); scrim.classList.add('on');
+    btn.classList.add('on'); btn.setAttribute('aria-expanded','true');
+  }
+  btn.onclick = ()=>{ side.classList.contains('open') ? close() : open(); };
+  scrim.onclick = close;
+  qsa('.nav-i').forEach(a=>a.addEventListener('click', close));
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape') close(); });
+  window.addEventListener('resize', ()=>{ if(window.innerWidth > 960) close(); });
+
+  /* 顶部条上的「当前章节」按滚动位置算，跳转后不会滞后 */
+  function syncTitle(){
+    const t = document.querySelector('.mtop-t');
+    if(!t) return;
+    const secs = qsa('section.sec');
+    let cur = secs[0];
+    for(let i = 0; i < secs.length; i++){ if(secs[i].getBoundingClientRect().top <= 96) cur = secs[i]; }
+    const link = qsa('.nav-i').filter(a=>a.getAttribute('href') === '#'+cur.id)[0];
+    if(link) t.textContent = t.dataset.subj + ' · ' + link.querySelector('span').textContent;
+  }
+  window.addEventListener('scroll', syncTitle, {passive:true});
+  syncTitle();
+})();
+
+const navLinks = qsa('.nav-i');
+const secs = qsa('.sec');
+const obs = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const cur = navLinks.filter(a=>a.getAttribute('href') === '#'+e.target.id)[0];
+      navLinks.forEach(a=>a.classList.toggle('on', a === cur));
+    }
+  });
+},{rootMargin:'-15% 0px -70% 0px'});
+secs.forEach(s=>obs.observe(s));
+
+/* 分值权重条形入场动画 */
+setTimeout(()=>{ qsa('.rank-bar i, .rank-sum-bar i').forEach(f=>f.style.width = f.dataset.w + '%'); }, 300);
+
+/* ============================================================
+   第 1 章 · 冯诺依曼部件
+   ============================================================ */
+const vnInfo = {
+  mem:['存储器','按地址存取指令和数据，容量大但慢。所有执行前提：程序已经装进主存。'],
+  cu:['控制器','指挥中心：取指令 → 译码 → 发出控制信号。由 PC（程序计数器）、IR（指令寄存器）、CU（控制单元）组成。'],
+  alu:['运算器','负责数据加工：算术运算（加减乘除）与逻辑运算（与或非、移位、比较）。核心是 ALU，配 ACC、MQ、X 等寄存器与标志寄存器 PSW。'],
+  'in':['输入设备','把人能识别的形式转换成计算机能处理的二进制，如键盘、鼠标、扫描仪。'],
+  out:['输出设备','把二进制结果转换成人可识别的形式，如显示器、打印机。']
+};
+qsa('.vnbox').forEach(g=>{
+  g.style.cursor = 'pointer';
+  g.onclick = ()=>{
+    const d = vnInfo[g.dataset.k];
+    qsa('.vnbox rect').forEach(r=>r.setAttribute('stroke-width','2'));
+    g.querySelector('rect').setAttribute('stroke-width','4');
+    $('vnRes').innerHTML =
+      '<div class="r"><span class="lbl">部件</span><span class="val">'+d[0]+'</span></div>'+
+      '<div class="r" style="color:#5c6779"><span class="lbl">职责</span>'+d[1]+'</div>';
+  };
+});
+
+/* ---------- 一条指令的完整旅程（与上方 vnbox 联动高亮） ---------- */
+const VN_STEPS = [
+  ['① 取指令', 'PC 里存着当前指令的<b>地址</b>。控制器把这个地址送上总线送到存储器；存储器按地址把<b>指令</b>读出来，送回控制器。',
+   '蓝色小球', ['mem','cu']],
+  ['② 译码', '控制器分析刚取回来的这条指令：要做什么运算？操作数在哪？这一步完全在 CPU 内部完成，<b>不需要访问存储器</b>。',
+   'CPU 内部', ['cu']],
+  ['③ 取操作数', '如果指令需要的数据存在存储器里，运算器就把数据的<b>地址</b>送上总线，存储器把<b>操作数</b>送回来。',
+   '橙色小球', ['alu','mem']],
+  ['④ 执行', '运算器用 ALU 完成计算 —— 加减乘除、逻辑运算、移位比较。结果先暂存在寄存器或累加器里，还没写回。',
+   'CPU 内部', ['alu']],
+  ['⑤ 写回', '如果这条指令要求保存结果，运算器把结果送上总线，存储器按地址写回去。',
+   '橙色小球（反向）', ['alu','mem']],
+  ['⑥ PC 自增，准备下一条', 'PC 自动加 1，指向下一条指令的地址，然后回到第 ① 步。<b>程序就是这样一条接一条自动跑下去的</b> —— 这就是「存储程序」的全部含义。',
+   '循环', ['cu']]
+];
+let vnIdx = -1, vnTimer = null;
+function renderVN(){
+  const cur = vnIdx >= 0 ? VN_STEPS[vnIdx] : null;
+  $('vnSteps').innerHTML = VN_STEPS.map((s,i)=>{
+    const cls = i < vnIdx ? 'dn' : (i === vnIdx ? 'act' : '');
+    return `<div class="step ${cls}"><div class="n">${i+1}</div><div style="flex:1">
+      <div class="t">${s[0]}<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:4px;background:#eef2f7;color:#6b7280;margin-left:6px">${s[2]}</span></div>
+      <div class="d">${s[1]}</div></div></div>`;
+  }).join('');
+  const hl = cur ? cur[3] : [];
+  qsa('.vnbox').forEach(g=>{
+    g.querySelector('rect').setAttribute('stroke-width', hl.indexOf(g.dataset.k) >= 0 ? '4' : '2');
+  });
+}
+$('vnPlay').onclick = ()=>{
+  clearInterval(vnTimer); vnIdx = -1; renderVN();
+  vnTimer = setInterval(()=>{
+    if(vnIdx < VN_STEPS.length-1){ vnIdx++; renderVN(); }
+    else { clearInterval(vnTimer); vnTimer = null; }
+  }, 1900);
+};
+$('vnReset').onclick = ()=>{ clearInterval(vnTimer); vnTimer=null; vnIdx = -1; renderVN(); };
+renderVN();
+
+/* ============================================================
+   动画 02 · 四种机器数
+   ============================================================ */
+function renderCodes(v){
+  v = parseInt(v,10);
+  if(isNaN(v)) v = 0;
+  v = Math.max(-128, Math.min(127, v));
+  const n = 8;
+  const neg = v < 0;
+  const mag = Math.abs(v);
+
+  // 原码
+  let ym = toBits(mag, 7);
+  let yuan = (neg?'1':'0') + ym;
+  // 反码
+  let fan = neg ? ('1' + ym.split('').map(b=>b==='0'?'1':'0').join('')) : yuan;
+  // 补码（对 -128 特殊：10000000）
+  let bu = toBits(v, 8);
+  // 移码 = 补码符号位取反
+  let yi = (bu[0]==='0'?'1':'0') + bu.slice(1);
+
+  const row = (name, s, cls, note)=>{
+    return '<div class="r" style="margin:7px 0"><span class="lbl" style="min-width:58px;color:#3c4654;font-weight:650">'+name+'</span>'+
+      bitRow(s, cls) + '<span style="font-size:11.5px;color:#8b95a3">'+note+'</span></div>';
+  };
+
+  let extra = '';
+  if(v === -128){
+    extra = '<div class="tip m" style="margin-top:10px"><span class="ti">边界</span><span>−128 是 8 位补码能表示的最小值，它<span class="key">没有对应的原码和反码</span>（因为 8 位原码最大只能表示 ±127）。上表中原码/反码一栏为近似示意，考试遇到直接答「溢出」。移码表示 −128 得到全 0，是最小值，正好符合「移码按无符号比较」的直觉。</span></div>';
+  } else if(v === 0){
+    extra = '<div class="tip i" style="margin-top:10px"><span class="ti">0</span><span>0 的原码和反码各有两种写法（+0 = 0000 0000，−0 = 1000 0000），而<span class="key">补码和移码的 0 唯一</span>。这正是补码比原码多表示一个负数的原因。</span></div>';
+  }
+
+  $('codeOut').innerHTML =
+    '<div class="res">'+
+    '<div class="r" style="margin-bottom:10px"><span class="lbl">真值</span><span class="val">'+(v>=0?'+':'')+v+'</span>'+
+    '<span style="font-size:11.5px;color:#8b95a3">8 位字长，'+(neg?'负数':'非负数（原反补三码相同）')+'</span></div>'+
+    row('原码', yuan, 'sign', neg? '符号位 1 + 绝对值' : '= 真值') +
+    row('反码', fan, 'sign', neg? '数值位逐位取反' : '= 真值') +
+    row('补码', bu, 'sign', neg? '反码 + 1' : '= 真值') +
+    row('移码', yi, 'sign', '补码符号位取反（阶码专用）') +
+    '</div>' + extra;
+}
+$('codeIn').oninput = e=>renderCodes(e.target.value);
+qsa('[data-code]').forEach(b=>b.onclick = ()=>{ $('codeIn').value = b.dataset.code; renderCodes(b.dataset.code); });
+renderCodes(-45);
+
+/* ============================================================
+   动画 03 · 补码加法溢出
+   ============================================================ */
+function renderOv(){
+  let A = parseInt($('ovA').value,10), B = parseInt($('ovB').value,10);
+  if(isNaN(A)) A = 0; if(isNaN(B)) B = 0;
+  A = Math.max(-128, Math.min(127, A)); B = Math.max(-128, Math.min(127, B));
+
+  const buA = toBits(A,8), buB = toBits(B,8);
+  const sum = A + B;
+  const buS = toBits(((sum % 256) + 256) % 256, 8);
+  const trueOv = sum < -128 || sum > 127;
+
+  // 逐位相加算进位
+  let carry = 0, cs = [];
+  for(let i = 7; i >= 0; i--){
+    const s = (+buA[i]) + (+buB[i]) + carry;
+    cs.unshift(s >= 2 ? 1 : 0);
+    carry = s >= 2 ? 1 : 0;
+  }
+  // cs[0] 是最高位结果；carry 是最高位向外的进位
+  const cout = carry;              // 最高位进位
+  const cin  = (function(){        // 次高位进位
+    let c = 0;
+    for(let i = 7; i >= 1; i--){
+      const s = (+buA[i]) + (+buB[i]) + c;
+      c = s >= 2 ? 1 : 0;
+    }
+    return c;
+  })();
+  const xorOv = (cout ^ cin) === 1;
+
+  const bits = (s,cls)=>'<span class="bits" style="font-size:14px">'+s.split('').map(b=>
+      '<i class="bit '+cls+(b==='1'?' on':'')+'" style="width:21px;height:27px">'+b+'</i>').join('')+'</span>';
+
+  let verdict;
+  if(trueOv){
+    verdict = '<div class="tip e" style="margin-top:6px"><span class="ti">溢出</span><span>'+
+      (sum>127?'正溢':'负溢')+'：真值和 '+sum+' 超出 8 位补码范围 [−128, 127]。'+
+      '溢出位 = C<sub>最高位进位</sub> ⊕ C<sub>次高位进位</sub> = '+cout+' ⊕ '+cin+' = <span class="key">'+ (xorOv?1:0) +'</span>，与真实情况一致。</span></div>';
+  } else {
+    verdict = '<div class="tip s" style="margin-top:6px"><span class="ti">正常</span><span>真值和 '+sum+' 在范围内，结果有效。溢出位 = '+cout+' ⊕ '+cin+' = <span class="key">'+ (xorOv?1:0) +'</span>。</span></div>'+
+      (A>=0&&B<0||A<0&&B>=0 ? '<div class="tip i" style="margin-top:4px"><span class="ti">规律</span><span>两数异号相加，<span class="key">绝不可能溢出</span>——可用来秒杀单选题。</span></div>' : '');
+  }
+
+  $('ovOut').innerHTML =
+    '<div class="res"><div class="r" style="margin:5px 0"><span class="lbl">A 的补码</span>'+bits(buA,'')+
+      '<span style="font-size:11.5px;color:#8b95a3">'+A+'</span></div>'+
+    '<div class="r" style="margin:5px 0"><span class="lbl">B 的补码</span>'+bits(buB,'')+
+      '<span style="font-size:11.5px;color:#8b95a3">'+B+'</span></div>'+
+    '<div class="r" style="margin:5px 0"><span class="lbl">结果</span>'+bits(buS,'')+
+      '<span style="font-size:11.5px;color:#8b95a3">截断后 '+ ((sum%256+256)%256 >= 128 ? ((sum%256+256)%256 - 256) : ((sum%256+256)%256)) +'</span></div>'+
+    '<div class="r" style="border-top:1px dashed #d8dfe9;padding-top:9px;margin-top:6px">'+
+      '<span class="lbl">进位</span><span style="font-size:12.5px">最高位进位 C<sub>out</sub> = <b style="color:'+(cout?'#dc2626':'#0f9d6e')+'">'+cout+'</b>'+
+      ' &nbsp;·&nbsp; 次高位进位 C<sub>in</sub> = <b style="color:'+(cin?'#dc2626':'#0f9d6e')+'">'+cin+'</b>'+
+      ' &nbsp;·&nbsp; C<sub>out</sub> ⊕ C<sub>in</sub> = <b style="color:'+(xorOv?'#dc2626':'#0f9d6e')+'">'+(xorOv?1:0)+'</b>'+
+      ' &nbsp;·&nbsp; 真值溢出 = <b style="color:'+(trueOv?'#dc2626':'#0f9d6e')+'">'+(trueOv?'是':'否')+'</b></span></div></div>'+
+    verdict;
+}
+$('ovA').oninput = renderOv; $('ovB').oninput = renderOv;
+$('ovSwap').onclick = ()=>{ const t=$('ovA').value; $('ovA').value=$('ovB').value; $('ovB').value=t; renderOv(); };
+renderOv();
+
+/* ============================================================
+   动画 04 · IEEE 754 单精度
+   ============================================================ */
+function renderF32(inp){
+  const f = parseFloat(inp);
+  if(isNaN(f)) { $('f32Out').innerHTML = '<div class="tip m"><span class="ti">提示</span><span>请输入一个十进制数。</span></div>'; return; }
+  const buf = new ArrayBuffer(4), dv = new DataView(buf);
+  dv.setFloat32(0, f, false);
+  let bin = '';
+  for(let i=0;i<4;i++) bin += dv.getUint8(i).toString(2).padStart(8,'0');
+  const S = bin.slice(0,1), E = bin.slice(1,9), M = bin.slice(9,32);
+  const Eint = parseInt(E,2), Mint = parseInt(M,2);
+  const exp = Eint - 127;
+  const sign = S === '1' ? '-' : '+';
+
+  let kind = '', formula = '';
+  if(Eint === 0 && Mint === 0){ kind='零'; formula = sign + '0'; }
+  else if(Eint === 0){ kind='非规格化数'; formula = sign + '0.'+M+' × 2⁻¹²⁶'; }
+  else if(Eint === 255){ kind = Mint === 0 ? '无穷大 ∞' : 'NaN（非数）'; formula = kind; }
+  else { kind='规格化数'; formula = sign + '1.'+M+' × 2^'+exp; }
+
+  const exact = (Eint>0 && Eint<255) ? (f) : null;
+  const mantVal = Eint>0 && Eint<255 ? (1 + Mint/Math.pow(2,23)) : null;
+  const back = mantVal !== null ? (sign==='-'?-1:1) * mantVal * Math.pow(2, exp) : null;
+
+  const seg = (str, cls)=>'<span class="bits" style="font-size:14px">'+str.split('').map((b,i)=>
+      '<i class="bit '+cls+(b==='1'?' on':'')+'" style="width:19px;height:26px">'+b+'</i>').join('')+'</span>';
+
+  let note = '';
+  if(kind === '规格化数'){
+    note = '<div class="tip s" style="margin-top:10px"><span class="ti">读法</span><span>隐含最高位 1，所以尾数实际是 <b class="mono">1.'+M+'</b>，共 24 位有效数字。阶码字段 '+Eint+' − 偏置 127 = 真指数 <b>'+exp+'</b>。</span></div>';
+  } else if(kind === '非规格化数'){
+    note = '<div class="tip m" style="margin-top:10px"><span class="ti">非规格化</span><span>阶码全 0 表示非规格化数，此时<span class="key">尾数不再隐含 1</span>，真指数固定为 −126。这样可以在 0 附近把精度「续」下去，减小下溢的突跳。</span></div>';
+  } else {
+    note = '<div class="tip e" style="margin-top:10px"><span class="ti">特殊值</span><span>阶码全 1：尾数为 0 表示 ∞，尾数非 0 表示 NaN。+∞ 用于溢出，NaN 用于非法运算（0/0、∞−∞）。</span></div>';
+  }
+
+  let roundNote = '';
+  if(exact !== null && back !== null && Math.abs(back - exact) > 1e-12){
+    roundNote = '<div class="tip m" style="margin-top:6px"><span class="ti">舍入</span><span>该数无法用二进制有限表示，按 IEEE 754 就近舍入后实际存储值约为 <b class="mono">'+back+'</b>，与输入的 '+exact+' 存在微小误差——这正是 0.1+0.2≠0.3 的根源。</span></div>';
+  }
+
+  $('f32Out').innerHTML =
+    '<div class="res">'+
+    '<div class="r" style="margin:4px 0"><span class="lbl">输入</span><span class="val">'+f+'</span>'+
+      '<span style="font-size:11.5px;color:#8b95a3">类型：'+kind+'</span></div>'+
+    '<div style="margin:11px 0 3px"><span style="font-size:11.5px;color:#6b7280;font-weight:650">32 位存储格式</span></div>'+
+    '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;padding:10px 0 4px">'+
+      '<div><div style="font-size:10.5px;color:#dc2626;font-weight:700;margin-bottom:3px">S 符号 · 1 位</div>'+seg(S,'sign')+'</div>'+
+      '<div><div style="font-size:10.5px;color:#9a5b06;font-weight:700;margin-bottom:3px">E 阶码 · 8 位（移码）</div>'+seg(E,'exp')+'</div>'+
+      '<div><div style="font-size:10.5px;color:#2563eb;font-weight:700;margin-bottom:3px">M 尾数 · 23 位</div>'+seg(M,'man')+'</div>'+
+    '</div>'+
+    '<div style="border-top:1px dashed #d8dfe9;margin-top:12px;padding-top:10px;font-size:12.5px;line-height:2">'+
+      '<div>阶码字段 E = <b style="color:#9a5b06">'+Eint+'</b>（二进制 '+E+'）&nbsp;·&nbsp; 真指数 = E − 127 = <b>'+exp+'</b></div>'+
+      '<div>尾数实际值 = 1.'+M+' ≈ <b>'+(mantVal!==null?mantVal.toFixed(9):'—')+'</b></div>'+
+      '<div style="margin-top:6px">还原真值：<b style="color:#0a6b4a">'+formula+'</b>'+
+      (back!==null?' = <b>'+back+'</b>':'')+'</div>'+
+    '</div></div>'+ note + roundNote;
+}
+$('f32In').oninput = e=>renderF32(e.target.value);
+qsa('[data-f32]').forEach(b=>b.onclick=()=>{ $('f32In').value=b.dataset.f32; renderF32(b.dataset.f32); });
+renderF32('12.375');
+
+/* ============================================================
+   动画 05 · 浮点加减五步
+   ============================================================ */
+function bin32(f){
+  const dv = new DataView(new ArrayBuffer(4));
+  dv.setFloat32(0,f,false);
+  let b=''; for(let i=0;i<4;i++) b += dv.getUint8(i).toString(2).padStart(8,'0');
+  return b;
+}
+function faCompute(){
+  const X = parseFloat($('faX').value), Y = parseFloat($('faY').value);
+  if(isNaN(X)||isNaN(Y)) return null;
+  const bx = bin32(X), by = bin32(Y);
+  const ex = parseInt(bx.slice(1,9),2) - 127, ey = parseInt(by.slice(1,9),2) - 127;
+  const mx = '1' + bx.slice(9), my = '1' + by.slice(9);   // 24 位
+  const big = ex >= ey;
+  const dExp = Math.abs(ex - ey);
+  const es = big ? ex : ey;
+  // 对阶：小阶尾数右移 dExp 位
+  const mSmall = big ? my : mx;
+  const mBig   = big ? mx : my;
+  const shift = dExp > 31 ? '0'.repeat(24) : mSmall.slice(0, 24-dExp) + '0'.repeat(dExp);
+  // 定点值相加（把 24 位尾数视为 2^(-23) 定点小数）
+  const vBig = parseInt(mBig,2), vSh = parseInt(shift,2) || 0;
+  const sgnBig = (big?bx:by)[0]==='1' ? -1 : 1;
+  const sgnSm  = (big?by:bx)[0]==='1' ? -1 : 1;
+  const sum = sgnBig*vBig + sgnSm*vSh;
+
+  return {X,Y,bx,by,ex,ey,mx,my,big,dExp,es,mBig,shift,sgnBig,sgnSm,sum,
+          result: (Math.fround(X)+Math.fround(Y))};
+}
+let faIdx = -1;
+function faRender(){
+  const d = faCompute();
+  if(!d){ $('faSteps').innerHTML = '<div class="tip m"><span class="ti">提示</span><span>请输入两个十进制浮点数。</span></div>'; return; }
+  const exact = (d.sgnBig*(parseInt(d.mBig,2)/Math.pow(2,23)) + d.sgnSm*(parseInt(d.shift,2)/Math.pow(2,23)));
+  const exactVal = exact * Math.pow(2, d.es);
+  const steps = [
+    ['① 对阶', 'X 的阶码 ' + d.ex + '，Y 的阶码 ' + d.ey + '，阶差 ΔE = ' + d.dExp + '，' + (d.big?'X':'Y') + ' 阶码更大。\n小阶向大阶看齐：' + (d.big?'Y':'X') + ' 的尾数右移 ' + d.dExp + ' 位，阶码加到 ' + d.es,
+      'X 尾数 = ' + d.mx + '\nY 尾数 = ' + d.my + '\n移后小阶尾数 = ' + d.shift + '（右移丢低位，会产生误差）'],
+    ['② 尾数求和', '阶码统一为 ' + d.es + ' 后，对 24 位尾数做加减（同号加、异号减）。',
+      '大阶尾数 ' + d.mBig + '\n小阶尾数 ' + d.shift + '\n求和结果定点值 = ' + d.sum + '（单位 2⁻²³）'],
+    ['③ 规格化', '若结果最高位与次高位相同则需左规（尾数左移、阶码减 1）；若尾数溢出（需 25 位）则右规（右移 1 位、阶码加 1）。',
+      '规格化要求：1.xxxx 形式，即整数位恰为 1'],
+    ['④ 舍入', '默认采用「就近舍入，偶数优先」，把 24 位尾数截到 23 位存储精度。',
+      '单精度最多保留 23 位尾数，多余位按规则舍入'],
+    ['⑤ 判溢出', '只看阶码：阶码超出 1～254 为溢出（上溢产生 ∞，下溢按 0 或非规格化处理）。尾数进位不算溢出，右规即可修正。',
+      '本例阶码 = ' + d.es + '，在正常范围内']
+  ];
+  $('faSteps').innerHTML = steps.map((s,i)=>{
+    const cls = i < faIdx ? 'dn' : (i === faIdx ? 'act' : '');
+    return '<div class="step '+cls+'"><div class="n">'+(i+1)+'</div><div><div class="t">'+s[0]+'</div>'+
+      '<div class="d">'+s[1].replace(/\n/g,'<br>')+'</div>'+
+      '<div class="d" style="margin-top:5px;color:#8b95a3;font-size:11.5px">'+s[2].replace(/\n/g,'<br>')+'</div>'+
+      '</div></div>';
+  }).join('') +
+  (faIdx >= 4 ? '<div class="tip s" style="margin-top:10px"><span class="ti">结果</span><span>'+
+    d.X+' + ('+d.Y+') ≈ <b>'+d.result+'</b>　（换算成规格化指数形式约为 '+ exactVal.toFixed(6) +'，末尾差异来自尾数截断与舍入）</span></div>' : '');
+}
+$('faStart').onclick = ()=>{ faIdx = -1; faRender(); };
+$('faNext').onclick = ()=>{ if(faIdx < 4){ faIdx++; faRender(); } };
+$('faX').oninput = ()=>{ faIdx=-1; faRender(); };
+$('faY').oninput = ()=>{ faIdx=-1; faRender(); };
+faRender();
+
+/* ============================================================
+   动画 06 · 海明码
+   ============================================================ */
+function renderHam(str){
+  const data = (str||'').replace(/[^01]/g,'');
+  if(!data.length){ $('hamOut').innerHTML = '<div class="tip m"><span class="ti">提示</span><span>请输入只含 0 和 1 的数据位。</span></div>'; return; }
+  const n = data.length;
+  let k = 0;
+  while(Math.pow(2,k) < n + k + 1) k++;
+  const total = n + k;
+  const code = new Array(total+1).fill('0');   // 下标从 1 开始
+  const isParity = new Array(total+1).fill(false);
+  for(let i=0;i<k;i++){ const p = Math.pow(2,i); isParity[p]=true; }
+  // 填入数据位
+  let di = 0;
+  for(let i=1;i<=total;i++) if(!isParity[i]) code[i] = data[di++];
+  // 计算校验位（偶校验）
+  const groups = [];
+  for(let i=0;i<k;i++){
+    const p = Math.pow(2,i);
+    let xor = 0, members = [];
+    for(let j=1;j<=total;j++){
+      if(j === p) continue;
+      if((j & p) !== 0){ xor ^= (+code[j]); members.push(j); }
+    }
+    code[p] = String(xor);
+    groups.push({p, members, val: xor});
+  }
+
+  const cells = [];
+  for(let i=1;i<=total;i++){
+    const cls = isParity[i] ? 'sign' : 'man';
+    const on = code[i] === '1' ? ' on' : '';
+    let style = 'width:26px;height:34px;position:relative';
+    cells.push('<i class="bit '+cls+on+'" style="'+style+'">'+code[i]+
+      '<span style="position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:9px;color:#9aa4b2;font-weight:600">'+i+'</span></i>');
+  }
+
+  const gHtml = groups.map(g=>
+    '<div class="r" style="margin:6px 0"><span class="lbl" style="min-width:58px">P'+Math.log2(g.p)+' (第'+g.p+'位)</span>'+
+    '<span style="font-size:12.5px">= 第 ['+g.members.join(', ')+'] 位异或 = <b style="color:#2563eb;font-family:Consolas">'+g.val+'</b>'+
+    '　→ 校验位取值 <b>'+code[g.p]+'</b></span></div>').join('');
+
+  $('hamOut').innerHTML =
+    '<div class="res">'+
+      '<div class="r" style="margin:4px 0"><span class="lbl">数据位</span><span class="val">'+data+'</span>'+
+        '<span style="font-size:11.5px;color:#8b95a3">n = '+n+'，需满足 2ᵏ ≥ n+k+1，解得 k = '+k+'，总长 '+total+' 位</span></div>'+
+      '<div style="margin:16px 0 22px;padding-left:4px">'+
+        '<div style="font-size:11px;color:#6b7280;font-weight:650;margin-bottom:20px">海明码排列（下方数字为位号，红色为校验位 P，蓝色为数据位 D）</div>'+
+        '<div class="bits" style="gap:0">'+cells.join('')+'</div>'+
+      '</div>'+
+      '<div style="border-top:1px dashed #d8dfe9;padding-top:10px">'+
+        '<div style="font-size:11.5px;color:#6b7280;font-weight:650;margin-bottom:6px">校验位计算（偶校验：使每组 1 的个数为偶数）</div>'+
+        gHtml +
+      '</div>'+
+    '</div>'+
+    '<div class="tip i" style="margin-top:10px"><span class="ti">纠错</span><span>接收端重算各校验组的异或，若得到 S = '+groups.map((g,i)=>'S'+i).join('')+
+    ' 组成的二进制数，则 <span class="key">S 的十进制值就是出错位的位号</span>（S=0 表示无错）。海明码只能纠 1 位错，检 1 位以上的错需要再加一个全校验位。</span></div>';
+}
+$('hamIn').oninput = e=>renderHam(e.target.value);
+qsa('[data-ham]').forEach(b=>b.onclick=()=>{ $('hamIn').value=b.dataset.ham; renderHam(b.dataset.ham); });
+renderHam('1011');
+
+/* ============================================================
+   动画 07 · 存储层次金字塔
+   ============================================================ */
+const hierInfo = [
+  ['CPU 寄存器','容量：几十字节 ~ 几 KB<br>访问时间：0.2 ~ 1 ns<br>实现：触发器（SRAM 工艺）<br>管理方：编译程序负责分配<br><b>对程序员完全可见</b>，需要显式使用',
+   '为什么最快？因为它在 CPU 芯片内部，不需要走总线。数量极少（x86-64 只有 16 个通用寄存器），所以编译器要拼命把热点变量留在寄存器里。'],
+  ['Cache（高速缓存）','容量：几百 KB ~ 几十 MB（分 L1/L2/L3）<br>访问时间：1 ~ 10 ns<br>实现：SRAM<br>管理方：<b>纯硬件自动完成</b><br><b>对所有程序员透明</b>',
+   'Cache 存在的全部依据是「局部性原理」。它有独立的地址映射、替换算法和写策略逻辑，程序员写代码时完全不需要知道它，也无法直接寻址它——所以叫「透明」。'],
+  ['主存（内存 DRAM）','容量：几 GB ~ 几十 GB<br>访问时间：50 ~ 100 ns<br>实现：DRAM（需周期性刷新）<br>管理方：硬件 + 操作系统<br><b>CPU 可直接按地址访问</b>',
+   '主存是「运行中程序」的家。CPU 执行的每条指令、每个操作数都必须先在主存里。外存的东西想被 CPU 用，必须先搬到主存。'],
+  ['辅存（磁盘 / SSD）','容量：TB 级<br>访问时间：微秒（SSD）~ 毫秒（磁盘）<br>实现：磁介质 / 闪存<br>管理方：操作系统<br><b>CPU 不能直接访问</b>',
+   '辅存负责「掉电不丢」，是虚拟存储器的物理基础。CPU 要访问它，必须通过 I/O 系统把数据先调入主存——这就是虚拟存储和缺页的由来。']
+];
+qsa('.hl').forEach(g=>{
+  g.onclick = ()=>{
+    const d = hierInfo[+g.dataset.k];
+    qsa('.hl polygon').forEach(p=>p.setAttribute('stroke-width','2'));
+    g.querySelector('polygon').setAttribute('stroke-width','4');
+    $('hierRes').innerHTML =
+      '<div class="r"><span class="lbl">层次</span><span class="val">'+d[0]+'</span></div>'+
+      '<div class="r" style="color:#3c4654"><span class="lbl">参数</span><span style="font-size:13px">'+d[1]+'</span></div>'+
+      '<div class="r" style="color:#5c6779"><span class="lbl">理解</span><span style="font-size:12.5px">'+d[2]+'</span></div>';
+  };
+});
+
+/* ============================================================
+   动画 08 · Cache 三种映射
+   ============================================================ */
+/* 把块号拆成「标记 | 索引」两段显示 —— 取模在硬件上就是「取低 k 位」 */
+function bitSplit(B, idxBits, tagName, idxName){
+  let total = Math.max(idxBits + 2, 6);
+  let b = B.toString(2);
+  if(b.length > total) total = b.length;
+  b = b.padStart(total, '0');
+  const tag = b.slice(0, total - idxBits) || '0';
+  const idx = b.slice(total - idxBits);
+  const cell = (txt, color, radius) =>
+    `<span style="padding:5px 11px;background:${color}1a;color:${color};border:1px solid ${color};${radius};font-weight:800">${txt}</span>`;
+  return `<div style="display:flex;gap:0;align-items:center;flex-wrap:wrap;margin:9px 0 4px">
+    <span style="font-family:Consolas,monospace;font-size:13.5px;display:flex">
+      ${cell(tag, '#2563eb', 'border-radius:7px 0 0 7px')}${cell(idx, '#d97706', 'border-radius:0 7px 7px 0')}
+    </span>
+    <span style="margin-left:12px;font-size:11.5px;color:#8b95a3;font-weight:600;line-height:1.6">
+      ${tagName} = ${parseInt(tag,2) || 0}　·　${idxName} = <b style="color:#9a5b06">${parseInt(idx,2)}</b>（十进制）
+    </span></div>`;
+}
+function renderMap(){
+  const mode = $('mapMode').value;
+  const R = +$('mapRows').value;
+  let B = parseInt($('blkNo').value,10);
+  if(isNaN(B)) B = 0;
+  B = Math.max(0, Math.min(63, B));
+
+  let W = 1;
+  if(mode === 'set2') W = 2;
+  if(mode === 'set4') W = Math.min(4, R);
+  if(mode === 'full') W = R;
+
+  const groups = R / W;
+
+  // 主存块列表
+  let blocks = [];
+  for(let i=0;i<16;i++) blocks.push(i);
+  if(B > 15) blocks.unshift(B);
+
+  $('memCol').innerHTML = blocks.map(i=>{
+    const sel = i === B;
+    return '<div class="rowbox '+(sel?'sel':'')+'"><span class="idx">块 '+i+'</span>'+
+      (sel?'<span style="font-size:11px">当前访问</span>':'')+'</div>';
+  }).join('');
+
+  // Cache 行列表 + 高亮
+  let targetRows = [], targetGroup = -1;
+  if(mode === 'direct'){ targetRows = [B % R]; }
+  else if(mode === 'full'){ targetRows = []; }
+  else { targetGroup = B % groups; for(let i=0;i<W;i++) targetRows.push(targetGroup*W + i); }
+
+  let html = '', conflictBlocks = [];
+  for(let i=0;i<R;i++){
+    const g = Math.floor(i/W);
+    let cls = 'rowbox';
+    if(mode !== 'full' && targetRows.indexOf(i) >= 0) cls += ' hit';
+    const groupLabel = W > 1 ? '<span class="tagv">组 '+g+'</span>' : '';
+    html += '<div class="'+cls+'"><span class="idx">行 '+i+'</span>'+groupLabel+'</div>';
+  }
+  $('cacheCol').innerHTML = html;
+
+  // 冲突块
+  if(mode === 'direct'){
+    for(let b = B % R; b < 64; b += R) conflictBlocks.push(b);
+  } else if(mode !== 'full'){
+    for(let b = B % groups; b < 64; b += groups) conflictBlocks.push(b);
+  }
+
+  let calc = '', extra = '';
+  if(mode === 'direct'){
+    calc = `Cache 行号 = 主存块号 mod Cache 总行数 = ${B} mod ${R} = <b style="color:#2563eb">${B%R}</b>`;
+    extra = `<div class="r" style="margin-top:10px"><span class="lbl">为什么是这行</span>
+        <span style="font-size:12.5px">把块号 <b>${B}</b> 写成二进制，<b>低 ${Math.log2(R)} 位</b>就是行号 —— 这就是「mod ${R}」在硬件里的样子：</span></div>
+      ${bitSplit(B, Math.log2(R), '标记', '行号')}
+      <div class="r" style="margin-top:6px"><span class="lbl">地址格式</span><span class="mono" style="font-size:12.5px">[ 标记 | 行号 ${Math.log2(R)} 位 | 块内地址 ]</span></div>
+      <div class="r"><span class="lbl">冲突块</span><span style="font-size:12.5px">块 ${conflictBlocks.slice(0,8).join('、')}… <b>全部映射到行 ${B%R}</b>（因为它们的低 ${Math.log2(R)} 位相同），互相覆盖 —— 这就是直接映射冲突率高的原因。</span></div>`;
+  } else if(mode === 'full'){
+    calc = `全相联：主存任意块 <b style="color:#2563eb">${B}</b> 可以放入 <b>任意 Cache 行</b>（0 ~ ${R-1}）`;
+    extra = `<div class="r" style="margin-top:8px"><span class="lbl">地址格式</span><span class="mono" style="font-size:12.5px">[ 标记 | 块内地址 ]（无行号字段）</span></div>
+      <div class="r"><span class="lbl">代价</span><span style="font-size:12.5px">命中时需要与<b>全部 ${R} 行</b>的标记并行比较，比较器电路最贵；但冲突率最低。</span></div>`;
+  } else {
+    calc = `Cache 组号 = 主存块号 mod Cache 组数 = ${B} mod ${groups} = <b style="color:#2563eb">${targetGroup}</b>　→ 可放入行 ${targetRows.join(' 或 ')}`;
+    extra = `<div class="r" style="margin-top:10px"><span class="lbl">为什么是这组</span>
+        <span style="font-size:12.5px">块号 <b>${B}</b> 的低 <b>${Math.log2(groups)} 位</b>就是组号，其余位当标记：</span></div>
+      ${bitSplit(B, Math.log2(groups), '标记', '组号')}
+      <div class="r" style="margin-top:6px"><span class="lbl">地址格式</span><span class="mono" style="font-size:12.5px">[ 标记 | 组号 ${Math.log2(groups)} 位 | 块内地址 ]</span></div>
+      <div class="r"><span class="lbl">冲突块</span><span style="font-size:12.5px">块 ${conflictBlocks.slice(0,8).join('、')}… <b>映射到组 ${targetGroup}</b>。组内有 ${W} 个位置，比直接映射宽容 ${W} 倍。</span></div>`;
+  }
+
+  $('mapRes').innerHTML =
+    `<div class="r"><span class="lbl">映射方式</span><span class="val">${mode==='direct'?'直接映射':(mode==='full'?'全相联映射':W+' 路组相联')}</span>
+     <span style="font-size:11.5px;color:#8b95a3">Cache ${R} 行${W>1&&mode!=='full'?`，共 ${groups} 组，每组 ${W} 行`:''}</span></div>
+     <div class="r" style="margin-top:6px"><span class="lbl">计算</span><span style="font-size:13px">${calc}</span></div>${extra}`;
+}
+['mapMode','mapRows','blkNo'].forEach(id=>{ $(id).oninput = renderMap; $(id).onchange = renderMap; });
+renderMap();
+
+/* ============================================================
+   动画 09 · 地址格式划分计算器
+   ============================================================ */
+function renderPart(){
+  const a = parseInt($('pMem').value,10);
+  const b = parseInt($('pCache').value,10);
+  const c = parseInt($('pBlk').value,10);
+  const W = parseInt($('pWay').value,10);
+  if([a,b,c,W].some(v=>isNaN(v))) return;
+  if(b < c || a < b){ $('pOut').innerHTML = '<div class="tip e"><span class="ti">参数错误</span><span>需满足：主存容量 ≥ Cache 容量 ≥ 块大小。</span></div>'; return; }
+
+  const blockOff = c;                 // 块内地址位数
+  const mainBlocks = a - c;           // 主存块号位数
+  const cacheRows = b - c;            // Cache 行数
+  const groupBits = Math.max(0, (b - c) - Math.log2(W));
+  const tagBits = a - c - groupBits;
+  const rowsTotal = Math.pow(2, cacheRows);
+  const groupsTotal = Math.pow(2, groupBits);
+
+  const seg = (label, bits, color, bg)=>{
+    if(bits <= 0) return '';
+    const w = Math.max(7, bits / (tagBits + groupBits + blockOff) * 100);
+    return `<div style="flex:${bits};min-width:${Math.max(46,w*0.55)}px;background:${bg};border:1px solid ${color};
+      border-radius:8px;padding:9px 6px;text-align:center;overflow:hidden">
+      <div style="font-size:11.5px;font-weight:800;color:${color};white-space:nowrap">${label}</div>
+      <div style="font-size:15px;font-weight:800;color:#334155;margin-top:2px">${bits} 位</div>
+      <div style="font-size:10px;color:#8b95a3;white-space:nowrap">${Math.pow(2,bits).toLocaleString('en-US')} 种</div>
+    </div>`;
+  };
+
+  let wayDesc = W === 1 ? '直接映射（每行即一组）' : (W === rowsTotal ? '全相联（整个 Cache 一组）' : `${W} 路组相联`);
+  if(W === 1) wayDesc = '直接映射';
+  else if(groupsTotal === 1) wayDesc = '全相联';
+
+  $('pOut').innerHTML =
+    `<div class="res">
+      <div class="r"><span class="lbl">块内地址</span><span style="font-size:12.5px">= log₂(块大小 2^${c}) = <b>${blockOff}</b> 位　<span style="color:#8b95a3">（所有映射方式都一样）</span></span></div>
+      <div class="r"><span class="lbl">主存块数</span><span style="font-size:12.5px">= 2^${a} / 2^${c} = 2^${mainBlocks}，块号需 <b>${mainBlocks}</b> 位</span></div>
+      <div class="r"><span class="lbl">Cache</span><span style="font-size:12.5px">共 <b>${rowsTotal.toLocaleString('en-US')}</b> 行${W>1?`，划分为 <b>${groupsTotal.toLocaleString('en-US')}</b> 组（${wayDesc}）`:`，${wayDesc}`}</span></div>
+    </div>
+    <div style="font-size:11.5px;color:#6b7280;font-weight:650;margin:16px 0 8px">主存地址格式（共 ${a} 位）</div>
+    <div style="display:flex;gap:7px;align-items:stretch">
+      ${seg('标记 Tag', tagBits, '#2563eb', '#eaf0ff')}
+      ${seg('组号 / 行号', groupBits, '#d97706', '#fff4e3')}
+      ${seg('块内地址', blockOff, '#0f9d6e', '#e5f7f0')}
+    </div>
+    <div class="tip s" style="margin-top:12px"><span class="ti">速记</span><span>
+      标记位数 = <b>主存地址总位数 − 组号位数 − 块内地址位数</b> = ${a} − ${groupBits} − ${blockOff} = <b>${tagBits}</b>。
+      也可以这样想：${a} 位主存地址里，被 Cache 直接「用掉」的是 ${groupBits + blockOff} 位，剩下的 ${tagBits} 位就是标记。
+    </span></div>
+    ${W>1 && groupsTotal>1 ? `<div class="tip i" style="margin-top:6px"><span class="ti">规律</span><span>路数从 1 变成 ${W}，组数就减少 ${Math.log2(W)} 倍，<b>组号位数少 ${Math.log2(W)} 位、标记多 ${Math.log2(W)} 位</b>。路数越多，标记越长，但冲突越少。</span></div>` : ''}`;
+}
+['pMem','pCache','pBlk'].forEach(id=>$(id).oninput = renderPart);
+$('pWay').onchange = renderPart;
+renderPart();
+
+/* ============================================================
+   动画 10 · 虚拟地址 → 物理地址
+   ============================================================ */
+const PAGE_TABLE = { '1':'A', '2':'7', '3':'B', '4':'C', '5':'3' };
+let vaTimer = [];
+function renderVA(auto){
+  vaTimer.forEach(t=>clearTimeout(t)); vaTimer = [];
+  let raw = ($('vaIn').value || '').trim();
+  let v = parseInt(raw.replace(/^0[xX]/,''), /^0[xX]/.test(raw) ? 16 : 10);
+  if(isNaN(v)) v = 0;
+  v = (v >>> 0) & 0xFFFFFFFF;
+
+  const vpn = (v >>> 12) & 0xFFFFF;      // 20 位虚页号
+  const off = v & 0xFFF;                  // 12 位页内偏移
+  const vpnHex = vpn.toString(16).toUpperCase().padStart(5,'0');
+  const offHex = off.toString(16).toUpperCase().padStart(3,'0');
+  const vHex = '0x' + v.toString(16).toUpperCase().padStart(8,'0');
+  const pfn = PAGE_TABLE[String(vpn)];
+  const missPage = !pfn;
+  const pfnHex = missPage ? '─────' : pfn.padStart(5,'0');
+  const pa = missPage ? null : ((parseInt(pfn,16) << 12) | off);
+  const paHex = pa === null ? '（缺页，需先调入）' : '0x' + pa.toString(16).toUpperCase().padStart(8,'0');
+
+  const steps = [
+    ['① 拆分虚拟地址', `页大小 4 KB = 2¹²，所以低 12 位是页内偏移，高 20 位是虚页号。`,
+     `虚页号 = ${vHex} >> 12 = <b>0x${vpnHex}</b>　页内偏移 = ${vHex} & 0xFFF = <b>0x${offHex}</b>`],
+    ['② 查 TLB（快表）', `用虚页号 0x${vpnHex} 去 TLB 里并行比对，TLB 在 CPU 内，用的是 SRAM。`,
+     `本例视为 <b>TLB 未命中</b>（首次访问该页）→ 需要访问主存中的页表`],
+    ['③ 访问页表', `页表存在主存，用虚页号作为索引取出对应页表项。这一步要访问主存，所以慢。`,
+     `页表项 = 页表[0x${vpnHex}]`],
+    ['④ 有效性检查', `页表项里的有效位（驻留位）告诉硬件这个页面当前是否在主存中。`,
+     missPage ? `<b style="color:#dc2626">有效位为 0 → 触发缺页异常</b>，转操作系统处理` : `有效位为 1 → 页面在主存中，继续`],
+    ['⑤ 取出物理页号', `页表项中保存的是物理页号（页框号），它和页内偏移一起构成物理地址。`,
+     `物理页号 = <b>0x${pfnHex}</b>`],
+    ['⑥ 拼接物理地址', `物理地址 = 物理页号左移 12 位 + 页内偏移。<b>页内偏移全程不变</b>——这是页式存储的关键。`,
+     `PA = (0x${pfnHex} << 12) | 0x${offHex} = <b>${paHex}</b>`]
+  ];
+
+  $('vaSteps').innerHTML = steps.map((s,i)=>
+    `<div class="step" id="vas${i}"><div class="n">${i+1}</div><div>
+      <div class="t">${s[0]}</div>
+      <div class="d">${s[1]}</div>
+      <div class="d" style="margin-top:5px;color:#2563eb">${s[2]}</div>
+    </div></div>`).join('');
+
+  $('vaEv').innerHTML =
+    `<span class="ev">虚拟地址 ${vHex}</span>
+     <span class="ev">虚页号 0x${vpnHex}</span>
+     <span class="ev">页内偏移 0x${offHex}</span>
+     <span class="ev">TLB 未命中</span>
+     <span class="ev">查页表</span>
+     <span class="ev" ${missPage?'style="background:#dc2626"':'style="background:#0f9d6e"'}>物理页号 0x${pfnHex}</span>
+     <span class="ev">物理地址 ${paHex}</span>`;
+
+  const evs = qsa('#vaEv .ev');
+  if(!auto) return;
+  for(let i=0;i<steps.length;i++){
+    vaTimer.push(setTimeout(()=>{
+      qsa('#vaSteps .step').forEach(e=>e.classList.remove('act'));
+      const el = $('vas'+i);
+      if(el){ el.classList.add('act'); el.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+      if(evs[i]) evs[i].classList.add('on');
+    }, 700*i + 120));
+  }
+}
+$('vaIn').oninput = ()=>renderVA(false);
+qsa('[data-va]').forEach(b=>b.onclick=()=>{ $('vaIn').value=b.dataset.va; renderVA(true); });
+$('vaStart').onclick = ()=>renderVA(true);
+renderVA(false);   /* 首次只画静态结果；自动播放会 scrollIntoView，把刚打开的页面拽到本章 */
+
+/* ============================================================
+   动画 11 · 扩展操作码
+   ============================================================ */
+function renderExt(){
+  const k = Math.max(1, Math.min(8, parseInt($('eK').value,10)||4));
+  const a = Math.max(1, Math.min(8, parseInt($('eA').value,10)||4));
+  const n3 = Math.max(0, parseInt($('e3').value,10)||0);
+  const n2 = Math.max(0, parseInt($('e2').value,10)||0);
+  const n1 = Math.max(0, parseInt($('e1').value,10)||0);
+  const A = Math.pow(2,a), K = Math.pow(2,k);
+
+  const cap3 = K,            left3 = cap3 - n3;
+  const cap2 = left3 * A,    left2 = cap2 - n2;
+  const cap1 = left2 * A,    left1 = cap1 - n1;
+  const cap0 = left1 * A;
+
+  const bad = left3 < 0 || left2 < 0 || left1 < 0;
+
+  const bar = (used, cap, color)=>{
+    const pct = cap > 0 ? Math.min(100, used/cap*100) : 0;
+    return `<div style="height:14px;background:#eef2f7;border-radius:7px;overflow:hidden;margin-top:5px">
+      <div style="width:${pct}%;height:100%;background:${color};transition:width .5s"></div></div>`;
+  };
+
+  const row = (name, opBits, cap, used, color, note)=>{
+    const left = cap - used;
+    return `<div class="card" style="box-shadow:none;border-color:${left<0?'#f5c2c0':'#e3e8ef'}">
+      <h4>${name} <span class="pt" style="background:${color}22;color:${color}">操作码 ${opBits} 位</span></h4>
+      <div style="font-size:12.5px;color:#3c4654">
+        编码空间 = 2<sup>${opBits}</sup> = <b>${cap.toLocaleString('en-US')}</b> 条　·　已用 <b>${used}</b> 条　·　剩余
+        <b style="color:${left<0?'#dc2626':'#0f9d6e'}">${left.toLocaleString('en-US')}</b> 条
+      </div>
+      ${bar(used, cap, color)}
+      <div style="font-size:11.5px;color:#8b95a3;margin-top:6px">${note}</div>
+    </div>`;
+  };
+
+  $('eOut').innerHTML =
+    `<div class="grid g2" style="margin-bottom:4px">
+      ${row('三地址指令', k, cap3, n3, '#2563eb', `起始编码空间 = 2^${k}，每用掉 1 个，就少 1 个可用于扩展。`)}
+      ${row('二地址指令', k+a, cap2, n2, '#0891b2', `可用空间 = 三地址剩余 ${left3} × 2^${a} = ${cap2.toLocaleString('en-US')}`)}
+      ${row('一地址指令', k+2*a, cap1, n1, '#0f9d6e', `可用空间 = 二地址剩余 ${left2} × 2^${a} = ${cap1.toLocaleString('en-US')}`)}
+      ${row('零地址指令', k+3*a, cap0, 0, '#d97706', `可用空间 = 一地址剩余 ${left1} × 2^${a} = ${cap0.toLocaleString('en-US')}`)}
+    </div>
+    ${bad ? '<div class="tip e" style="margin-top:12px"><span class="ti">不合法</span><span>某一级指令条数超过了该级编码空间，说明这个指令系统无法按此方案编码，需要增加操作码位数。</span></div>' : ''}
+    <div class="tip s" style="margin-top:12px"><span class="ti">结论</span><span>
+      在「操作码基础 ${k} 位、地址码各 ${a} 位」的前提下，按上述分配，
+      <b>零地址指令最多还可安排 ${cap0.toLocaleString('en-US')} 条</b>。
+    </span></div>
+    <div class="tip i" style="margin-top:6px"><span class="ti">原理</span><span>
+      扩展操作码的本质是<b>用地址码字段腾出的位来换操作码位</b>。三地址指令因为要留出 3 个地址码，操作码最短；
+      零地址指令不需要地址码，整个指令字都能当操作码，所以短指令（地址少）天然拥有更大的编码空间。
+      关键约束是<span class="key">短操作码不能是长操作码的前缀</span>——实现上就是「留出全 1 的编码给更长的格式用」。
+    </span></div>`;
+}
+['eK','eA','e3','e2','e1'].forEach(id=>$(id).oninput = renderExt);
+renderExt();
+
+/* ============================================================
+   动画 12 · 寻址方式实验室
+   ============================================================ */
+const AM = {
+  imm: {n:'立即寻址', ea:'—（操作数就在指令中）', mem:0, formula:'操作数 = A',
+    desc:'地址码字段直接就是操作数本身，取指令时一并取出，不需要再访存。速度最快，但操作数大小受地址码位数限制，且值在程序运行中不可改变。',
+    use:'给常量赋值，如 ADD R1, #100'},
+  reg: {n:'寄存器寻址', ea:'—（操作数在寄存器中）', mem:0, formula:'操作数 = (R)',
+    desc:'地址码给出寄存器编号，操作数存放在该寄存器里。不访存，速度快，但寄存器数量有限。',
+    use:'寄存器之间的运算，如 ADD R1, R2'},
+  dir: {n:'直接寻址', ea:'EA = A', mem:1, formula:'EA = A',
+    desc:'地址码直接就是操作数在主存中的地址。只需一次访存即可取到操作数，但寻址范围受地址码位数限制（A 有多少位，就只能覆盖多大空间）。',
+    use:'访问单个全局变量、数组首元素'},
+  ind: {n:'间接寻址', ea:'EA = (A)', mem:2, formula:'EA = (A)',
+    desc:'地址码给出的是「操作数地址的地址」。第一次访存取到真正的有效地址，第二次访存才取到操作数。<b>扩大了寻址范围</b>，但速度慢一倍。',
+    use:'子程序返回时修改返回地址、指针访问'},
+  rind:{n:'寄存器间接寻址', ea:'EA = (R)', mem:1, formula:'EA = (R)',
+    desc:'寄存器里存的是操作数的<b>主存地址</b>。只需一次访存，既扩大了寻址范围又比间接寻址快，是指针访问的硬件基础。',
+    use:'指针解引用，如 C 语言中 *p'},
+  rel: {n:'相对寻址', ea:'EA = PC + A', mem:1, formula:'EA = (PC) + A',
+    desc:'以程序计数器 PC 的当前值为基准加上形式地址 A（通常是带符号的偏移量）。因为程序整体浮动时 PC 和目标的差值不变，所以<b>转移指令用它实现位置无关代码</b>。',
+    use:'条件转移、循环跳转，如 JMP +8'},
+  base:{n:'基址寻址', ea:'EA = (BR) + A', mem:1, formula:'EA = (BR) + A',
+    desc:'基址寄存器 BR 的内容由<b>操作系统或管理程序</b>设定，在程序执行过程中不变；形式地址 A 是偏移量。用户程序不必关心自己装在哪块内存，从而实现<b>程序浮动</b>。',
+    use:'多道程序的内存重定位'},
+  index:{n:'变址寻址', ea:'EA = (IX) + A', mem:1, formula:'EA = (IX) + A',
+    desc:'形式地址 A 给出<b>数组首地址</b>，变址寄存器 IX 由<b>用户程序</b>在循环中自增。这是数组顺序访问的标准实现方式。',
+    use:'for 循环遍历数组 a[i]'}
+};
+function parseNum(s){
+  s = (s||'').trim();
+  if(/^0[xX]/.test(s)) return parseInt(s.replace(/^0[xX]/,''),16);
+  return parseInt(s,10);
+}
+function renderAM(){
+  const m = AM[$('amMode').value];
+  const A = parseNum($('amA').value), R = parseNum($('amR').value), PC = parseNum($('amPC').value);
+  const ok = v => isNaN(v) ? null : v;
+  let detail = '';
+
+  const f = (x)=> x===null ? '—' : '0x' + x.toString(16).toUpperCase();
+
+  if(m.n === '立即寻址'){
+    detail = `操作数 = A = <b>${isNaN(A)?'—':A}</b>（十进制）`;
+  } else if(m.n === '寄存器寻址'){
+    detail = `操作数 = 寄存器内容 = <b>${isNaN(R)?'—':R}</b>`;
+  } else if(m.n === '直接寻址'){
+    detail = `EA = A = <b>${f(ok(A))}</b>`;
+  } else if(m.n === '间接寻址'){
+    detail = `EA = (A) = 主存单元 [${f(ok(A))}] 中存放的地址。此处演示设为 A 的两倍关系：EA ≈ <b>0x${isNaN(A)?'—':(A*2).toString(16).toUpperCase()}</b>`;
+  } else if(m.n === '寄存器间接寻址'){
+    detail = `EA = (R) = <b>${f(ok(R))}</b>`;
+  } else if(m.n === '相对寻址'){
+    detail = `EA = PC + A = ${f(ok(PC))} + (${isNaN(A)?'—':A}) = <b>${f(ok(PC))} 的相对偏移 ${isNaN(A)?'—':A} 字节处</b>`;
+  } else if(m.n === '基址寻址'){
+    detail = `EA = (BR) + A = ${f(ok(R))} + ${isNaN(A)?'—':A} = <b>0x${(isNaN(R)||isNaN(A))?'—':(R+A).toString(16).toUpperCase()}</b>`;
+  } else if(m.n === '变址寻址'){
+    detail = `EA = (IX) + A = ${f(ok(R))} + ${isNaN(A)?'—':A} = <b>0x${(isNaN(R)||isNaN(A))?'—':(R+A).toString(16).toUpperCase()}</b>`;
+  }
+
+  const memTag = m.mem === 0
+    ? '<span style="color:#0f9d6e;font-weight:800">0 次</span>（最快）'
+    : (m.mem === 1 ? '<span style="color:#d97706;font-weight:800">1 次</span>' : '<span style="color:#dc2626;font-weight:800">2 次</span>（最慢）');
+
+  // 路径图
+  const p = m.n;
+  const path = [];
+  path.push('<b>指令</b>');
+  if(p === '立即寻址') path.push('操作数直接嵌在地址码字段', '<b style="color:#0f9d6e">拿到操作数</b>');
+  else if(p === '寄存器寻址') path.push('地址码 = 寄存器号 R', '<b style="color:#0f9d6e">读 R 得到操作数</b>');
+  else if(p === '直接寻址') path.push('EA = A', '访存 [EA]', '<b style="color:#0f9d6e">拿到操作数</b>');
+  else if(p === '间接寻址') path.push('访存 [A] 得 EA', '访存 [EA] 得操作数', '<b style="color:#0f9d6e">拿到操作数</b>');
+  else if(p === '寄存器间接寻址') path.push('读 R 得 EA', '访存 [EA]', '<b style="color:#0f9d6e">拿到操作数</b>');
+  else if(p === '相对寻址') path.push('EA = (PC) + A', '访存 [EA]', '<b style="color:#0f9d6e">拿到操作数 / 转移目标</b>');
+  else if(p === '基址寻址') path.push('EA = (BR) + A', '访存 [EA]', '<b style="color:#0f9d6e">拿到操作数</b>');
+  else path.push('EA = (IX) + A', '访存 [EA]', '<b style="color:#0f9d6e">拿到操作数</b>');
+
+  $('amOut').innerHTML =
+    `<div class="res">
+      <div class="r"><span class="lbl">寻址方式</span><span class="val">${m.n}</span>
+        <span style="font-size:11.5px;color:#8b95a3">取操作数需访存 ${memTag}</span></div>
+      <div class="r" style="margin-top:6px"><span class="lbl">公式</span><span class="mono" style="font-size:13px;color:#1e293b">${m.formula}</span></div>
+      <div class="r" style="margin-top:6px"><span class="lbl">本例</span><span style="font-size:13px">${detail}</span></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px;padding:12px 14px;background:#f7f9fc;border:1px solid #e3e8ef;border-radius:10px">
+      ${path.map((t,i)=>`<span style="font-size:12px;padding:5px 11px;border-radius:8px;background:#fff;border:1px solid #e3e8ef">${t}</span>${i<path.length-1?'<span style="color:#c3cbd7">→</span>':''}`).join('')}
+    </div>
+    <div class="tip i" style="margin-top:12px"><span class="ti">理解</span><span>${m.desc}</span></div>
+    <div class="tip s" style="margin-top:6px"><span class="ti">典型用途</span><span>${m.use}</span></div>`;
+}
+$('amMode').onchange = renderAM;
+['amA','amR','amPC'].forEach(id=>$(id).oninput = renderAM);
+renderAM();
+
+/* ============================================================
+   动画 13 · 指令周期 × 单总线数据通路
+   ============================================================ */
+const DP = {
+  add: {
+    name:'ADD R1, (R0)',
+    init:{PC:'1000', MAR:'—', MDR:'—', IR:'—', R0:'2000', R1:'5', ACC:'—'},
+    mem:{'1000':'ADD R1,(R0)','2000':'12'},
+    ops:[
+      {ph:'取指周期', t:'(PC) → MAR', f:'PC', to:'MAR', set:{MAR:'1000'}, v:'1000',
+       why:'PC 里的指令地址被送上总线，MAR 接收。这一步只占用总线一次。'},
+      {ph:'取指周期', t:'M(MAR) → MDR', f:'MEM', to:'MDR', set:{MDR:'ADD R1,(R0)'}, v:'指令',
+       why:'存储器按 MAR 指出的地址读出内容，送到 MDR。<b>注意方向是从存储器"流出来"的</b>——此时读出来的是<b>指令</b>，还不是数据。'},
+      {ph:'取指周期', t:'(MDR) → IR', f:'MDR', to:'IR', set:{IR:'ADD R1,(R0)'}, v:'指令',
+       why:'指令进入 IR，接下来控制器开始译码。取指阶段到此结束，IR 里已是当前指令。'},
+      {ph:'取指周期', t:'(PC) + 1 → PC', f:'PC', to:'PC', set:{PC:'1001'}, v:'1001', self:true,
+       why:'<b>关键考点</b>：PC 自增发生在取指阶段末尾，不是执行阶段。加 1 是因为按字编址且一条指令占一个存储字。<br><b>注意这一步没有连线</b>——它是 PC 内部完成的，<b>不占用总线</b>。'},
+      {ph:'执行周期', t:'(R0) → MAR', f:'REG', to:'MAR', set:{MAR:'2000'}, v:'2000',
+       why:'这是一条间接寻址指令。R0 中保存的是<b>操作数的地址</b>，把它送到 MAR，准备再次访存。'},
+      {ph:'执行周期', t:'M(MAR) → MDR', f:'MEM', to:'MDR', set:{MDR:'12'}, v:'12',
+       why:'第二次访存，这次取出的是真正要参与运算的<b>数据</b>——12。'},
+      {ph:'执行周期', t:'(MDR) + (R1) → R1', f:'MDR', to:'REG', set:{R1:'17'}, v:'17',
+       why:'ALU 做加法，结果写回 R1。单总线结构下这一步实际上要拆成两次总线传送，所以需要额外时钟周期。'}
+    ]
+  },
+  load: {
+    name:'LOAD R1, [2000]',
+    init:{PC:'1000', MAR:'—', MDR:'—', IR:'—', R0:'2000', R1:'5', ACC:'—'},
+    mem:{'1000':'LOAD R1,[2000]','2000':'12'},
+    ops:[
+      {ph:'取指周期', t:'(PC) → MAR', f:'PC', to:'MAR', set:{MAR:'1000'}, v:'1000', why:'把指令地址送上总线。'},
+      {ph:'取指周期', t:'M(MAR) → MDR', f:'MEM', to:'MDR', set:{MDR:'LOAD R1,[2000]'}, v:'指令', why:'读出指令。'},
+      {ph:'取指周期', t:'(MDR) → IR', f:'MDR', to:'IR', set:{IR:'LOAD R1,[2000]'}, v:'指令', why:'指令送入 IR。'},
+      {ph:'取指周期', t:'(PC) + 1 → PC', f:'PC', to:'PC', set:{PC:'1001'}, v:'1001', self:true,
+       why:'PC 自增。<b>这一步也不占用总线。</b>'},
+      {ph:'执行周期', t:'A → MAR', f:'IR', to:'MAR', set:{MAR:'2000'}, v:'2000',
+       why:'直接寻址：指令中的形式地址 2000 直接就是有效地址（存在 IR 的地址字段里），送到 MAR。'},
+      {ph:'执行周期', t:'M(MAR) → MDR', f:'MEM', to:'MDR', set:{MDR:'12'}, v:'12', why:'访存取出数据 12。'},
+      {ph:'执行周期', t:'(MDR) → R1', f:'MDR', to:'REG', set:{R1:'12'}, v:'12', why:'数据写入目标寄存器 R1。'}
+    ]
+  },
+  store: {
+    name:'STORE R1, [2000]',
+    init:{PC:'1000', MAR:'—', MDR:'—', IR:'—', R0:'2000', R1:'5', ACC:'—'},
+    mem:{'1000':'STORE R1,[2000]','2000':'12'},
+    ops:[
+      {ph:'取指周期', t:'(PC) → MAR', f:'PC', to:'MAR', set:{MAR:'1000'}, v:'1000', why:'取指令地址。'},
+      {ph:'取指周期', t:'M(MAR) → MDR', f:'MEM', to:'MDR', set:{MDR:'STORE R1,[2000]'}, v:'指令', why:'读出指令。'},
+      {ph:'取指周期', t:'(MDR) → IR', f:'MDR', to:'IR', set:{IR:'STORE R1,[2000]'}, v:'指令', why:'指令送入 IR。'},
+      {ph:'取指周期', t:'(PC) + 1 → PC', f:'PC', to:'PC', set:{PC:'1001'}, v:'1001', self:true,
+       why:'PC 自增，不占用总线。'},
+      {ph:'执行周期', t:'A → MAR', f:'IR', to:'MAR', set:{MAR:'2000'}, v:'2000', why:'形成有效地址，准备写入。'},
+      {ph:'执行周期', t:'(R1) → MDR', f:'REG', to:'MDR', set:{MDR:'5'}, v:'5',
+       why:'要被写出的数据先送进 MDR。'},
+      {ph:'执行周期', t:'(MDR) → M(MAR)', f:'MDR', to:'MEM', set:{}, v:'5',
+       why:'数据写入主存单元 2000。<b>看流向：这一步是从 CPU"流回"存储器，方向与读操作刚好相反。</b>'}
+    ]
+  }
+};
+let dpKey = 'add', dpIdx = -1, dpTimer = null;
+
+/* 部件在总线上的挂载位置：x = 部件中心，y = 与总线相接的那条边 */
+const DP_BUS_Y = 190;
+const DP_POS = {
+  PC:{x:108, y:122}, MAR:{x:234, y:122}, MDR:{x:360, y:122}, IR:{x:486, y:122},
+  MEM:{x:160, y:272}, ALU:{x:355, y:272}, REG:{x:540, y:272}, ACC:{x:720, y:272}
+};
+function dpClip(s, n){
+  s = String(s == null ? '' : s);
+  return s.length > n ? s.slice(0, n - 1) + '…' : s;
+}
+function dpBox(id, x, y, w, h, label, sub, role){
+  // role: 'from' = 本步发出数据的部件 / 'to' = 本步接收数据的部件
+  const isMem = (id === 'MEM');
+  let stroke = isMem ? '#d97706' : '#2563eb';
+  let fill   = isMem ? '#fff4e3' : '#eaf0ff';
+  let tc     = isMem ? '#9a5b06' : '#1e40af';
+  let sw = 1.8;
+  if(role === 'from'){ stroke = '#7c3aed'; fill = '#f2ecfe'; tc = '#5b21b6'; sw = 3.4; }
+  if(role === 'to'){ stroke = '#dc2626'; fill = '#fdeceb'; tc = '#8d2020'; sw = 3.4; }
+  return `<g>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="11" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" style="transition:.3s"/>
+    <text x="${x+w/2}" y="${y+(sub?h/2-5:h/2+5)}" text-anchor="middle" font-size="13.5" font-weight="800" fill="${tc}">${label}</text>
+    ${sub?`<text x="${x+w/2}" y="${y+h/2+14}" text-anchor="middle" font-size="10.5" fill="#8b95a3">${sub}</text>`:''}
+  </g>`;
+}
+
+function dpRender(){
+  const d = DP[dpKey];
+  const regs = Object.assign({}, d.init);
+  const mem = Object.assign({}, d.mem);
+  for(let i=0;i<=dpIdx;i++){
+    const s = d.ops[i].set;
+    if(s) for(const k in s) regs[k] = s[k];
+    if(dpKey === 'store' && i === d.ops.length-1) mem['2000'] = '5';
+  }
+  const cur = dpIdx >= 0 ? d.ops[dpIdx] : null;
+  const selfLoop = !!(cur && (cur.f === cur.to));
+
+  /* ★ 数据流向：源部件 → 总线 → 目标部件 */
+  let flowPath = null;
+  if(cur && !selfLoop){
+    const A = DP_POS[cur.f], B = DP_POS[cur.to];
+    if(A && B) flowPath = `M${A.x},${A.y} L${A.x},${DP_BUS_Y} L${B.x},${DP_BUS_Y} L${B.x},${B.y}`;
+  }
+  const roleOf = id => {
+    if(!cur) return '';
+    if(id === cur.f) return 'from';
+    if(id === cur.to) return 'to';
+    return '';
+  };
+  const spd = (typeof ANIM_SPEED === 'number' && ANIM_SPEED > 0) ? ANIM_SPEED : 1.7;
+
+  $('dpStage').innerHTML =
+    `<svg viewBox="0 0 900 400" style="width:100%;height:auto;display:block">
+      <defs>
+        <marker id="dpAh" markerWidth="10" markerHeight="10" refX="7.5" refY="3.2" orient="auto">
+          <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="#dc2626"/>
+        </marker>
+      </defs>
+
+      <line x1="56" y1="${DP_BUS_Y}" x2="852" y2="${DP_BUS_Y}" stroke="#cbd5e1" stroke-width="3"/>
+      <text x="60" y="${DP_BUS_Y+24}" font-size="11.5" fill="#94a3b8">内部总线 · 单总线结构：同一时刻只能有一个部件向上送数据</text>
+
+      ${[108,234,360,486].map(x=>`<line x1="${x}" y1="122" x2="${x}" y2="${DP_BUS_Y}" stroke="#dbe3ee" stroke-width="1.6"/>`).join('')}
+      ${[160,355,540,720].map(x=>`<line x1="${x}" y1="${DP_BUS_Y}" x2="${x}" y2="272" stroke="#dbe3ee" stroke-width="1.6"/>`).join('')}
+
+      ${dpBox('PC', 60, 70, 96, 52, 'PC', dpClip(regs.PC, 10), roleOf('PC'))}
+      ${dpBox('MAR',186, 70, 96, 52, 'MAR', dpClip(regs.MAR, 10), roleOf('MAR'))}
+      ${dpBox('MDR',312, 70, 96, 52, 'MDR', dpClip(regs.MDR, 10), roleOf('MDR'))}
+      ${dpBox('IR', 438, 70, 96, 52, 'IR', dpClip(regs.IR, 10), roleOf('IR'))}
+      ${dpBox('MEM',60, 272, 200, 72, '主存储器', 'M[2000] = ' + mem['2000'], roleOf('MEM'))}
+      ${dpBox('ALU',290,272, 130, 72, 'ALU', '算术逻辑单元', '')}
+      ${dpBox('REG',450,272, 180, 72, '通用寄存器组', 'R0 = ' + regs.R0 + '　R1 = ' + regs.R1, roleOf('REG'))}
+      ${dpBox('ACC',660,272, 120, 72, 'ACC', '累加器', '')}
+
+      <text x="152" y="264" text-anchor="end" font-size="10.5" fill="#9a5b06">M[1000] = ${dpClip(mem['1000'], 14)}</text>
+
+      ${flowPath ? `
+        <path d="${flowPath}" fill="none" stroke="#fdeceb" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${flowPath}" fill="none" stroke="#dc2626" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"
+          stroke-dasharray="14 8" marker-end="url(#dpAh)">
+          <animate attributeName="stroke-dashoffset" from="44" to="0" dur="${(0.85*spd).toFixed(2)}s" repeatCount="indefinite"/>
+        </path>
+        <g>
+          <circle r="9.5" fill="#dc2626" opacity=".95"/>
+          <text y="-15" text-anchor="middle" font-size="12" font-weight="800" fill="#dc2626"
+            stroke="#fff" stroke-width="3.5" paint-order="stroke">${cur.v}</text>
+          <animateMotion dur="${(1.6*spd).toFixed(2)}s" repeatCount="indefinite" rotate="0" path="${flowPath}"/>
+        </g>
+      ` : ''}
+
+      ${selfLoop ? `
+        <text x="${DP_POS[cur.f].x}" y="30" text-anchor="middle" font-size="12" font-weight="800" fill="#dc2626">↻ ${cur.t}</text>
+        <text x="${DP_POS[cur.f].x}" y="47" text-anchor="middle" font-size="10.5" fill="#dc2626">在 ${cur.f} 内部完成 · 不占用总线</text>
+      ` : ''}
+
+      ${cur && !flowPath && !selfLoop ? `<text x="450" y="360" text-anchor="middle" font-size="11.5" fill="#b6c0cc">本步没有部件间的数据传送</text>` : ''}
+    </svg>`;
+
+  /* 阶段条 + 本步的总线占用情况 */
+  const phs = ['取指周期','间址周期','执行周期','中断周期'];
+  const activePh = cur ? cur.ph : '';
+  let busNote;
+  if(!cur) busNote = '<span style="color:#94a3b8">点「下一步」开始，看数据每一拍从哪个部件流向哪个部件。</span>';
+  else if(selfLoop) busNote = `<span style="color:#7c3aed;font-weight:700">本步不占用总线</b></span> —— ${cur.f} 在自己内部完成 +1，总线空着。`;
+  else busNote = `<span style="color:#dc2626;font-weight:700">本步占用总线 1 拍</span> —— 数据从 <b>${cur.f}</b> 经内部总线送到 <b>${cur.to}</b>（源部件 → 总线 → 目标部件，图中红色路径就是它走的路）。`;
+  $('dpPhase').innerHTML =
+    `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">` +
+    phs.map(p=>{
+      const isOn = p === activePh;
+      const isIdle = p === '间址周期' || p === '中断周期';
+      const bg = isOn ? '#2563eb' : '#eef2f7';
+      const col = isOn ? '#fff' : (isIdle ? '#b6c0cc' : '#6b7280');
+      return `<div style="flex:1;min-width:88px;text-align:center;padding:8px 6px;border-radius:9px;background:${bg};
+        color:${col};font-size:12.5px;font-weight:700;transition:.3s">${p}${isIdle?'<span style="font-size:9.5px;font-weight:500">（本例无）</span>':''}</div>`;
+    }).join('') + `</div>
+    <div style="margin-top:10px;font-size:12.5px;color:#4b5665;background:#f8f7fc;border:1px solid #e8e5e0;
+      border-left:3px solid #dc2626;border-radius:8px;padding:9px 13px;line-height:1.7">${busNote}</div>`;
+
+  /* 微操作列表 */
+  let html = '', n = 0, lastPh = '';
+  d.ops.forEach((o,i)=>{
+    if(o.ph !== lastPh){ html += `<div style="font-size:11.5px;font-weight:750;color:#6b7280;margin:12px 0 6px">${o.ph}</div>`; lastPh = o.ph; }
+    const cls = i < dpIdx ? 'dn' : (i === dpIdx ? 'act' : '');
+    n++;
+    html += `<div class="step ${cls}"><div class="n">${n}</div><div style="flex:1">
+      <div class="t" style="font-family:Consolas,monospace;font-size:13px">${o.t}</div>
+      <div class="d">${o.why}</div></div></div>`;
+  });
+  $('dpUop').innerHTML = html;
+
+  $('dpNext').disabled = dpIdx >= d.ops.length - 1;
+}
+function dpStep(){ if(dpIdx < DP[dpKey].ops.length - 1){ dpIdx++; dpRender(); } else { clearInterval(dpTimer); dpTimer = null; } }
+$('dpNext').onclick = ()=>{ clearInterval(dpTimer); dpTimer=null; dpStep(); };
+$('dpReset').onclick = ()=>{ clearInterval(dpTimer); dpTimer=null; dpIdx=-1; dpRender(); };
+$('dpPlay').onclick = ()=>{
+  clearInterval(dpTimer);
+  dpIdx = -1; dpRender();
+  dpTimer = setInterval(dpStep, 1500);
+};
+$('dpInstr').onchange = e=>{ clearInterval(dpTimer); dpTimer=null; dpKey = e.target.value; dpIdx = -1; dpRender(); };
+ON_SPEED_CHANGE.push(dpRender);
+dpRender();
+
+/* ============================================================
+   动画 14 · 微程序控制器：换指令看微程序岔路
+   ============================================================ */
+const MCP_FETCH = [
+  {addr:0, uop:'(PC)→MAR', cmds:['PCout','MARin'],
+   note:'<b>取指微程序第 1 条 —— 所有指令公用</b>。CMAR=0，从 CM 按这个地址取出微指令存入 μIR；μIR 中的微命令生效：PC 里的指令地址送上内部总线，送进 MAR。'},
+  {addr:1, uop:'M(MAR)→MDR', cmds:['MemR','MDRin'],
+   note:'发出主存读命令，主存按 MAR 中的地址读出<b>指令</b>送入 MDR。注意此刻读到的还是指令，不是数据。'},
+  {addr:2, uop:'(MDR)→IR', cmds:['MDRout','IRin'],
+   note:'指令送入 IR —— 控制器至此「拿到并锁定」了当前指令，下一步就要译码了。'},
+  {addr:3, uop:'(PC)+1→PC', cmds:['PC+1'],
+   note:'PC 自增，为取下一条指令做准备。取指微程序至此执行完毕 —— 接下来就是微程序控制器特有的「岔路」。'}
+];
+const MCP_EXEC = {
+  add: { label:'ADD R1, (R0)', entry:8, steps:[
+    {addr:8, uop:'(R0)→MAR', cmds:['R0out','MARin'],
+     note:'进入 ADD 自己的执行微程序。间接寻址：R0 中存的是操作数地址，送往 MAR，准备再次访存。'},
+    {addr:9, uop:'M(MAR)→MDR', cmds:['MemR','MDRin'],
+     note:'访存取数：主存把要参与运算的操作数送入 MDR。'},
+    {addr:10, uop:'(MDR)+(R1)→R1', cmds:['MDRout','ALU(+)','R1in'],
+     note:'μIR 发出加法与寄存器写入命令：ALU 完成 (MDR)+(R1)，结果写回 R1。ADD 的执行微程序结束。'}
+  ]},
+  load: { label:'LOAD R1, [2000]', entry:12, steps:[
+    {addr:12, uop:'A→MAR', cmds:['Ad(IR)out','MARin'],
+     note:'进入 LOAD 自己的执行微程序。直接寻址：把指令中地址字段 A 的内容送往 MAR。'},
+    {addr:13, uop:'M(MAR)→MDR', cmds:['MemR','MDRin'],
+     note:'按地址读出数据，送入 MDR。'},
+    {addr:14, uop:'(MDR)→R1', cmds:['MDRout','R1in'],
+     note:'把数据写进目标寄存器 R1。LOAD 的执行微程序结束。'}
+  ]},
+  store: { label:'STORE R1, [2000]', entry:16, steps:[
+    {addr:16, uop:'A→MAR', cmds:['Ad(IR)out','MARin'],
+     note:'进入 STORE 自己的执行微程序。先形成写入地址，送往 MAR。'},
+    {addr:17, uop:'(R1)→MDR', cmds:['R1out','MDRin'],
+     note:'把要写出的数据从 R1 送进 MDR 缓冲。'},
+    {addr:18, uop:'M(MAR)←(MDR)', cmds:['MemW','MDRout'],
+     note:'发出主存写命令，MDR 中的数据写入主存。STORE 的执行微程序结束。'}
+  ]}
+};
+let mcpKey = 'add', mcpIdx = -1, mcpTimer = null, mcpSeq = [];
+
+function mcpBuildSeq(){
+  const exe = MCP_EXEC[mcpKey];
+  const seq = [];
+  MCP_FETCH.forEach(mi=>seq.push({k:'fetch', addr:mi.addr, uop:mi.uop, cmds:mi.cmds,
+    title:'(CMAR)=' + mi.addr + ' · ' + mi.uop, note:mi.note}));
+  seq.push({k:'decode',
+    title:'操作码 → 执行微程序入口 ' + exe.entry,
+    note:'取指结束，微地址形成部件读出 IR 中的操作码，得到 <b>' + exe.label + '</b> 执行微程序的入口地址 <b>' + exe.entry + '</b>，送入 CMAR。<br>这就是岔路口：前面 4 条取指微指令所有指令共用，从这里开始才各走各的路。'});
+  exe.steps.forEach(mi=>seq.push({k:'exec', addr:mi.addr, uop:mi.uop, cmds:mi.cmds,
+    title:'(CMAR)=' + mi.addr + ' · ' + mi.uop, note:mi.note}));
+  seq.push({k:'loop',
+    title:'(CMAR) ← 0 · 取下一条指令',
+    note:'执行微程序走完，控制部分把 CMAR 置回 0，开始取下一条指令 —— 又回到那段公用的取指微程序。周而复始。这就是「微程序」名字的由来：<b>它是一段存放在 CM 里的程序，控制器靠「跑程序」来指挥 CPU</b>。'});
+  return seq;
+}
+
+function mcpRender(){
+  const cur = mcpIdx >= 0 ? mcpSeq[mcpIdx] : null;
+  const exe = MCP_EXEC[mcpKey];
+  const done = {};
+  for(let i = 0; i < mcpIdx; i++) if(mcpSeq[i].addr !== undefined) done[mcpSeq[i].addr] = true;
+
+  /* ---- 左侧：控制存储器 CM 格子 ---- */
+  const regions = [
+    {key:'fetch', name:'公用取指段', hint:'所有指令共用', items:MCP_FETCH},
+    {key:'add', name:'ADD 专用段', hint:'入口 ' + MCP_EXEC.add.entry, items:MCP_EXEC.add.steps},
+    {key:'load', name:'LOAD 专用段', hint:'入口 ' + MCP_EXEC.load.entry, items:MCP_EXEC.load.steps},
+    {key:'store', name:'STORE 专用段', hint:'入口 ' + MCP_EXEC.store.entry, items:MCP_EXEC.store.steps}
+  ];
+  let cmHtml = '';
+  regions.forEach(rg=>{
+    const active = rg.key === 'fetch' || rg.key === mcpKey;
+    cmHtml += '<div style="display:flex;gap:7px;align-items:baseline;margin:9px 0 3px;font-size:11px;font-weight:750;color:' + (active ? '#2b3542' : '#c3cbd7') + '">'
+      + rg.name + '<span style="font-weight:500;font-size:10px;color:#9aa4b2">' + rg.hint + '</span></div>';
+    rg.items.forEach(mi=>{
+      const isDone = !!done[mi.addr];
+      const isCur = !!(cur && cur.addr === mi.addr);
+      const isTarget = !!(cur && cur.k === 'decode' && mi.addr === exe.entry);
+      let bg = '#fbfcfe', bd = '#eef1f6', col = '#5c6779', mk = '', fw = 600;
+      if(active){ bg = '#f7f9fc'; bd = '#e3e8ef'; col = '#4b5665'; }
+      if(isDone){ bg = '#e9f8f1'; bd = '#bfe8d6'; col = '#0a6b4a'; mk = '✓'; }
+      if(isTarget){ bg = '#fff4e3'; bd = '#f3cf9b'; col = '#8a5209'; mk = '◀ 即将进入'; }
+      if(isCur){ bg = '#eaf0ff'; bd = '#2563eb'; col = '#1e40af'; mk = '▶'; fw = 800; }
+      cmHtml += '<div style="display:flex;align-items:center;gap:8px;padding:3px 9px;border-radius:7px;background:' + bg + ';border:1px solid ' + bd + ';margin:2px 0;transition:.25s">'
+        + '<span style="font-family:Consolas,monospace;font-size:10.5px;color:#9aa4b2;width:20px;text-align:right">' + mi.addr + '</span>'
+        + '<span style="flex:1;font-family:Consolas,monospace;font-size:11.5px;font-weight:' + fw + ';color:' + col + '">' + mi.uop + '</span>'
+        + '<span style="font-size:10px;font-weight:800;color:' + (isCur ? '#2563eb' : (isTarget ? '#d97706' : '#0f9d6e')) + '">' + mk + '</span>'
+        + '</div>';
+    });
+  });
+
+  /* ---- 右侧：CMAR / μIR / 微命令 / 说明 ---- */
+  const badge = (c, tone) => '<span style="display:inline-block;padding:2px 9px;border-radius:6px;font-family:Consolas,monospace;font-size:11px;font-weight:700;margin:2px 5px 2px 0;background:' + tone[0] + ';color:' + tone[1] + ';border:1px solid ' + tone[2] + '">' + c + '</span>';
+  const TONE_BLUE = ['#eef4ff', '#1e40af', '#d4e2fc'], TONE_GREEN = ['#e9f9f2', '#0a6b4a', '#bfe8d6'], TONE_ORANGE = ['#fff4e3', '#8a5209', '#f3cf9b'];
+  let cmar = '—', uir = '—', uirSub = '等待取微指令', cmdHtml = '<span style="font-size:12px;color:#b6c0cc">—</span>', note;
+  if(!cur){
+    note = '<b>点「下一步」开始</b> —— 看一条指令的微程序，怎么从公用的取指段走到自己的专用段。';
+  } else if(cur.k === 'fetch' || cur.k === 'exec'){
+    cmar = String(cur.addr);
+    uir = cur.uop;
+    uirSub = '从 CM[' + cur.addr + '] 取出';
+    cmdHtml = cur.cmds.map(c=>badge(c, cur.k === 'exec' ? TONE_GREEN : TONE_BLUE)).join('');
+    note = cur.note;
+  } else if(cur.k === 'decode'){
+    cmar = '3 → ' + exe.entry;
+    uir = '（微地址形成部件跳转）';
+    uirSub = '按操作码形成入口';
+    cmdHtml = badge('操作码译码', TONE_ORANGE) + '<span style="color:#d97706;font-weight:800;font-size:12px;margin-right:5px">⇒</span>' + badge('CMAR = ' + exe.entry, TONE_BLUE);
+    note = cur.note;
+  } else {
+    cmar = '← 0';
+    uir = '（控制转移）';
+    uirSub = '回到取指入口';
+    cmdHtml = badge('CMAR ← 0', TONE_BLUE);
+    note = cur.note;
+  }
+  const prog = mcpIdx < 0 ? '尚未开始' : '第 ' + (mcpIdx + 1) + ' / ' + mcpSeq.length + ' 步';
+
+  $('mcpStage').innerHTML =
+    '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:stretch">'
+    + '<div style="flex:1.15;min-width:292px;background:#fbfcfe;border:1px solid #e3e8ef;border-radius:12px;padding:12px 13px">'
+    +   '<div style="font-size:12.5px;font-weight:800;color:#2b3542">控制存储器 CM<span style="font-weight:500;font-size:10.5px;color:#9aa4b2;margin-left:7px">ROM · 每格一条微指令（存的是微命令代码）</span></div>'
+    +   cmHtml
+    + '</div>'
+    + '<div style="flex:1;min-width:250px;display:flex;flex-direction:column;gap:9px">'
+    +   '<div style="display:flex;gap:9px">'
+    +     '<div style="flex:1;background:#fff;border:1px solid #e3e8ef;border-radius:10px;padding:9px 12px">'
+    +       '<div style="font-size:10px;font-weight:750;color:#9aa4b2;letter-spacing:.4px">CMAR · 微地址</div>'
+    +       '<div style="font-size:20px;font-weight:800;color:#2563eb;font-family:Consolas,monospace;line-height:1.4">' + cmar + '</div>'
+    +     '</div>'
+    +     '<div style="flex:1.6;background:#fff;border:1px solid #e3e8ef;border-radius:10px;padding:9px 12px">'
+    +       '<div style="font-size:10px;font-weight:750;color:#9aa4b2;letter-spacing:.4px">μIR · 微指令寄存器</div>'
+    +       '<div style="font-size:14px;font-weight:800;color:' + (cur && (cur.k === 'fetch' || cur.k === 'exec') ? '#1e40af' : '#9aa4b2') + ';font-family:Consolas,monospace;line-height:1.5">' + uir + '</div>'
+    +       '<div style="font-size:10px;color:#a9b2bf">' + uirSub + '</div>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div style="background:#fff;border:1px solid #e3e8ef;border-radius:10px;padding:9px 12px">'
+    +     '<div style="font-size:10px;font-weight:750;color:#9aa4b2;letter-spacing:.4px;margin-bottom:4px">微命令 · 发往各执行部件</div>'
+    +     '<div style="min-height:24px">' + cmdHtml + '</div>'
+    +   '</div>'
+    +   '<div style="background:#f8fafd;border:1px solid #e8eef6;border-left:3px solid #2563eb;border-radius:9px;padding:9px 12px;flex:1">'
+    +     '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:750;color:#9aa4b2;margin-bottom:3px"><span>当前步说明</span><span>' + prog + '</span></div>'
+    +     '<div style="font-size:12px;color:#3c4654;line-height:1.7">' + note + '</div>'
+    +   '</div>'
+    + '</div>'
+    + '</div>';
+
+  /* ---- 底部：步骤条 ---- */
+  const KCOL = {fetch:'#2563eb', decode:'#d97706', exec:'#0f9d6e', loop:'#7c3aed'};
+  const KNAME = {fetch:'取指', decode:'译码', exec:'执行', loop:'回环'};
+  $('mcpSteps').innerHTML = mcpSeq.map((s, i)=>{
+    const cls = i < mcpIdx ? 'dn' : (i === mcpIdx ? 'act' : '');
+    return '<div class="step ' + cls + '" style="padding:6px 12px">'
+      + '<div class="n" style="width:18px;height:18px;font-size:10px">' + (i + 1) + '</div>'
+      + '<div style="flex:1;display:flex;align-items:center;gap:8px;min-width:0">'
+      + '<span style="flex-shrink:0;font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:4px;background:' + KCOL[s.k] + '1a;color:' + KCOL[s.k] + '">' + KNAME[s.k] + '</span>'
+      + '<span style="font-family:Consolas,monospace;font-size:12px;font-weight:' + (i === mcpIdx ? 800 : 600) + ';color:#3c4654;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + s.title + '</span>'
+      + '</div></div>';
+  }).join('');
+}
+
+function mcpStep(){ if(mcpIdx < mcpSeq.length - 1){ mcpIdx++; mcpRender(); } else { clearInterval(mcpTimer); mcpTimer = null; } }
+$('mcpNext').onclick = ()=>{ clearInterval(mcpTimer); mcpTimer = null; mcpStep(); };
+$('mcpReset').onclick = ()=>{ clearInterval(mcpTimer); mcpTimer = null; mcpIdx = -1; mcpRender(); };
+$('mcpPlay').onclick = ()=>{
+  clearInterval(mcpTimer);
+  mcpIdx = -1; mcpRender();
+  mcpTimer = setInterval(mcpStep, 1300);
+};
+$('mcpInstr').onchange = e=>{ clearInterval(mcpTimer); mcpTimer = null; mcpKey = e.target.value; mcpSeq = mcpBuildSeq(); mcpIdx = -1; mcpRender(); };
+mcpSeq = mcpBuildSeq();
+mcpRender();
+
+/* ============================================================
+   动画 15 · 五级流水线时空图
+   ============================================================ */
+let plTimer = null, plRevealed = 0;
+function plBuild(){
+  const mode = $('plMode').value, n = +$('plN').value;
+  const D = (mode === 'raw') ? 2 : 0;
+  const rows = [];
+  for(let i=0;i<n;i++){
+    const start = (i === 0) ? 1 : (i + 1 + D);
+    const cells = [];
+    for(let c=0;c<start-1;c++) cells.push({s:'', blank:true});
+    cells.push({s:'IF'}); cells.push({s:'ID'});
+    for(let d=0;d<D;d++) cells.push({s:'stall'});
+    cells.push({s:'EX'}); cells.push({s:'MEM'}); cells.push({s:'WB'});
+    // 转发标记
+    if(mode === 'fwd' && i === 1){
+      cells.forEach(c=>{ if(c.s === 'EX') c.fw = true; });
+    }
+    rows.push(cells);
+  }
+  const maxCol = Math.max.apply(null, rows.map(r=>r.length));
+  return {rows, maxCol, mode, n};
+}
+function plRender(reveal){
+  const {rows, maxCol, mode, n} = plBuild();
+  const cols = [];
+  for(let c=0;c<maxCol;c++) cols.push(c);
+
+  let head = `<div class="plabel" style="font-size:10.5px;color:#9aa4b2">周期</div>` +
+    cols.map(c=>`<div style="text-align:center;font-size:10.5px;color:${c<reveal?'#2563eb':'#b6c0cc'};font-weight:700;transition:.3s">${c+1}</div>`).join('');
+
+  let body = '';
+  rows.forEach((r,i)=>{
+    body += `<div class="plabel" style="font-size:11.5px">I${i+1}</div>`;
+    for(let c=0;c<maxCol;c++){
+      const cell = r[c];
+      if(!cell || cell.blank){ body += `<div class="pcell" style="background:transparent"></div>`; continue; }
+      const show = c < reveal;
+      const cls = show ? (cell.s === 'stall' ? 'stall' : (cell.fw ? 'fw' : cell.s)) : '';
+      const txt = show ? (cell.s === 'stall' ? '停顿' : (cell.fw ? 'EX·转发' : cell.s)) : '';
+      body += `<div class="pcell ${cls}" style="opacity:${show?1:.16};font-size:${cell.s==='stall'||cell.fw?'9.5':'11'}px">${txt}</div>`;
+    }
+  });
+
+  $('plChart').innerHTML =
+    `<div class="pipegrid" style="grid-template-columns:96px repeat(${maxCol},minmax(38px,1fr))">${head}${body}</div>`;
+
+  // 统计
+  const T = maxCol;
+  const k = 5;
+  const idealT = k + n - 1;
+  const S = (n * k) / T;
+  const TP = n / T;
+  const extra = T - idealT;
+
+  $('plStat').innerHTML =
+    `<div class="res" style="margin-top:16px">
+      <div class="r"><span class="lbl">总周期数</span><span class="val">${T}</span>
+        <span style="font-size:12px;color:#8b95a3">理想值为 k + n − 1 = ${k} + ${n} − 1 = ${idealT}${extra>0?`，本例因冒险多花 <b style="color:#dc2626">${extra}</b> 个周期`:''}</span></div>
+      <div class="r"><span class="lbl">吞吐率 TP</span><span class="val">${TP.toFixed(3)}</span>
+        <span style="font-size:12px;color:#8b95a3">条/周期 = n / T = ${n} / ${T}</span></div>
+      <div class="r"><span class="lbl">加速比 S</span><span class="val">${S.toFixed(2)}</span>
+        <span style="font-size:12px;color:#8b95a3">= n·k / T = ${n}×${k} / ${T}</span></div>
+    </div>` +
+    (mode === 'raw'
+      ? `<div class="tip e" style="margin-top:10px"><span class="ti">数据冒险</span><span>I2 要用 I1 的计算结果，而 I1 的 EX 要到第 3 周期才产出、WB 到第 5 周期才写回。不做任何处理的话，I2 只能<b>插入 2 个气泡（停顿）</b>干等，后续指令全部顺延，加速比明显下降。</span></div>`
+      : (mode === 'fwd'
+      ? `<div class="tip s" style="margin-top:10px"><span class="ti">转发解决</span><span>把 I1 在 EX 阶段<b>刚算出来的结果直接旁路</b>给 I2 的 ALU 输入端，不必等它写回寄存器。于是停顿消失，总周期数回到理想值。橙色格子表示这一步的输入来自转发而非寄存器读。</span></div>`
+      : `<div class="tip i" style="margin-top:10px"><span class="ti">理想情形</span><span>指令之间无任何相关，流水线全速推进：第 1 条指令用 ${k} 个周期走完，之后<b>每个周期都有一条指令完成</b>，这是流水线的理论最优。</span></div>`));
+}
+$('plMode').onchange = ()=>{ plRevealed = 999; plRender(plRevealed); };
+$('plN').onchange = ()=>{ plRevealed = 999; plRender(plRevealed); };
+$('plPlay').onclick = ()=>{
+  clearInterval(plTimer);
+  const {maxCol} = plBuild();
+  plRevealed = 0; plRender(0);
+  plTimer = setInterval(()=>{
+    plRevealed++;
+    plRender(plRevealed);
+    if(plRevealed >= maxCol){ clearInterval(plTimer); plTimer = null; }
+  }, 420);
+};
+$('plReset').onclick = ()=>{ clearInterval(plTimer); plTimer=null; plRevealed = 999; plRender(999); };
+plRevealed = 999;
+plRender(999);
+
+/* ============================================================
+   动画 16 · 总线带宽计算器
+   ============================================================ */
+function fmtB(b){
+  if(b >= 1e9) return (b/1e9).toFixed(2) + ' GB/s';
+  if(b >= 1e6) return (b/1e6).toFixed(2) + ' MB/s';
+  if(b >= 1e3) return (b/1e3).toFixed(2) + ' KB/s';
+  return b.toFixed(2) + ' B/s';
+}
+function renderBW(){
+  const f = parseFloat($('bwFreq').value) || 0;
+  const w = parseFloat($('bwW').value) || 0;
+  const c = Math.max(1, Math.round(parseFloat($('bwC').value) || 1));
+  const bytesPerTx = w / 8;
+  const txPerSec = f * 1e6 / c;
+  const bw = txPerSec * bytesPerTx;
+
+  $('bwOut').innerHTML =
+    `<div class="res">
+      <div class="r"><span class="lbl">一次传</span><span style="font-size:13px">总线宽度 ${w} 位 = <b>${bytesPerTx}</b> 字节</span></div>
+      <div class="r"><span class="lbl">总线周期</span><span style="font-size:13px">占 ${c} 个时钟 → 每秒 <b>${(txPerSec/1e6).toFixed(2)} M</b> 个总线周期</span></div>
+      <div class="r" style="border-top:1px dashed #d8dfe9;padding-top:9px;margin-top:5px">
+        <span class="lbl">总线带宽</span><span class="val" style="font-size:16px">${fmtB(bw)}</span></div>
+    </div>
+    <div class="tip s" style="margin-top:10px"><span class="ti">公式</span><span>
+      带宽 = 频率 × 位宽 ÷ 8 ÷ 每个总线周期占用的时钟数 = ${f}×10⁶ × ${w} ÷ 8 ÷ ${c} = <b>${fmtB(bw)}</b>。
+      ${c>1?`注意这里不能直接把频率乘位宽——因为每个总线周期要花 ${c} 个时钟，这是最容易漏掉的一步。`:`本题每个总线周期只占 1 个时钟，所以可以直接乘。`}
+    </span></div>`;
+}
+['bwFreq','bwW','bwC'].forEach(id=>$(id).oninput = renderBW);
+renderBW();
+
+/* ============================================================
+   动画 17 · 三种集中式仲裁
+   ============================================================ */
+let arbReq = -1;
+const DEV = [['设备 1',320],['设备 2',520],['设备 3',720]];
+function renderArb(){
+  const mode = $('arbMode').value;
+  const bx = 40, by = 100, bw = 140, bh = 70;
+  let extra = '', grant = -1, note = '';
+
+  const devBox = (i, x)=>{
+    const req = arbReq === i;
+    const got = grant === i;
+    const fill = got ? '#e5f7f0' : (req ? '#fff4e3' : '#fff');
+    const stroke = got ? '#0f9d6e' : (req ? '#d97706' : '#cdd5e0');
+    const tc = got ? '#0a6b4a' : (req ? '#9a5b06' : '#5c6779');
+    return `<g style="cursor:pointer" data-dev="${i}">
+      <rect x="${x}" y="${by}" width="${bw}" height="${bh}" rx="12" fill="${fill}" stroke="${stroke}" stroke-width="${(req||got)?3:2}" style="transition:.25s"/>
+      <text x="${x+bw/2}" y="${by+30}" text-anchor="middle" font-size="13.5" font-weight="800" fill="${tc}">${DEV[i][0]}</text>
+      <text x="${x+bw/2}" y="${by+50}" text-anchor="middle" font-size="10.5" fill="#8b95a3">${req?'请求中…':(got?'已获得总线':'点击发起请求')}</text>
+    </g>`;
+  };
+
+  // 优先级判定
+  if(arbReq >= 0){
+    if(mode === 'chain'){
+      grant = 0; // 链式：离控制器最近者优先；这里简化为“更靠前的设备会截获”
+      note = `链式查询中，总线允许信号 BG 像接力棒一样从控制器依次向后传。设备 ${ arbReq+1 } 发出请求后，要先等排在它前面的设备都不请求，BG 才会传到它手上。`;
+      const higher = [];
+      for(let i=0;i<arbReq;i++) higher.push('设备 '+(i+1));
+      if(higher.length) note += ` 本题中 ${higher.join('、')} 的位置更靠近控制器，<b>优先级更高</b>，只要它们也请求，就会先截获 BG。`;
+      else note += ` 该设备离控制器最近，<b>优先级最高</b>，只要它请求就一定能拿到总线。`;
+    } else if(mode === 'counter'){
+      grant = arbReq;
+      note = `计数器定时查询中，控制器用一个计数器依次广播设备地址。设备被「点到」且正好有请求时才能获得总线。计数起点可以设定，所以优先级<b>不固定</b>——可以轮转保证公平，也可以编程指定。`;
+    } else {
+      grant = arbReq;
+      note = `独立请求中，每个设备都有自己独立的请求线 BR 和允许线 BG，直接连到仲裁器。仲裁器内部按优先级表判定，<b>响应速度最快</b>，优先级也可以灵活编程。代价是控制线数量随设备数成倍增长。`;
+    }
+  }
+
+  // 连线
+  if(mode === 'chain'){
+    extra =
+      `<line x1="180" y1="68" x2="860" y2="68" stroke="#8fb4f5" stroke-width="2"/>
+       <text x="190" y="60" font-size="10.5" fill="#5b7fc7">BR 总线请求（共用一根）</text>
+       <path d="M180,212 L860,212" stroke="#f0b775" stroke-width="2" stroke-dasharray="7 4" fill="none"/>
+       ${DEV.map(d=>`<line x1="${d[1]+70}" y1="${by+bh}" x2="${d[1]+70}" y2="212" stroke="#f0b775" stroke-width="1.6" stroke-dasharray="7 4"/>`).join('')}
+       <text x="190" y="234" font-size="10.5" fill="#b8802f">BG 总线允许（串行穿过每一级，不能跳跃）</text>`;
+  } else if(mode === 'counter'){
+    extra =
+      `<line x1="180" y1="68" x2="860" y2="68" stroke="#8fb4f5" stroke-width="2"/>
+       <text x="190" y="60" font-size="10.5" fill="#5b7fc7">BR 总线请求（共用一根）</text>
+       ${[0,1,2].map(k=>`<line x1="180" y1="${196+k*13}" x2="860" y2="${196+k*13}" stroke="#a78bfa" stroke-width="1.6"/>`).join('')}
+       <text x="190" y="252" font-size="10.5" fill="#7c3aed">设备地址线（一组线，广播计数器值）</text>`;
+  } else {
+    extra = DEV.map((d,i)=>{
+      const y1 = 190 + i*24;
+      return `<line x1="180" y1="68" x2="${d[1]}" y2="68" stroke="#8fb4f5" stroke-width="2"/>
+        <text x="${d[1]-8}" y="62" font-size="10" fill="#5b7fc7" text-anchor="end">BR${i}</text>
+        <line x1="180" y1="${y1}" x2="${d[1]}" y2="${y1}" stroke="#6ee7b7" stroke-width="2"/>
+        <text x="${d[1]-8}" y="${y1+4}" font-size="10" fill="#0f9d6e" text-anchor="end">BG${i}</text>`;
+    }).join('') + `<text x="190" y="86" font-size="10.5" fill="#5b7fc7">每个设备一对独立的请求 / 允许线</text>`;
+  }
+
+  $('arbStage').innerHTML =
+    `<svg viewBox="0 0 900 280" style="width:100%;height:auto;display:block">
+      ${extra}
+      <g>
+        <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="12" fill="#eaf0ff" stroke="#2563eb" stroke-width="2.4"/>
+        <text x="${bx+bw/2}" y="${by+32}" text-anchor="middle" font-size="13.5" font-weight="800" fill="#1e40af">总线控制器</text>
+        <text x="${bx+bw/2}" y="${by+52}" text-anchor="middle" font-size="10.5" fill="#5b7fc7">（仲裁器）</text>
+      </g>
+      ${DEV.map((d,i)=>devBox(i, d[1])).join('')}
+    </svg>`;
+
+  qsa('#arbStage [data-dev]').forEach(g=>{
+    g.onclick = ()=>{ const i = +g.dataset.dev; arbReq = (arbReq === i) ? -1 : i; renderArb(); };
+  });
+
+  const modeName = {chain:'链式查询', counter:'计数器定时查询', indep:'独立请求'}[mode];
+  $('arbOut').innerHTML =
+    `<div class="res">
+      <div class="r"><span class="lbl">仲裁方式</span><span class="val">${modeName}</span></div>
+      <div class="r" style="margin-top:5px"><span class="lbl">当前状态</span><span style="font-size:13px">${
+        arbReq < 0 ? '暂无设备请求总线' : (grant >= 0 ? `<b style="color:#0f9d6e">设备 ${grant+1}</b> 获得总线使用权` : '正在仲裁…')
+      }</span></div>
+    </div>
+    ${note ? `<div class="tip i" style="margin-top:10px"><span class="ti">为什么</span><span>${note}</span></div>` : ''}
+    <div class="tip s" style="margin-top:6px"><span class="ti">对比</span><span>
+      控制线数量：链式查询 <b>最少</b> → 计数器定时查询 <b>中等</b> → 独立请求 <b>最多</b>；
+      响应速度：独立请求 <b>最快</b> → 计数器定时查询 → 链式查询 <b>最慢</b>；
+      可靠性：链式查询<b>最差</b>（链上任一环节故障会导致后续设备全部失效）。
+    </span></div>`;
+}
+$('arbMode').onchange = ()=>{ arbReq = -1; renderArb(); };
+renderArb();
+
+/* ============================================================
+   动画 18 · 三种 I/O 方式时间线
+   ============================================================ */
+const IO_STYLE = {
+  wait:{bg:'#e6eaf1',c:'#6b7280',t:'轮询'},
+  xfer:{bg:'#fbd9b0',c:'#8a5209',t:'搬数据'},
+  calc:{bg:'#c7dbff',c:'#1e40af',t:'计算'},
+  intr:{bg:'#f7b98a',c:'#8a3d09',t:'中断处理'},
+  idle:{bg:'#f3f5f9',c:'#aab3c0',t:'空闲'},
+  prep:{bg:'#eef2f8',c:'#8b95a3',t:'准备中'},
+  ready:{bg:'#fde68a',c:'#8a6109',t:'就绪·请求'},
+  dxfer:{bg:'#a7e8cd',c:'#0a6b4a',t:'设备传输'},
+  dma:{bg:'#d8c8fb',c:'#5b21b6',t:'DMA 搬运'},
+  end:{bg:'#f7b98a',c:'#8a3d09',t:'结束中断'}
+};
+const IO_MODES = [
+  { name:'程序查询方式', cost:'CPU 几乎 100% 耗在轮询上',
+    cpu:['wait','wait','wait','xfer','wait','wait','xfer','wait','wait','xfer','wait','wait'],
+    dev:['idle','idle','ready','dxfer','idle','idle','ready','dxfer','idle','idle','ready','dxfer'],
+    note:'CPU 不停地读取状态寄存器问「好了没有」，直到设备就绪才亲自搬运数据。CPU 与 I/O 完全<b>串行</b>，期间无法做任何有用的计算。' },
+  { name:'程序中断方式', cost:'CPU 利用率大幅提升',
+    cpu:['calc','calc','calc','intr','calc','calc','calc','intr','calc','calc','calc','calc'],
+    dev:['prep','prep','ready','dxfer','prep','prep','ready','dxfer','prep','prep','prep','prep'],
+    note:'CPU 一直忙自己的计算，设备准备好后<b>主动发中断请求</b>，CPU 才暂停当前程序去处理。数据搬运仍然由 CPU 执行，因此还有现场保护和返回开销。' },
+  { name:'DMA 方式', cost:'CPU 只被打断一次',
+    cpu:['calc','calc','calc','calc','calc','calc','calc','calc','calc','calc','end','calc'],
+    dev:['dma','dma','dma','dma','dma','dma','dma','dma','dma','dma','dma','idle'],
+    note:'CPU 只需在开始前给 DMA 控制器设好起始地址、字数和方向，之后<b>整块数据的搬运全部由硬件完成</b>，CPU 全程照常计算。只在整块传完后被打断一次做收尾。' }
+];
+let ioRevealed = 0, ioTimer = null;
+function ioRender(reveal){
+  const N = 12;
+  let html = '';
+  IO_MODES.forEach((m, mi)=>{
+    const cpuCells = m.cpu.map((k,i)=>{
+      const s = IO_STYLE[k], on = i < reveal;
+      return `<div style="height:26px;border-radius:6px;background:${on?s.bg:'#f7f9fc'};color:${on?s.c:'#c8cfd8'};
+        display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:650;transition:.4s;overflow:hidden;white-space:nowrap">${on?s.t:''}</div>`;
+    }).join('');
+    const devCells = m.dev.map((k,i)=>{
+      const s = IO_STYLE[k], on = i < reveal;
+      return `<div style="height:26px;border-radius:6px;background:${on?s.bg:'#f7f9fc'};color:${on?s.c:'#c8cfd8'};
+        display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:650;transition:.4s;overflow:hidden;white-space:nowrap">${on?s.t:''}</div>`;
+    }).join('');
+    html += `<div style="margin-bottom:18px">
+      <div style="font-size:13px;font-weight:750;margin-bottom:7px;color:#2b3542">${m.name}
+        <span style="font-size:11.5px;font-weight:500;color:#8b95a3;margin-left:8px">${m.cost}</span></div>
+      <div style="display:grid;grid-template-columns:52px repeat(${N},minmax(30px,1fr));gap:3px;align-items:center">
+        <div style="font-size:11px;color:#6b7280;font-weight:650">CPU</div>${cpuCells}
+        <div style="font-size:11px;color:#6b7280;font-weight:650">设备</div>${devCells}
+      </div>
+    </div>`;
+  });
+  $('ioStage').innerHTML = `<div style="display:grid;grid-template-columns:52px repeat(12,minmax(30px,1fr));gap:3px;margin-bottom:8px">
+      <div></div>${Array.from({length:12},(_,i)=>`<div style="text-align:center;font-size:10px;color:#b6c0cc">${i+1}</div>`).join('')}</div>` + html;
+
+  // 统计
+  const stat = (m)=>{
+    const total = m.cpu.length;
+    const eff = m.cpu.filter(k=>k==='calc').length;
+    return Math.round(eff/total*100);
+  };
+  $('ioOut').innerHTML =
+    `<div class="res">
+      <div class="r"><span class="lbl">CPU 有效计算占比</span>
+        <span style="font-size:13px">程序查询 <b style="color:#dc2626">${stat(IO_MODES[0])}%</b>　·　
+        程序中断 <b style="color:#d97706">${stat(IO_MODES[1])}%</b>　·　
+        DMA <b style="color:#0f9d6e">${stat(IO_MODES[2])}%</b></span></div>
+    </div>
+    ${IO_MODES.map(m=>`<div class="tip ${m.name.indexOf('DMA')>=0?'s':(m.name.indexOf('中断')>=0?'m':'e')}" style="margin-top:8px">
+      <span class="ti">${m.name}</span><span>${m.note}</span></div>`).join('')}`;
+}
+$('ioPlay').onclick = ()=>{
+  clearInterval(ioTimer);
+  ioRevealed = 0; ioRender(0);
+  ioTimer = setInterval(()=>{
+    ioRevealed++; ioRender(ioRevealed);
+    if(ioRevealed >= 12){ clearInterval(ioTimer); ioTimer = null; }
+  }, 260);
+};
+$('ioReset').onclick = ()=>{ clearInterval(ioTimer); ioTimer=null; ioRevealed = 12; ioRender(12); };
+ioRevealed = 12;
+ioRender(12);
+
+/* ============================================================
+   动画 19 · 中断响应与处理十二步
+   ============================================================ */
+const IR_STEPS = [
+  ['设备发出中断请求','外设完成一次工作后，把接口中的中断请求触发器置 1，向 CPU 发出 IRQ 信号。','这一步是<b>设备主动</b>完成的，不需要 CPU 参与。'],
+  ['硬件判优','多个设备同时请求时，由硬件排队器（或软件查询程序）选出优先级最高的那一个。','中断判优保证了高优先级设备先被服务。'],
+  ['检查响应条件','CPU 判断能否响应：① 有未屏蔽的请求；② 当前指令已执行完毕；③ 处于开中断状态。','三个条件缺一不可。这也是为什么中断响应总是发生在<b>指令边界</b>。'],
+  ['进入中断隐指令','CPU 响应中断，硬件自动执行一串操作——它没有对应的指令码，也不需要程序编写，所以叫「隐指令」。','这是最容易被问的顺序题，下面三步要背牢。'],
+  ['隐指令 ① · 关中断','把中断允许触发器 EINT 清 0。','先关中断，是为了防止接下来的保护动作被打断，造成现场错乱。'],
+  ['隐指令 ② · 保存断点','把当前 PC（即被打断处下一条指令的地址）压入栈中。','保存的是<b>PC</b>而不是 IR。很多题在这里设陷阱。'],
+  ['隐指令 ③ · 取入口地址','根据中断类型号去中断向量表（或由硬件直接给出）取出中断服务程序的入口地址，送入 PC。','至此隐指令结束，CPU 已经跳到服务程序的第一条指令。'],
+  ['保存现场','进入服务程序后，用软件把通用寄存器、PSW 等压栈保存。','这一步属于软件操作，与隐指令里的「保存断点」是两回事。'],
+  ['开中断','设置 EINT 为 1，允许更高级的中断打断当前服务程序。','<b>这是实现多重中断（中断嵌套）的必要条件</b>。若不开中断，就只能等本次处理完才能响应下一次。'],
+  ['执行设备服务程序','真正干活：从接口读数据、处理、写回内存或图形缓冲区。','这是中断存在的意义所在——真正的数据传输和处理在这里发生。'],
+  ['恢复现场','关中断，把之前压栈的通用寄存器和 PSW 出栈还原。','先关中断再恢复，避免恢复一半被打断。'],
+  ['执行 iret 返回','开中断，执行中断返回指令 iret，从栈中弹出断点地址送回 PC。','程序从被打断的地方继续执行，就好像什么都没发生过——这就是「透明」的含义。']
+];
+let irIdx = -1, irTimer2 = null;
+function irRender(){
+  $('irSteps').innerHTML = IR_STEPS.map((s,i)=>{
+    const cls = i < irIdx ? 'dn' : (i === irIdx ? 'act' : '');
+    const kind = i >= 4 && i <= 6 ? '隐指令' : (i >= 7 && i <= 10 ? '软件' : (i < 4 ? '硬件' : '返回'));
+    const kc = i>=4&&i<=6 ? '#7c3aed' : (i>=7&&i<=10 ? '#0f9d6e' : '#2563eb');
+    return `<div class="step ${cls}"><div class="n">${i+1}</div><div style="flex:1">
+      <div class="t">${s[0]}
+        <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:4px;background:${kc}18;color:${kc};margin-left:6px">${kind}</span></div>
+      <div class="d">${s[1]}</div>
+      ${i === irIdx ? `<div class="d" style="margin-top:6px;color:#2563eb">▸ ${s[2]}</div>` : ''}
+    </div></div>`;
+  }).join('');
+  if(irIdx >= IR_STEPS.length-1){
+    $('irNote').innerHTML = `<div class="tip s"><span class="ti">完整链路</span><span>
+      请求 → 判优 → 响应条件 → 隐指令（关中断 · 保存断点 · 取入口）→ 保存现场 → 开中断 → 处理 → 恢复现场 → 开中断 → iret 返回。
+      其中<b>只有「隐指令」三步是硬件自动完成的</b>，其余都需要程序（或操作系统）指令来执行。</span></div>`;
+  } else if(irIdx < 0){
+    $('irNote').innerHTML = `<div class="tip i"><span class="ti">怎么看</span><span>
+      点「重新播放」自动走一遍，或用「下一步」自己控制节奏。
+      注意第 <b>5～7</b> 步（紫色标签）是<b>硬件自动完成</b>的中断隐指令，其余各步都要靠程序指令来做——
+      这是这一章最爱考的分界点。</span></div>`;
+  } else { $('irNote').innerHTML = ''; }
+}
+$('irNext').onclick = ()=>{ clearInterval(irTimer2); irTimer2=null; if(irIdx < IR_STEPS.length-1){ irIdx++; irRender(); } };
+$('irPlay').onclick = ()=>{
+  clearInterval(irTimer2); irIdx = -1; irRender();
+  irTimer2 = setInterval(()=>{
+    if(irIdx < IR_STEPS.length-1){ irIdx++; irRender(); }
+    else { clearInterval(irTimer2); irTimer2 = null; }
+  }, 1400);
+};
+irRender();
+</script>
+</body>
+</html>
